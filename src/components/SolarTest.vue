@@ -139,7 +139,6 @@ const initializeMap = async (lat: number, lng: number) => {
   const building = await findClosestBuilding({ lat: () => lat, lng: () => lng }, apiKey)
 
   //  const placeId = building.name.split('/').pop() || ''
-
   //  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
   buildingResult.value = JSON.stringify(building, null, 2)
 }

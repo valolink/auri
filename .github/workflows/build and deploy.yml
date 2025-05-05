@@ -45,4 +45,4 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: 'dist/assets/'
-          target: '${{ vars.SERVER_PATH }}/dist/assets/'
+          target: ${{ vars.SERVER_PATH }}
