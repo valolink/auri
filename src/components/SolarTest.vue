@@ -1,0 +1,219 @@
+<template>
+  <div style="padding: 1rem; max-width: 600px; margin: auto">
+    <h2 style="font-size: 1.25rem; margin-bottom: 1rem">
+      Solar API with Vue.js and WordPress test
+    </h2>
+
+    <input
+      v-model="address"
+      type="text"
+      placeholder="Enter address"
+      style="
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+      "
+    />
+
+    <button
+      @click="runTest"
+      style="
+        background-color: #3b82f6;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        width: 100%;
+        cursor: pointer;
+      "
+    >
+      Get Solar Image
+    </button>
+    <div
+      ref="mapRef"
+      style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
+    ></div>
+    <canvas
+      ref="canvasRef"
+      style="margin-top: 1rem; border: 1px solid #ccc; max-height: 800px; width: 100%"
+    ></canvas>
+
+    <pre
+      v-if="geoResult"
+      style="
+        margin-top: 1rem;
+        background: #f9f9f9;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        overflow-x: auto;
+      "
+    >
+Geocode:
+{{ geoResult }}
+    </pre>
+
+    <pre
+      v-if="buildingResult"
+      style="
+        margin-top: 1rem;
+        background: #f9f9f9;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        overflow-x: auto;
+      "
+    >
+Building:
+{{ buildingResult }}
+    </pre>
+
+    <pre
+      v-if="layerResult"
+      style="
+        margin-top: 1rem;
+        background: #f9f9f9;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        overflow-x: auto;
+      "
+    >
+Data Layers:
+{{ layerResult }}
+    </pre>
+
+    <p v-if="error" style="color: red; margin-top: 1rem">{{ error }}</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { Loader } from '@googlemaps/js-api-loader'
+import { geocodeAddress } from '@/services/geocodingApi'
+import { findClosestBuilding } from '@/services/solarApi'
+import { getDataLayerUrls } from '@/services/dataLayers'
+import { renderGeoTiffToCanvas } from '@/services/tiffToCanvas'
+
+const mapRef = ref<HTMLElement | null>(null)
+let map: google.maps.Map | null = null
+let marker: google.maps.Marker | null = null
+
+const address = ref('Rajatorpantie 8')
+const result = ref<string | null>(null)
+const error = ref<string | null>(null)
+const geoResult = ref<string | null>(null)
+const buildingResult = ref<string | null>(null)
+const layerResult = ref<string | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+
+const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
+
+let polygon: google.maps.Polygon | null = null
+
+const initializeMap = async (lat: number, lng: number) => {
+  const loader = new Loader({
+    apiKey,
+    version: 'weekly',
+    libraries: ['places'], // optional if you want places search later
+  })
+
+  await loader.load()
+
+  if (!mapRef.value) return
+
+  map = new google.maps.Map(mapRef.value, {
+    center: { lat, lng },
+    zoom: 18,
+    mapTypeId: 'satellite',
+    tilt: 0, // ✅ Keep map flat (0° tilt)
+    heading: 0, // ✅ Ensure north is up
+    gestureHandling: 'greedy', // optional: allow full pan/zoom
+    rotateControl: false, // optional: disable rotation UI
+    mapId: '', // optional: custom map style ID if needed
+  })
+  marker = new google.maps.Marker({
+    position: { lat, lng },
+    map,
+    title: 'Selected Location',
+  })
+  const building = await findClosestBuilding({ lat: () => lat, lng: () => lng }, apiKey)
+
+  const placeId = building.name.split('/').pop() || ''
+
+  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
+  buildingResult.value = JSON.stringify(building, null, 2)
+}
+
+const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) => {
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${placeId}&key=${apiKey}`
+  const response = await fetch(url)
+  const data = await response.json()
+
+  if (
+    data.status === 'OK' &&
+    data.results.length &&
+    data.results[0].geometry &&
+    (data.results[0].geometry.bounds || data.results[0].geometry.viewport)
+  ) {
+    const geom = data.results[0].geometry
+    return geom.bounds || geom.viewport
+  } else {
+    throw new Error('No bounds or viewport available for Place ID')
+  }
+}
+
+const runTest = async () => {
+  //try {
+  if (marker) marker.setMap(null)
+  result.value = error.value = null
+  geoResult.value = buildingResult.value = layerResult.value = null
+
+  const geo = await geocodeAddress(address.value, apiKey)
+  await initializeMap(geo.lat, geo.lng)
+
+  const building = await findClosestBuilding({ lat: () => geo.lat, lng: () => geo.lng }, apiKey)
+  const placeId = building.name.split('/').pop() || ''
+  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
+  buildingResult.value = JSON.stringify(building, null, 2)
+  if (polygon) polygon.setMap(null) // remove old one
+
+  const sw = bounds.southwest
+  const ne = bounds.northeast
+  const nw = { lat: ne.lat, lng: sw.lng }
+  const se = { lat: sw.lat, lng: ne.lng }
+
+  polygon = new google.maps.Polygon({
+    paths: [sw, se, ne, nw],
+    strokeColor: '#00f',
+    strokeOpacity: 1.0,
+    strokeWeight: 2,
+    fillColor: '#00f',
+    fillOpacity: 0.3,
+  })
+  polygon.setMap(map!)
+
+  geoResult.value = JSON.stringify(geo, null, 2)
+
+  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
+  layerResult.value = JSON.stringify(data, null, 2)
+
+  result.value = layerResult.value
+
+  const rgbUrl = data.rgbUrl
+  if (!rgbUrl) throw new Error('No RGB URL available')
+
+  const fetchUrl = new URL(rgbUrl)
+  const id = fetchUrl.searchParams.get('id')
+  if (!id) throw new Error('No image ID in URL')
+
+  const response = await fetch(`https://solar.googleapis.com/v1/geoTiff:get?id=${id}&key=${apiKey}`)
+  const blob = await response.blob()
+
+  if (canvasRef.value) {
+    await renderGeoTiffToCanvas(blob, canvasRef.value)
+  }
+  //} catch (err: any) {
+  //  error.value = err.message || 'Unknown error'
+  //}
+}
+</script>
