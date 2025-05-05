@@ -87,7 +87,7 @@ Data Layers:
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { Loader } from '@googlemaps/js-api-loader'
 import { geocodeAddress } from '@/services/geocodingApi'
 import { findClosestBuilding } from '@/services/solarApi'
@@ -138,9 +138,9 @@ const initializeMap = async (lat: number, lng: number) => {
   })
   const building = await findClosestBuilding({ lat: () => lat, lng: () => lng }, apiKey)
 
-  const placeId = building.name.split('/').pop() || ''
+  //  const placeId = building.name.split('/').pop() || ''
 
-  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
+  //  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
   buildingResult.value = JSON.stringify(building, null, 2)
 }
 

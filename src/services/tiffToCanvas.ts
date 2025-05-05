@@ -1,3 +1,12 @@
+type TypedArray =
+  | Uint8Array
+  | Uint16Array
+  | Uint32Array
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array
 import * as GeoTIFF from 'geotiff'
 
 export async function renderGeoTiffToCanvas(blob: Blob, canvas: HTMLCanvasElement) {
@@ -9,7 +18,7 @@ export async function renderGeoTiffToCanvas(blob: Blob, canvas: HTMLCanvasElemen
   const height = image.getHeight()
 
   const samplesPerPixel = image.getSamplesPerPixel()
-  const raster = await image.readRasters({ interleave: true })
+  const raster = (await image.readRasters({ interleave: true })) as TypedArray
 
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas context not available')
