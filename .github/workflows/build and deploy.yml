@@ -27,18 +27,22 @@ jobs:
       - name: Backup old assets on server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
+          host: ${{ vars.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
             TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-            mv /home/hautauspalvelu.demolink.fi/public_html/wp-content/plugins/valolink-vuejs-wp-plugin-starter/dist/ /home/hautauspalvelu.demolink.fi/public_html/wp-content/plugins/valolink-vuejs-wp-plugin-starter/previous/${TIMESTAMP}/
-
+            if [ -d "${{ vars.SERVER_PATH }}/dist/" ]; then
+              mkdir -p "${{ vars.SERVER_PATH }}/previous/${TIMESTAMP}/"
+              mv "${{ vars.SERVER_PATH }}/dist/" "${{ vars.SERVER_PATH }}/previous/${TIMESTAMP}/"
+            else
+              echo "No dist/ directory to backup."
+            fi
       - name: Deploy via SCP
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
+          host: ${{ vars.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           source: 'dist/assets/'
-          target: ${{ secrets.SERVER_PATH }}
+          target: '${{ vars.SERVER_PATH }}/dist/assets/'
