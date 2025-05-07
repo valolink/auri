@@ -3,34 +3,15 @@
     <h2 style="font-size: 1.25rem; margin-bottom: 1rem">
       Solar API with Vue.js and WordPress test
     </h2>
-
-    <input
-      v-model="address"
-      type="text"
-      placeholder="Enter address"
-      style="
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-      "
-    />
-
-    <button
-      @click="runTest"
-      style="
-        background-color: #3b82f6;
-        color: white;
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        width: 100%;
-        cursor: pointer;
-      "
-    >
-      Get Solar Image
-    </button>
+    <n-input-group>
+      <n-input
+        v-model:value="address"
+        type="text"
+        placeholder="Syötä osoite"
+        :style="{ width: '75%' }"
+      />
+      <n-button type="primary" @click="runTest">Hae</n-button>
+    </n-input-group>
     <div
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
@@ -39,49 +20,35 @@
       ref="canvasRef"
       style="margin-top: 1rem; border: 1px solid #ccc; max-height: 800px; width: 100%"
     ></canvas>
-
-    <pre
+    <p>Geocode:</p>
+    <json-viewer
       v-if="geoResult"
-      style="
-        margin-top: 1rem;
-        background: #f9f9f9;
-        padding: 0.5rem;
-        font-size: 0.75rem;
-        overflow-x: auto;
-      "
-    >
-Geocode:
-{{ geoResult }}
-    </pre>
+      :value="JSON.parse(geoResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+      sort
+    />
 
-    <pre
+    <p>Building:</p>
+    <json-viewer
       v-if="buildingResult"
-      style="
-        margin-top: 1rem;
-        background: #f9f9f9;
-        padding: 0.5rem;
-        font-size: 0.75rem;
-        overflow-x: auto;
-      "
-    >
-Building:
-{{ buildingResult }}
-    </pre>
+      :value="JSON.parse(buildingResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+      sort
+    />
 
-    <pre
+    <p>Data Layers:</p>
+    <json-viewer
       v-if="layerResult"
-      style="
-        margin-top: 1rem;
-        background: #f9f9f9;
-        padding: 0.5rem;
-        font-size: 0.75rem;
-        overflow-x: auto;
-      "
-    >
-Data Layers:
-{{ layerResult }}
-    </pre>
-
+      :value="JSON.parse(layerResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+      sort
+    />
     <p v-if="error" style="color: red; margin-top: 1rem">{{ error }}</p>
   </div>
 </template>
@@ -93,6 +60,11 @@ import { geocodeAddress } from '@/services/geocodingApi'
 import { findClosestBuilding } from '@/services/solarApi'
 import { getDataLayerUrls } from '@/services/dataLayers'
 import { renderGeoTiffToCanvas } from '@/services/tiffToCanvas'
+
+import JsonViewer from 'vue-json-viewer'
+import 'vue-json-viewer/style.css'
+
+import { NInput, NButton, NInputGroup } from 'naive-ui'
 
 const mapRef = ref<HTMLElement | null>(null)
 let map: google.maps.Map | null = null
