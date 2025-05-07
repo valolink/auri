@@ -60,7 +60,7 @@ import { geocodeAddress } from '@/services/geocodingApi'
 import { findClosestBuilding } from '@/services/solarApi'
 import { getDataLayerUrls } from '@/services/dataLayers'
 import { renderGeoTiffToCanvas } from '@/services/tiffToCanvas'
-
+// @ts-ignore
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
