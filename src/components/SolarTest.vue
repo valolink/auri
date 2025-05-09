@@ -178,9 +178,5 @@ const runTest = async () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.drawImage(canvas, 0, 0)
   }
-
-  //} catch (err: any) {
-  //  error.value = err.message || 'Unknown error'
-  //}
 }
 </script>
