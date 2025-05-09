@@ -57,10 +57,10 @@
 import { ref } from 'vue'
 import { Loader } from '@googlemaps/js-api-loader'
 import { geocodeAddress } from '@/services/geocodingApi'
-import { findClosestBuilding } from '@/services/solarApi'
-import { getDataLayerUrls } from '@/services/dataLayers'
-import { renderGeoTiffToCanvas } from '@/services/tiffToCanvas'
-// @ts-ignore
+import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
+import { getLayer } from '@/services/layer'
+
+// @ts-expect-error no types for jsonviewer
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
@@ -108,11 +108,6 @@ const initializeMap = async (lat: number, lng: number) => {
     map,
     title: 'Selected Location',
   })
-  const building = await findClosestBuilding({ lat: () => lat, lng: () => lng }, apiKey)
-
-  //  const placeId = building.name.split('/').pop() || ''
-  //  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
-  buildingResult.value = JSON.stringify(building, null, 2)
 }
 
 const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) => {
@@ -142,7 +137,7 @@ const runTest = async () => {
   const geo = await geocodeAddress(address.value, apiKey)
   await initializeMap(geo.lat, geo.lng)
 
-  const building = await findClosestBuilding({ lat: () => geo.lat, lng: () => geo.lng }, apiKey)
+  const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
   const placeId = building.name.split('/').pop() || ''
   const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
   buildingResult.value = JSON.stringify(building, null, 2)
@@ -173,16 +168,17 @@ const runTest = async () => {
   const rgbUrl = data.rgbUrl
   if (!rgbUrl) throw new Error('No RGB URL available')
 
-  const fetchUrl = new URL(rgbUrl)
-  const id = fetchUrl.searchParams.get('id')
-  if (!id) throw new Error('No image ID in URL')
-
-  const response = await fetch(`https://solar.googleapis.com/v1/geoTiff:get?id=${id}&key=${apiKey}`)
-  const blob = await response.blob()
+  const rgbLayer = await getLayer('rgb', data, apiKey)
+  const canvas = rgbLayer.render(true, 1, 1)[0] // showRoofOnly = true
 
   if (canvasRef.value) {
-    await renderGeoTiffToCanvas(blob, canvasRef.value)
+    const ctx = canvasRef.value.getContext('2d')!
+    canvasRef.value.width = canvas.width
+    canvasRef.value.height = canvas.height
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(canvas, 0, 0)
   }
+
   //} catch (err: any) {
   //  error.value = err.message || 'Unknown error'
   //}

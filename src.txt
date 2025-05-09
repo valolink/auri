@@ -16,14 +16,26 @@ export default {
 ===== START: src/components/SolarTest.vue =====
 <template>
   <div style="padding: 1rem; max-width: 600px; margin: auto">
+    <h2 style="font-size: 1.25rem; margin-bottom: 1rem">
+      Solar API with Vue.js and WordPress test
+    </h2>
     <n-input-group>
-      <n-input v-model:value="address" type="text" placeholder="Syötä osoite" />
+      <n-input
+        v-model:value="address"
+        type="text"
+        placeholder="Syötä osoite"
+        :style="{ width: '75%' }"
+      />
       <n-button type="primary" @click="runTest">Hae</n-button>
     </n-input-group>
     <div
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
     ></div>
+    <canvas
+      ref="canvasRef"
+      style="margin-top: 1rem; border: 1px solid #ccc; max-height: 800px; width: 100%"
+    ></canvas>
     <p>Geocode:</p>
     <json-viewer
       v-if="geoResult"
@@ -61,9 +73,9 @@ export default {
 import { ref } from 'vue'
 import { Loader } from '@googlemaps/js-api-loader'
 import { geocodeAddress } from '@/services/geocodingApi'
-import { findClosestBuilding } from '@/services/solarApi'
-import { getDataLayerUrls } from '@/services/dataLayers'
+import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
 
+// @ts-expect-error no types for jsonviewer
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
@@ -79,12 +91,11 @@ const error = ref<string | null>(null)
 const geoResult = ref<string | null>(null)
 const buildingResult = ref<string | null>(null)
 const layerResult = ref<string | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 
-const polygon: google.maps.Polygon | null = null
-
-const CanvasOverlay: typeof google.maps.OverlayView | null = null
+let polygon: google.maps.Polygon | null = null
 
 const initializeMap = async (lat: number, lng: number) => {
   const loader = new Loader({
@@ -112,9 +123,6 @@ const initializeMap = async (lat: number, lng: number) => {
     map,
     title: 'Selected Location',
   })
-
-  const building = await findClosestBuilding({ lat: () => lat, lng: () => lng }, apiKey)
-  buildingResult.value = JSON.stringify(building, null, 2)
 }
 
 const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) => {
@@ -136,6 +144,7 @@ const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) =>
 }
 
 const runTest = async () => {
+  //try {
   if (marker) marker.setMap(null)
   result.value = error.value = null
   geoResult.value = buildingResult.value = layerResult.value = null
@@ -143,9 +152,26 @@ const runTest = async () => {
   const geo = await geocodeAddress(address.value, apiKey)
   await initializeMap(geo.lat, geo.lng)
 
-  const building = await findClosestBuilding({ lat: () => geo.lat, lng: () => geo.lng }, apiKey)
+  const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
   const placeId = building.name.split('/').pop() || ''
+  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
   buildingResult.value = JSON.stringify(building, null, 2)
+  if (polygon) polygon.setMap(null) // remove old one
+
+  const sw = bounds.southwest
+  const ne = bounds.northeast
+  const nw = { lat: ne.lat, lng: sw.lng }
+  const se = { lat: sw.lat, lng: ne.lng }
+
+  polygon = new google.maps.Polygon({
+    paths: [sw, se, ne, nw],
+    strokeColor: '#00f',
+    strokeOpacity: 1.0,
+    strokeWeight: 2,
+    fillColor: '#00f',
+    fillOpacity: 0.3,
+  })
+  polygon.setMap(map!)
 
   geoResult.value = JSON.stringify(geo, null, 2)
 
@@ -164,43 +190,9 @@ const runTest = async () => {
   const response = await fetch(`https://solar.googleapis.com/v1/geoTiff:get?id=${id}&key=${apiKey}`)
   const blob = await response.blob()
 
-  const { image, bounds: overlayBounds } = await getGeoTiffBounds(blob)
-  const rasters = await image.readRasters({ interleave: true })
-  const width = image.getWidth()
-  const height = image.getHeight()
-
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')!
-  const imageData = ctx.createImageData(width, height)
-
-  for (let i = 0; i < rasters.length; i += 4) {
-    imageData.data[i + 0] = rasters[i + 0] // R
-    imageData.data[i + 1] = rasters[i + 1] // G
-    imageData.data[i + 2] = rasters[i + 2] // B
-    imageData.data[i + 3] = 255 // full alpha
-  }
-
-  ctx.putImageData(imageData, 0, 0)
-
-  const overlay = new CanvasOverlay(canvas, overlayBounds)
-  overlay.setMap(map!)
-}
-
-const getGeoTiffBounds = async (blob: Blob) => {
-  const { fromArrayBuffer } = await import('geotiff')
-  const buffer = await blob.arrayBuffer()
-  const tiff = await fromArrayBuffer(buffer)
-  const image = await tiff.getImage()
-  const [minLng, minLat, maxLng, maxLat] = image.getBoundingBox()
-  return {
-    image,
-    bounds: new google.maps.LatLngBounds(
-      { lat: minLat, lng: minLng },
-      { lat: maxLat, lng: maxLng },
-    ),
-  }
+  //} catch (err: any) {
+  //  error.value = err.message || 'Unknown error'
+  //}
 }
 </script>
 
@@ -336,6 +328,31 @@ export function useAppState() {
 
 ===== END: src/useAppState.ts =====
 
+===== START: src/services/colors.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+export const binaryPalette = ['212121', 'B3E5FC']
+export const rainbowPalette = ['3949AB', '81D4FA', '66BB6A', 'FFE082', 'E53935']
+export const ironPalette = ['00000A', '91009C', 'E64616', 'FEB400', 'FFFFF6']
+export const sunlightPalette = ['212121', 'FFCA28']
+export const panelsPalette = ['E8EAF6', '1A237E']
+
+===== END: src/services/colors.ts =====
+
 ===== START: src/services/imageFetcher.ts =====
 export async function fetchGeoTiffImage(imageUrl: string, apiKey: string): Promise<string> {
   const url = new URL(imageUrl)
@@ -358,6 +375,67 @@ export async function fetchGeoTiffImage(imageUrl: string, apiKey: string): Promi
 }
 
 ===== END: src/services/imageFetcher.ts =====
+
+===== START: src/services/tiffToCanvas.ts =====
+type TypedArray =
+  | Uint8Array
+  | Uint16Array
+  | Uint32Array
+  | Int8Array
+  | Int16Array
+  | Int32Array
+  | Float32Array
+  | Float64Array
+import * as GeoTIFF from 'geotiff'
+
+export async function renderGeoTiffToCanvas(blob: Blob, canvas: HTMLCanvasElement) {
+  const arrayBuffer = await blob.arrayBuffer()
+  const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer)
+  const image = await tiff.getImage()
+
+  const width = image.getWidth()
+  const height = image.getHeight()
+
+  const samplesPerPixel = image.getSamplesPerPixel()
+  const raster = (await image.readRasters({ interleave: true })) as TypedArray
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas context not available')
+
+  canvas.width = width
+  canvas.height = height
+
+  const imageData = ctx.createImageData(width, height)
+
+  for (let i = 0, j = 0; i < raster.length; i += samplesPerPixel, j += 4) {
+    if (samplesPerPixel === 1) {
+      // Grayscale
+      const v = raster[i]
+      imageData.data[j] = v
+      imageData.data[j + 1] = v
+      imageData.data[j + 2] = v
+      imageData.data[j + 3] = 255
+    } else if (samplesPerPixel === 3) {
+      // RGB
+      imageData.data[j] = raster[i]
+      imageData.data[j + 1] = raster[i + 1]
+      imageData.data[j + 2] = raster[i + 2]
+      imageData.data[j + 3] = 255
+    } else if (samplesPerPixel === 4) {
+      // RGBA
+      imageData.data[j] = raster[i]
+      imageData.data[j + 1] = raster[i + 1]
+      imageData.data[j + 2] = raster[i + 2]
+      imageData.data[j + 3] = raster[i + 3]
+    } else {
+      throw new Error(`Unsupported number of samples per pixel: ${samplesPerPixel}`)
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+}
+
+===== END: src/services/tiffToCanvas.ts =====
 
 ===== START: src/services/geocodingApi.ts =====
 export interface GeocodeLatLng {
@@ -383,19 +461,612 @@ export async function geocodeAddress(address: string, apiKey: string): Promise<G
 
 ===== END: src/services/geocodingApi.ts =====
 
-===== START: src/services/dataLayers.ts =====
-export interface LatLngCoords {
+===== START: src/services/visualize.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import type { GeoTiff } from './solar'
+
+// [START visualize_render_rgb]
+/**
+ * Renders an RGB GeoTiff image into an HTML canvas.
+ *
+ * The GeoTiff image must include 3 rasters (bands) which
+ * correspond to [Red, Green, Blue] in that order.
+ *
+ * @param  {GeoTiff} rgb   GeoTiff with RGB values of the image.
+ * @param  {GeoTiff} mask  Optional mask for transparency, defaults to opaque.
+ * @return {HTMLCanvasElement}  Canvas element with the rendered image.
+ */
+export function renderRGB(rgb: GeoTiff, mask?: GeoTiff): HTMLCanvasElement {
+  // Create an HTML canvas to draw the image.
+  // https://www.w3schools.com/tags/canvas_createimagedata.asp
+  const canvas = document.createElement('canvas')
+
+  // Set the canvas size to the mask size if it's available,
+  // otherwise set it to the RGB data layer size.
+  canvas.width = mask ? mask.width : rgb.width
+  canvas.height = mask ? mask.height : rgb.height
+
+  // Since the mask size can be different than the RGB data layer size,
+  // we calculate the "delta" between the RGB layer size and the canvas/mask
+  // size. For example, if the RGB layer size is the same as the canvas size,
+  // the delta is 1. If the RGB layer size is smaller than the canvas size,
+  // the delta would be greater than 1.
+  // This is used to translate the index from the canvas to the RGB layer.
+  const dw = rgb.width / canvas.width
+  const dh = rgb.height / canvas.height
+
+  // Get the canvas image data buffer.
+  const ctx = canvas.getContext('2d')!
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+  // Fill in every pixel in the canvas with the corresponding RGB layer value.
+  // Since Javascript doesn't support multidimensional arrays or tensors,
+  // everything is stored in flat arrays and we have to keep track of the
+  // indices for each row and column ourselves.
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      // RGB index keeps track of the RGB layer position.
+      // This is multiplied by the deltas since it might be a different
+      // size than the image size.
+      const rgbIdx = Math.floor(y * dh) * rgb.width + Math.floor(x * dw)
+      // Mask index keeps track of the mask layer position.
+      const maskIdx = y * canvas.width + x
+
+      // Image index keeps track of the canvas image position.
+      // HTML canvas expects a flat array with consecutive RGBA values.
+      // Each value in the image buffer must be between 0 and 255.
+      // The Alpha value is the transparency of that pixel,
+      // if a mask was not provided, we default to 255 which is opaque.
+      const imgIdx = y * canvas.width * 4 + x * 4
+      img.data[imgIdx + 0] = rgb.rasters[0][rgbIdx] // Red
+      img.data[imgIdx + 1] = rgb.rasters[1][rgbIdx] // Green
+      img.data[imgIdx + 2] = rgb.rasters[2][rgbIdx] // Blue
+      img.data[imgIdx + 3] = mask // Alpha
+        ? mask.rasters[0][maskIdx] * 255
+        : 255
+    }
+  }
+
+  // Draw the image data buffer into the canvas context.
+  ctx.putImageData(img, 0, 0)
+  return canvas
+}
+// [END visualize_render_rgb]
+
+// [START visualize_render_palette]
+/**
+ * Renders a single value GeoTiff image into an HTML canvas.
+ *
+ * The GeoTiff image must include 1 raster (band) which contains
+ * the values we want to display.
+ *
+ * @param  {GeoTiff}  data    GeoTiff with the values of interest.
+ * @param  {GeoTiff}  mask    Optional mask for transparency, defaults to opaque.
+ * @param  {string[]} colors  Hex color palette, defaults to ['000000', 'ffffff'].
+ * @param  {number}   min     Minimum value of the data range, defaults to 0.
+ * @param  {number}   max     Maximum value of the data range, defaults to 1.
+ * @param  {number}   index   Raster index for the data, defaults to 0.
+ * @return {HTMLCanvasElement}  Canvas element with the rendered image.
+ */
+export function renderPalette({
+  data,
+  mask,
+  colors,
+  min,
+  max,
+  index,
+}: {
+  data: GeoTiff
+  mask?: GeoTiff
+  colors?: string[]
+  min?: number
+  max?: number
+  index?: number
+}): HTMLCanvasElement {
+  // First create a palette from a list of hex colors.
+  const palette = createPalette(colors ?? ['000000', 'ffffff'])
+  // Normalize each value of our raster/band of interest into indices,
+  // such that they always map into a value within the palette.
+  const indices = data.rasters[index ?? 0]
+    .map((x) => normalize(x, max ?? 1, min ?? 0))
+    .map((x) => Math.round(x * (palette.length - 1)))
+  return renderRGB(
+    {
+      ...data,
+      // Map each index into the corresponding RGB values.
+      rasters: [
+        indices.map((i: number) => palette[i].r),
+        indices.map((i: number) => palette[i].g),
+        indices.map((i: number) => palette[i].b),
+      ],
+    },
+    mask,
+  )
+}
+
+/**
+ * Creates an {r, g, b} color palette from a hex list of colors.
+ *
+ * Each {r, g, b} value is a number between 0 and 255.
+ * The created palette is always of size 256, regardless of the number of
+ * hex colors passed in. Inbetween values are interpolated.
+ *
+ * @param  {string[]} hexColors  List of hex colors for the palette.
+ * @return {{r, g, b}[]}         RGB values for the color palette.
+ */
+export function createPalette(hexColors: string[]): { r: number; g: number; b: number }[] {
+  // Map each hex color into an RGB value.
+  const rgb = hexColors.map(colorToRGB)
+  // Create a palette with 256 colors derived from our rgb colors.
+  const size = 256
+  const step = (rgb.length - 1) / (size - 1)
+  return Array(size)
+    .fill(0)
+    .map((_, i) => {
+      // Get the lower and upper indices for each color.
+      const index = i * step
+      const lower = Math.floor(index)
+      const upper = Math.ceil(index)
+      // Interpolate between the colors to get the shades.
+      return {
+        r: lerp(rgb[lower].r, rgb[upper].r, index - lower),
+        g: lerp(rgb[lower].g, rgb[upper].g, index - lower),
+        b: lerp(rgb[lower].b, rgb[upper].b, index - lower),
+      }
+    })
+}
+
+/**
+ * Convert a hex color into an {r, g, b} color.
+ *
+ * @param  {string} color  Hex color like 0099FF or #0099FF.
+ * @return {{r, g, b}}     RGB values for that color.
+ */
+export function colorToRGB(color: string): { r: number; g: number; b: number } {
+  const hex = color.startsWith('#') ? color.slice(1) : color
+  return {
+    r: parseInt(hex.substring(0, 2), 16),
+    g: parseInt(hex.substring(2, 4), 16),
+    b: parseInt(hex.substring(4, 6), 16),
+  }
+}
+
+/**
+ * Normalizes a number to a given data range.
+ *
+ * @param  {number} x    Value of interest.
+ * @param  {number} max  Maximum value in data range, defaults to 1.
+ * @param  {number} min  Minimum value in data range, defaults to 0.
+ * @return {number}      Normalized value.
+ */
+export function normalize(x: number, max: number = 1, min: number = 0): number {
+  const y = (x - min) / (max - min)
+  return clamp(y, 0, 1)
+}
+
+/**
+ * Calculates the linear interpolation for a value within a range.
+ *
+ * @param  {number} x  Lower value in the range, when `t` is 0.
+ * @param  {number} y  Upper value in the range, when `t` is 1.
+ * @param  {number} t  "Time" between 0 and 1.
+ * @return {number}    Inbetween value for that "time".
+ */
+export function lerp(x: number, y: number, t: number): number {
+  return x + t * (y - x)
+}
+
+/**
+ * Clamps a value to always be within a range.
+ *
+ * @param  {number} x    Value to clamp.
+ * @param  {number} min  Minimum value in the range.
+ * @param  {number} max  Maximum value in the range.
+ * @return {number}      Clamped value.
+ */
+export function clamp(x: number, min: number, max: number): number {
+  return Math.min(Math.max(x, min), max)
+}
+// [END visualize_render_palette]
+
+export function rgbToColor({ r, g, b }: { r: number; g: number; b: number }): string {
+  const f = (x: number) => {
+    const hex = Math.round(x).toString(16)
+    return hex.length == 1 ? `0${hex}` : hex
+  }
+  return `#${f(r)}${f(g)}${f(b)}`
+}
+
+===== END: src/services/visualize.ts =====
+
+===== START: src/services/layer.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import { binaryPalette, ironPalette, rainbowPalette, sunlightPalette } from './colors'
+import { downloadGeoTIFF, type DataLayersResponse, type LayerId, type Bounds } from './solar'
+import { renderPalette, renderRGB } from './visualize'
+
+export interface Palette {
+  colors: string[]
+  min: string
+  max: string
+}
+
+export interface Layer {
+  id: LayerId
+  render: (showRoofOnly: boolean, month: number, day: number) => HTMLCanvasElement[]
+  bounds: Bounds
+  palette?: Palette
+}
+
+export async function getLayer(
+  layerId: LayerId,
+  urls: DataLayersResponse,
+  googleMapsApiKey: string,
+): Promise<Layer> {
+  const get: Record<LayerId, () => Promise<Layer>> = {
+    mask: async () => {
+      const mask = await downloadGeoTIFF(urls.maskUrl, googleMapsApiKey)
+      const colors = binaryPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'No roof',
+          max: 'Roof',
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: mask,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+          }),
+        ],
+      }
+    },
+    dsm: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.dsmUrl, googleMapsApiKey),
+      ])
+      const sortedValues = Array.from(data.rasters[0]).sort((x, y) => x - y)
+      const minValue = sortedValues[0]
+      const maxValue = sortedValues.slice(-1)[0]
+      const colors = rainbowPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: `${minValue.toFixed(1)} m`,
+          max: `${maxValue.toFixed(1)} m`,
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: data,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+            min: sortedValues[0],
+            max: sortedValues.slice(-1)[0],
+          }),
+        ],
+      }
+    },
+    rgb: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.rgbUrl, googleMapsApiKey),
+      ])
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        render: (showRoofOnly) => [renderRGB(data, showRoofOnly ? mask : undefined)],
+      }
+    },
+    annualFlux: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.annualFluxUrl, googleMapsApiKey),
+      ])
+      const colors = ironPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shady',
+          max: 'Sunny',
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: data,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+            min: 0,
+            max: 1800,
+          }),
+        ],
+      }
+    },
+    monthlyFlux: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.monthlyFluxUrl, googleMapsApiKey),
+      ])
+      const colors = ironPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shady',
+          max: 'Sunny',
+        },
+        render: (showRoofOnly) =>
+          [...Array(12).keys()].map((month) =>
+            renderPalette({
+              data: data,
+              mask: showRoofOnly ? mask : undefined,
+              colors: colors,
+              min: 0,
+              max: 200,
+              index: month,
+            }),
+          ),
+      }
+    },
+    hourlyShade: async () => {
+      const [mask, ...months] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        ...urls.hourlyShadeUrls.map((url) => downloadGeoTIFF(url, googleMapsApiKey)),
+      ])
+      const colors = sunlightPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shade',
+          max: 'Sun',
+        },
+        render: (showRoofOnly, month, day) =>
+          [...Array(24).keys()].map((hour) =>
+            renderPalette({
+              data: {
+                ...months[month],
+                rasters: months[month].rasters.map((values) =>
+                  values.map((x) => x & (1 << (day - 1))),
+                ),
+              },
+              mask: showRoofOnly ? mask : undefined,
+              colors: colors,
+              min: 0,
+              max: 1,
+              index: hour,
+            }),
+          ),
+      }
+    },
+  }
+  try {
+    return get[layerId]()
+  } catch (e) {
+    console.error(`Error getting layer: ${layerId}\n`, e)
+    throw e
+  }
+}
+
+===== END: src/services/layer.ts =====
+
+===== START: src/services/solar.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+// [START solar_api_data_types]
+export interface DataLayersResponse {
+  imageryDate: Date
+  imageryProcessedDate: Date
+  dsmUrl: string
+  rgbUrl: string
+  maskUrl: string
+  annualFluxUrl: string
+  monthlyFluxUrl: string
+  hourlyShadeUrls: string[]
+  imageryQuality: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+export interface Bounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
+// https://developers.google.com/maps/documentation/solar/reference/rest/v1/buildingInsights/findClosest
+export interface BuildingInsightsResponse {
+  name: string
+  center: LatLng
+  boundingBox: LatLngBox
+  imageryDate: Date
+  imageryProcessedDate: Date
+  postalCode: string
+  administrativeArea: string
+  statisticalArea: string
+  regionCode: string
+  solarPotential: SolarPotential
+  imageryQuality: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+export interface SolarPotential {
+  maxArrayPanelsCount: number
+  panelCapacityWatts: number
+  panelHeightMeters: number
+  panelWidthMeters: number
+  panelLifetimeYears: number
+  maxArrayAreaMeters2: number
+  maxSunshineHoursPerYear: number
+  carbonOffsetFactorKgPerMwh: number
+  wholeRoofStats: SizeAndSunshineStats
+  buildingStats: SizeAndSunshineStats
+  roofSegmentStats: RoofSegmentSizeAndSunshineStats[]
+  solarPanels: SolarPanel[]
+  solarPanelConfigs: SolarPanelConfig[]
+  financialAnalyses: object
+}
+
+export interface SizeAndSunshineStats {
+  areaMeters2: number
+  sunshineQuantiles: number[]
+  groundAreaMeters2: number
+}
+
+export interface RoofSegmentSizeAndSunshineStats {
+  pitchDegrees: number
+  azimuthDegrees: number
+  stats: SizeAndSunshineStats
+  center: LatLng
+  boundingBox: LatLngBox
+  planeHeightAtCenterMeters: number
+}
+
+export interface SolarPanel {
+  center: LatLng
+  orientation: 'LANDSCAPE' | 'PORTRAIT'
+  segmentIndex: number
+  yearlyEnergyDcKwh: number
+}
+
+export interface SolarPanelConfig {
+  panelsCount: number
+  yearlyEnergyDcKwh: number
+  roofSegmentSummaries: RoofSegmentSummary[]
+}
+
+export interface RoofSegmentSummary {
+  pitchDegrees: number
+  azimuthDegrees: number
+  panelsCount: number
+  yearlyEnergyDcKwh: number
+  segmentIndex: number
+}
+
+export interface LatLng {
   latitude: number
   longitude: number
 }
 
-export interface DataLayersResponse {
-  rgbUrl?: string
-  // other urls can be added as needed
+export interface LatLngBox {
+  sw: LatLng
+  ne: LatLng
 }
 
+export interface Date {
+  year: number
+  month: number
+  day: number
+}
+
+export interface RequestError {
+  error: {
+    code: number
+    message: string
+    status: string
+  }
+}
+// [END solar_api_data_types]
+
+// https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers
+export type LayerId = 'mask' | 'dsm' | 'rgb' | 'annualFlux' | 'monthlyFlux' | 'hourlyShade'
+
+// [START solar_api_building_insights]
+/**
+ * Fetches the building insights information from the Solar API.
+ *   https://developers.google.com/maps/documentation/solar/building-insights
+ *
+ * @param  {LatLng} location      Point of interest as latitude longitude.
+ * @param  {string} apiKey        Google Cloud API key.
+ * @return {Promise<DataLayersResponse>}  Building Insights response.
+ */
+export async function findClosestBuilding(
+  location: google.maps.LatLng,
+  apiKey: string,
+): Promise<BuildingInsightsResponse> {
+  const args = {
+    'location.latitude': location.lat().toFixed(5),
+    'location.longitude': location.lng().toFixed(5),
+  }
+  console.log('GET buildingInsights\n', args)
+  const params = new URLSearchParams({ ...args, key: apiKey })
+  // https://developers.google.com/maps/documentation/solar/reference/rest/v1/buildingInsights/findClosest
+  return fetch(`https://solar.googleapis.com/v1/buildingInsights:findClosest?${params}`).then(
+    async (response) => {
+      const content = await response.json()
+      if (response.status != 200) {
+        console.error('findClosestBuilding\n', content)
+        throw content
+      }
+      console.log('buildingInsightsResponse', content)
+      return content
+    },
+  )
+}
+// [END solar_api_building_insights]
+
+// [START solar_api_data_layers]
+/**
+ * Fetches the data layers information from the Solar API.
+ *   https://developers.google.com/maps/documentation/solar/data-layers
+ *
+ * @param  {LatLng} location      Point of interest as latitude longitude.
+ * @param  {number} radiusMeters  Radius of the data layer size in meters.
+ * @param  {string} apiKey        Google Cloud API key.
+ * @return {Promise<DataLayersResponse>}  Data Layers response.
+ */
 export async function getDataLayerUrls(
-  location: LatLngCoords,
+  location: LatLng,
   radiusMeters: number,
   apiKey: string,
 ): Promise<DataLayersResponse> {
@@ -403,57 +1074,115 @@ export async function getDataLayerUrls(
     'location.latitude': location.latitude.toFixed(5),
     'location.longitude': location.longitude.toFixed(5),
     radius_meters: radiusMeters.toString(),
+    // The Solar API always returns the highest quality imagery available.
+    // By default the API asks for HIGH quality, which means that HIGH quality isn't available,
+    // but there is an existing MEDIUM or LOW quality, it won't return anything.
+    // Here we ask for *at least* LOW quality, but if there's a higher quality available,
+    // the Solar API will return us the highest quality available.
     required_quality: 'LOW',
   }
-
+  console.log('GET dataLayers\n', args)
   const params = new URLSearchParams({ ...args, key: apiKey })
-
-  const response = await fetch(`https://solar.googleapis.com/v1/dataLayers:get?${params}`)
-  const content = await response.json()
-
-  if (!response.ok) {
-    throw new Error(content.error?.message || 'Failed to fetch data layers')
-  }
-
-  return content
-}
-
-===== END: src/services/dataLayers.ts =====
-
-===== START: src/services/solarApi.ts =====
-export interface LatLng {
-  lat: () => number
-  lng: () => number
-}
-
-export interface BuildingInsightsResponse {
-  // Add relevant fields from the response if needed
-  name: string
-  solarPotential: any
-}
-
-export async function findClosestBuilding(
-  location: LatLng,
-  apiKey: string,
-): Promise<BuildingInsightsResponse> {
-  const args = {
-    'location.latitude': location.lat().toFixed(5),
-    'location.longitude': location.lng().toFixed(5),
-  }
-  const params = new URLSearchParams({ ...args, key: apiKey })
-
-  const response = await fetch(
-    `https://solar.googleapis.com/v1/buildingInsights:findClosest?${params}`,
+  // https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers/get
+  return fetch(`https://solar.googleapis.com/v1/dataLayers:get?${params}`).then(
+    async (response) => {
+      const content = await response.json()
+      if (response.status != 200) {
+        console.error('getDataLayerUrls\n', content)
+        throw content
+      }
+      console.log('dataLayersResponse', content)
+      return content
+    },
   )
-  const content = await response.json()
+}
+// [END solar_api_data_layers]
 
-  if (!response.ok) {
-    console.error('API Error:', content)
-    throw new Error(content.error?.message || 'API request failed')
+// [START solar_api_data_layer_custom_type]
+export interface GeoTiff {
+  width: number
+  height: number
+  rasters: Array<number>[]
+  bounds: Bounds
+}
+// [END solar_api_data_layer_custom_type]
+
+// [START solar_api_download_geotiff]
+// npm install geotiff geotiff-geokeys-to-proj4 proj4
+
+import * as geotiff from 'geotiff'
+import * as geokeysToProj4 from 'geotiff-geokeys-to-proj4'
+import proj4 from 'proj4'
+
+/**
+ * Downloads the pixel values for a Data Layer URL from the Solar API.
+ *
+ * @param  {string} url        URL from the Data Layers response.
+ * @param  {string} apiKey     Google Cloud API key.
+ * @return {Promise<GeoTiff>}  Pixel values with shape and lat/lon bounds.
+ */
+export async function downloadGeoTIFF(url: string, apiKey: string): Promise<GeoTiff> {
+  console.log(`Downloading data layer: ${url}`)
+
+  // Include your Google Cloud API key in the Data Layers URL.
+  const solarUrl = url.includes('solar.googleapis.com') ? url + `&key=${apiKey}` : url
+  const response = await fetch(solarUrl)
+  if (response.status != 200) {
+    const error = await response.json()
+    console.error(`downloadGeoTIFF failed: ${url}\n`, error)
+    throw error
   }
 
-  return content
+  // Get the GeoTIFF rasters, which are the pixel values for each band.
+  const arrayBuffer = await response.arrayBuffer()
+  const tiff = await geotiff.fromArrayBuffer(arrayBuffer)
+  const image = await tiff.getImage()
+  const rasters = await image.readRasters()
+
+  // Reproject the bounding box into lat/lon coordinates.
+  const geoKeys = image.getGeoKeys()
+  const projObj = geokeysToProj4.toProj4(geoKeys)
+  const projection = proj4(projObj.proj4, 'WGS84')
+  const box = image.getBoundingBox()
+  const sw = projection.forward({
+    x: box[0] * projObj.coordinatesConversionParameters.x,
+    y: box[1] * projObj.coordinatesConversionParameters.y,
+  })
+  const ne = projection.forward({
+    x: box[2] * projObj.coordinatesConversionParameters.x,
+    y: box[3] * projObj.coordinatesConversionParameters.y,
+  })
+
+  return {
+    // Width and height of the data layer image in pixels.
+    // Used to know the row and column since Javascript
+    // stores the values as flat arrays.
+    width: rasters.width,
+    height: rasters.height,
+    // Each raster reprents the pixel values of each band.
+    // We convert them from `geotiff.TypedArray`s into plain
+    // Javascript arrays to make them easier to process.
+    rasters: [...Array(rasters.length).keys()].map((i) =>
+      Array.from(rasters[i] as geotiff.TypedArray),
+    ),
+    // The bounding box as a lat/lon rectangle.
+    bounds: {
+      north: ne.y,
+      south: sw.y,
+      east: ne.x,
+      west: sw.x,
+    },
+  }
+}
+// [END solar_api_download_geotiff]
+
+export function showLatLng(point: LatLng) {
+  return `(${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)})`
 }
 
-===== END: src/services/solarApi.ts =====
+export function showDate(date: Date) {
+  return `${date.month}/${date.day}/${date.year}`
+}
+
+===== END: src/services/solar.ts =====
 
