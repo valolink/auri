@@ -16,10 +16,6 @@
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
     ></div>
-    <canvas
-      ref="canvasRef"
-      style="margin-top: 1rem; border: 1px solid #ccc; max-height: 800px; width: 100%"
-    ></canvas>
     <p>Geocode:</p>
     <json-viewer
       v-if="geoResult"
@@ -68,7 +64,7 @@ import { NInput, NButton, NInputGroup } from 'naive-ui'
 
 const mapRef = ref<HTMLElement | null>(null)
 let map: google.maps.Map | null = null
-let marker: google.maps.Marker | null = null
+const marker: google.maps.Marker | null = null
 
 const address = ref('Rajatorpantie 8')
 const result = ref<string | null>(null)
@@ -80,7 +76,8 @@ const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 
-let polygon: google.maps.Polygon | null = null
+const polygon: google.maps.Polygon | null = null
+let overlay: google.maps.GroundOverlay | null = null
 
 const initializeMap = async (lat: number, lng: number) => {
   const loader = new Loader({
@@ -103,11 +100,11 @@ const initializeMap = async (lat: number, lng: number) => {
     rotateControl: false, // optional: disable rotation UI
     mapId: '', // optional: custom map style ID if needed
   })
-  marker = new google.maps.Marker({
-    position: { lat, lng },
-    map,
-    title: 'Selected Location',
-  })
+  // marker = new google.maps.Marker({
+  //   position: { lat, lng },
+  //   map,
+  //   title: 'Selected Location',
+  // })
 }
 
 const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) => {
@@ -130,7 +127,7 @@ const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) =>
 
 const runTest = async () => {
   //try {
-  if (marker) marker.setMap(null)
+  // if (marker) marker.setMap(null)
   result.value = error.value = null
   geoResult.value = buildingResult.value = layerResult.value = null
 
@@ -139,44 +136,37 @@ const runTest = async () => {
 
   const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
   const placeId = building.name.split('/').pop() || ''
-  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
+  // const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
   buildingResult.value = JSON.stringify(building, null, 2)
-  if (polygon) polygon.setMap(null) // remove old one
+  // if (polygon) polygon.setMap(null) // remove old one
 
-  const sw = bounds.southwest
-  const ne = bounds.northeast
-  const nw = { lat: ne.lat, lng: sw.lng }
-  const se = { lat: sw.lat, lng: ne.lng }
+  // const sw = bounds.southwest
+  // const ne = bounds.northeast
+  // const nw = { lat: ne.lat, lng: sw.lng }
+  // const se = { lat: sw.lat, lng: ne.lng }
 
-  polygon = new google.maps.Polygon({
-    paths: [sw, se, ne, nw],
-    strokeColor: '#00f',
-    strokeOpacity: 1.0,
-    strokeWeight: 2,
-    fillColor: '#00f',
-    fillOpacity: 0.3,
-  })
-  polygon.setMap(map!)
-
+  // polygon = new google.maps.Polygon({
+  //   paths: [sw, se, ne, nw],
+  //   strokeColor: '#00f',
+  //   strokeOpacity: 1.0,
+  //   strokeWeight: 2,
+  //   fillColor: '#00f',
+  //   fillOpacity: 0.3,
+  // })
+  // polygon.setMap(map!)
+  //
   geoResult.value = JSON.stringify(geo, null, 2)
 
   const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
   layerResult.value = JSON.stringify(data, null, 2)
 
   result.value = layerResult.value
+  const layer = await getLayer('annualFlux', data, apiKey)
 
-  const rgbUrl = data.rgbUrl
-  if (!rgbUrl) throw new Error('No RGB URL available')
+  const canvas = layer.render(true, 0, 14)[0] // showRoofOnly, month=0, day=14
 
-  const rgbLayer = await getLayer('rgb', data, apiKey)
-  const canvas = rgbLayer.render(true, 1, 1)[0] // showRoofOnly = true
-
-  if (canvasRef.value) {
-    const ctx = canvasRef.value.getContext('2d')!
-    canvasRef.value.width = canvas.width
-    canvasRef.value.height = canvas.height
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(canvas, 0, 0)
-  }
+  overlay?.setMap(null) // remove previous one
+  overlay = new google.maps.GroundOverlay(canvas.toDataURL(), layer.bounds)
+  overlay.setMap(map!)
 }
 </script>
