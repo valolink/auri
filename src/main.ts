@@ -8,6 +8,7 @@ import SolarTest from './components/SolarTest.vue'
 const app = createApp({
   setup() {
     const state = useAppState()
+    console.log('settings', state.settings)
     return state
   },
   components: {

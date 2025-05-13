@@ -1,9 +1,9 @@
-import { ref } from 'vue'
+import { reactive } from 'vue'
 
-const message = ref('hello')
+const settings = reactive(window.vueAppData?.settings || {})
 
 export function useAppState() {
   return {
-    message,
+    settings,
   }
 }

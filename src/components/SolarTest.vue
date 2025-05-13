@@ -16,6 +16,9 @@
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
     ></div>
+    <p>Settings:</p>
+    <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
+
     <p>Geocode:</p>
     <json-viewer
       v-if="geoResult"
@@ -61,6 +64,9 @@ import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
 import { NInput, NButton, NInputGroup } from 'naive-ui'
+
+import { useAppState } from '@/useAppState'
+const { settings } = useAppState()
 
 const mapRef = ref<HTMLElement | null>(null)
 let map: google.maps.Map | null = null
