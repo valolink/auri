@@ -1,16 +1,34 @@
 import { reactive } from 'vue'
 
-interface BaseSetting<T = any> {
+interface BaseSetting<T = string | number | boolean> {
   label: string
   description: string
   value: T
   sanitize: string
-  type: string
+  type: 'text' | 'number' | 'select' | 'checkbox' | 'textarea'
   step?: string
-  options?: Record<string, string>
 }
 
-export type AppSettings = Record<string, BaseSetting>
+interface SelectSetting extends BaseSetting<string> {
+  type: 'select'
+  options: { label: string; value: string }[]
+}
+
+interface CheckboxSetting extends BaseSetting<boolean> {
+  type: 'checkbox'
+}
+
+interface NumberSetting extends BaseSetting<number> {
+  type: 'number'
+}
+
+interface TextSetting extends BaseSetting<string> {
+  type: 'text' | 'textarea'
+}
+
+type Setting = SelectSetting | CheckboxSetting | NumberSetting | TextSetting
+
+export type AppSettings = Record<string, Setting>
 
 const settings = reactive<AppSettings>({
   ...window.vueAppData?.settings,
