@@ -33,18 +33,18 @@
         <n-input-number v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" />
       </n-form-item>
 
-      <n-form-item label="Tavoiteteho (kWp)">
+      <n-form-item :label="settings.targetPower.label">
         <n-input-number
-          v-model:value="settings.targetPower"
+          v-model:value="settings.targetPower.value"
           :min="0"
           :step="0.01"
           @update:value="updateFromPower"
         />
       </n-form-item>
 
-      <n-form-item label="Paneelien määrä">
+      <n-form-item :label="settings.panelCount.label">
         <n-input-number
-          v-model:value="settings.panelCount"
+          v-model:value="settings.panelCount.value"
           :min="1"
           :step="1"
           @update:value="updateFromPanels"
@@ -64,11 +64,17 @@ const { settings } = useAppState()
 const panelCapacity = 400 // watts per panel
 
 const updateFromPower = () => {
-  settings.panelCount = Math.round((settings.targetPower * 1000) / panelCapacity)
+  if (settings.targetPower && settings.panelCount) {
+    settings.panelCount.value = Math.round((settings.targetPower.value * 1000) / panelCapacity)
+  }
 }
 
 const updateFromPanels = () => {
-  settings.targetPower = parseFloat(((settings.panelCount * panelCapacity) / 1000).toFixed(2))
+  if (settings.panelCount && settings.targetPower) {
+    settings.targetPower.value = parseFloat(
+      ((settings.panelCount.value * panelCapacity) / 1000).toFixed(2),
+    )
+  }
 }
 </script>
 
