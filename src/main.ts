@@ -1,9 +1,10 @@
 // main.ts
 import './assets/main.css'
 import { createApp } from 'vue'
-import App from './App.vue'
 import { useAppState } from './useAppState'
-import SolarTest from './components/SolarTest.vue'
+import DataView from './components/DataView.vue'
+import MapView from './components/MapView.vue'
+import Inputs from './components/Inputs.vue'
 
 const app = createApp({
   setup() {
@@ -12,7 +13,9 @@ const app = createApp({
     return state
   },
   components: {
-    'solar-test': SolarTest,
+    'data-view': DataView,
+    inputs: Inputs,
+    'map-view': MapView,
   },
 })
 
