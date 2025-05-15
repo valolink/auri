@@ -63,13 +63,6 @@ const { settings } = useAppState()
 
 const panelCapacity = 400 // watts per panel
 
-const powerProfileOptions = [
-  { label: 'Profile A (Standard)', value: 'profileA' },
-  { label: 'Profile B (Industrial)', value: 'profileB' },
-  { label: 'Profile C (Evening-heavy)', value: 'profileC' },
-  { label: 'Custom Profile', value: 'custom' },
-]
-
 const updateFromPower = () => {
   settings.panelCount = Math.round((settings.targetPower * 1000) / panelCapacity)
 }

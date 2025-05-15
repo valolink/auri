@@ -10,36 +10,33 @@ export default {
   mounted() {},
 }
 </script>
-
+-e 
 ===== END: src/App.vue =====
 
-===== START: src/components/SolarTest.vue =====
+===== START: src/components/Map.vue =====
 <template>
   <div style="padding: 1rem; max-width: 600px; margin: auto">
-    <h2 style="font-size: 1.25rem; margin-bottom: 1rem">
-      Solar API with Vue.js and WordPress test
-    </h2>
-    <n-input-group>
-      <n-input
-        v-model:value="address"
-        type="text"
-        placeholder="Syötä osoite"
-        :style="{ width: '75%' }"
-      />
-      <n-button type="primary" @click="runTest">Hae</n-button>
-    </n-input-group>
     <div
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
     ></div>
-    <canvas
-      ref="canvasRef"
-      style="margin-top: 1rem; border: 1px solid #ccc; max-height: 800px; width: 100%"
-    ></canvas>
+  </div>
+</template>
+
+<script setup lang="ts"></script>
+-e 
+===== END: src/components/Map.vue =====
+
+===== START: src/components/DataView.vue =====
+<template>
+  <div>
+    <p>Settings:</p>
+    <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
+
     <p>Geocode:</p>
     <json-viewer
-      v-if="geoResult"
-      :value="JSON.parse(geoResult)"
+      v-if="jsonData.geoResult"
+      :value="JSON.parse(jsonData.geoResult)"
       :expand-depth="2"
       copyable
       boxed
@@ -48,8 +45,8 @@ export default {
 
     <p>Building:</p>
     <json-viewer
-      v-if="buildingResult"
-      :value="JSON.parse(buildingResult)"
+      v-if="jsonData.buildingResult"
+      :value="JSON.parse(jsonData.buildingResult)"
       :expand-depth="2"
       copyable
       boxed
@@ -58,145 +55,129 @@ export default {
 
     <p>Data Layers:</p>
     <json-viewer
-      v-if="layerResult"
-      :value="JSON.parse(layerResult)"
+      v-if="jsonData.layerResult"
+      :value="JSON.parse(jsonData.layerResult)"
       :expand-depth="2"
       copyable
       boxed
       sort
     />
-    <p v-if="error" style="color: red; margin-top: 1rem">{{ error }}</p>
+    <p v-if="jsonData.error" style="color: red; margin-top: 1rem">{{ jsonData.error }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Loader } from '@googlemaps/js-api-loader'
-import { geocodeAddress } from '@/services/geocodingApi'
-import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
-
+import { useAppState } from '@/useAppState'
 // @ts-expect-error no types for jsonviewer
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-import { NInput, NButton, NInputGroup } from 'naive-ui'
+const { settings, jsonData } = useAppState()
+</script>
+-e 
+===== END: src/components/DataView.vue =====
 
-const mapRef = ref<HTMLElement | null>(null)
-let map: google.maps.Map | null = null
-let marker: google.maps.Marker | null = null
+===== START: src/components/Inputs.vue =====
+<template>
+  <div class="input-container">
+    <n-form>
+      <n-form-item label="Calculation Basis">
+        <n-select
+          v-model:value="settings.calculationBasis"
+          :options="calculationBasisOptions"
+          placeholder="Select basis"
+        />
+      </n-form-item>
 
-const address = ref('Rajatorpantie 8')
-const result = ref<string | null>(null)
-const error = ref<string | null>(null)
-const geoResult = ref<string | null>(null)
-const buildingResult = ref<string | null>(null)
-const layerResult = ref<string | null>(null)
-const canvasRef = ref<HTMLCanvasElement | null>(null)
+      <n-form-item label="Power Consumption Profile">
+        <n-select
+          v-model:value="settings.powerProfile"
+          :options="powerProfileOptions"
+          placeholder="Select profile"
+        />
+      </n-form-item>
 
-const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
+      <n-form-item label="Yearly Power Consumption (kWh/a)">
+        <n-input-number
+          v-model:value="settings.yearlyConsumption"
+          :min="0"
+          placeholder="Enter yearly consumption"
+        />
+      </n-form-item>
 
-let polygon: google.maps.Polygon | null = null
+      <n-form-item label="Target Power (kWp)">
+        <n-input-number
+          v-model:value="settings.targetPower"
+          :min="0"
+          :step="0.01"
+          @update:value="updateFromPower"
+        />
+      </n-form-item>
 
-const initializeMap = async (lat: number, lng: number) => {
-  const loader = new Loader({
-    apiKey,
-    version: 'weekly',
-    libraries: ['places'], // optional if you want places search later
-  })
+      <n-form-item label="Panel Count">
+        <n-input-number
+          v-model:value="settings.panelCount"
+          :min="1"
+          :step="1"
+          @update:value="updateFromPanels"
+        />
+      </n-form-item>
+    </n-form>
+  </div>
+</template>
 
-  await loader.load()
+<script setup lang="ts">
+import { NForm, NFormItem, NSelect, NInputNumber } from 'naive-ui'
+import { useAppState } from '@/useAppState'
 
-  if (!mapRef.value) return
+const { settings } = useAppState()
 
-  map = new google.maps.Map(mapRef.value, {
-    center: { lat, lng },
-    zoom: 18,
-    mapTypeId: 'satellite',
-    tilt: 0, // ✅ Keep map flat (0° tilt)
-    heading: 0, // ✅ Ensure north is up
-    gestureHandling: 'greedy', // optional: allow full pan/zoom
-    rotateControl: false, // optional: disable rotation UI
-    mapId: '', // optional: custom map style ID if needed
-  })
-  marker = new google.maps.Marker({
-    position: { lat, lng },
-    map,
-    title: 'Selected Location',
-  })
+const panelCapacity = 400 // watts per panel
+
+const calculationBasisOptions = [
+  {
+    label: 'Default optimum amount (based on yearly energy consumption and profile)',
+    value: 'optimum',
+  },
+  {
+    label: 'Technical max panel count',
+    value: 'technicalMax',
+  },
+  {
+    label: 'Target power output / panel count',
+    value: 'target',
+  },
+  {
+    label: 'Smart max panel count',
+    value: 'smartMax',
+  },
+]
+
+const powerProfileOptions = [
+  { label: 'Profile A (Standard)', value: 'profileA' },
+  { label: 'Profile B (Industrial)', value: 'profileB' },
+  { label: 'Profile C (Evening-heavy)', value: 'profileC' },
+  { label: 'Custom Profile', value: 'custom' },
+]
+
+const updateFromPower = () => {
+  settings.panelCount = Math.round((settings.targetPower * 1000) / panelCapacity)
 }
 
-const fetchGeocodeBoundsFromPlaceId = async (placeId: string, apiKey: string) => {
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${placeId}&key=${apiKey}`
-  const response = await fetch(url)
-  const data = await response.json()
-
-  if (
-    data.status === 'OK' &&
-    data.results.length &&
-    data.results[0].geometry &&
-    (data.results[0].geometry.bounds || data.results[0].geometry.viewport)
-  ) {
-    const geom = data.results[0].geometry
-    return geom.bounds || geom.viewport
-  } else {
-    throw new Error('No bounds or viewport available for Place ID')
-  }
-}
-
-const runTest = async () => {
-  //try {
-  if (marker) marker.setMap(null)
-  result.value = error.value = null
-  geoResult.value = buildingResult.value = layerResult.value = null
-
-  const geo = await geocodeAddress(address.value, apiKey)
-  await initializeMap(geo.lat, geo.lng)
-
-  const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
-  const placeId = building.name.split('/').pop() || ''
-  const bounds = await fetchGeocodeBoundsFromPlaceId(placeId, apiKey)
-  buildingResult.value = JSON.stringify(building, null, 2)
-  if (polygon) polygon.setMap(null) // remove old one
-
-  const sw = bounds.southwest
-  const ne = bounds.northeast
-  const nw = { lat: ne.lat, lng: sw.lng }
-  const se = { lat: sw.lat, lng: ne.lng }
-
-  polygon = new google.maps.Polygon({
-    paths: [sw, se, ne, nw],
-    strokeColor: '#00f',
-    strokeOpacity: 1.0,
-    strokeWeight: 2,
-    fillColor: '#00f',
-    fillOpacity: 0.3,
-  })
-  polygon.setMap(map!)
-
-  geoResult.value = JSON.stringify(geo, null, 2)
-
-  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
-  layerResult.value = JSON.stringify(data, null, 2)
-
-  result.value = layerResult.value
-
-  const rgbUrl = data.rgbUrl
-  if (!rgbUrl) throw new Error('No RGB URL available')
-
-  const fetchUrl = new URL(rgbUrl)
-  const id = fetchUrl.searchParams.get('id')
-  if (!id) throw new Error('No image ID in URL')
-
-  const response = await fetch(`https://solar.googleapis.com/v1/geoTiff:get?id=${id}&key=${apiKey}`)
-  const blob = await response.blob()
-
-  //} catch (err: any) {
-  //  error.value = err.message || 'Unknown error'
-  //}
+const updateFromPanels = () => {
+  settings.targetPower = parseFloat(((settings.panelCount * panelCapacity) / 1000).toFixed(2))
 }
 </script>
 
-===== END: src/components/SolarTest.vue =====
+<style scoped>
+.input-container {
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+</style>
+-e 
+===== END: src/components/Inputs.vue =====
 
 ===== START: src/assets/base.css =====
 /* color palette from <https://github.com/vuejs/theme> */
@@ -285,47 +266,83 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+-e 
 ===== END: src/assets/base.css =====
 
 ===== START: src/assets/main.css =====
 /* @import './base.css'; */
-
+-e 
 ===== END: src/assets/main.css =====
 
 ===== START: src/main.ts =====
 // main.ts
 import './assets/main.css'
 import { createApp } from 'vue'
-import App from './App.vue'
 import { useAppState } from './useAppState'
 import SolarTest from './components/SolarTest.vue'
+import Inputs from './components/Inputs.vue'
 
 const app = createApp({
   setup() {
     const state = useAppState()
+    console.log('settings', state.settings)
     return state
   },
   components: {
     'solar-test': SolarTest,
+    inputs: Inputs,
   },
 })
 
 app.mount('#content')
-
+-e 
 ===== END: src/main.ts =====
 
 ===== START: src/useAppState.ts =====
-import { ref } from 'vue'
+import { reactive } from 'vue'
 
-const message = ref('hello')
+const settings = reactive({
+  calculationBasis: 'smartMax',
+  powerProfile: 'default',
+  yearlyConsumption: 12000,
+  targetPower: 6.0, // in kWp
+  panelCount: 15,
+  address: 'Rajatorpantie 8',
+  ...window.vueAppData?.settings,
+})
 
-export function useAppState() {
-  return {
-    message,
+const jsonData = reactive({
+  geoResult: null as string | null,
+  buildingResult: null as string | null,
+  layerResult: null as string | null,
+  error: null as string | null,
+})
+
+declare global {
+  interface Window {
+    vueAppData?: {
+      settings?: Record<string, AppSetting>
+    }
+  }
+
+  interface AppSetting {
+    label: string
+    type: 'number' | 'text' | 'select' | 'checkbox' | 'textarea'
+    sanitize: string
+    description: string
+    value: string | number | boolean
+    step?: string
+    options?: Record<string, string>
   }
 }
 
+export function useAppState() {
+  return {
+    settings,
+    jsonData,
+  }
+}
+-e 
 ===== END: src/useAppState.ts =====
 
 ===== START: src/services/colors.ts =====
@@ -350,92 +367,76 @@ export const rainbowPalette = ['3949AB', '81D4FA', '66BB6A', 'FFE082', 'E53935']
 export const ironPalette = ['00000A', '91009C', 'E64616', 'FEB400', 'FFFFF6']
 export const sunlightPalette = ['212121', 'FFCA28']
 export const panelsPalette = ['E8EAF6', '1A237E']
-
+-e 
 ===== END: src/services/colors.ts =====
 
-===== START: src/services/imageFetcher.ts =====
-export async function fetchGeoTiffImage(imageUrl: string, apiKey: string): Promise<string> {
-  const url = new URL(imageUrl)
-  const imageId = url.searchParams.get('id') || imageUrl.split('id=')[1]
+===== START: src/services/useSolarApi.ts =====
+// src/composables/useSolarApi.ts
+import { ref } from 'vue'
+import { Loader } from '@googlemaps/js-api-loader'
+import { geocodeAddress } from '@/services/geocodingApi'
+import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
+import { getLayer } from '@/services/layer'
+import { useAppState } from '@/useAppState'
 
-  if (!imageId) {
-    throw new Error('Unable to extract image ID from URL')
-  }
+const mapRef = ref<HTMLElement | null>(null)
+let map: google.maps.Map | null = null
+let overlay: google.maps.GroundOverlay | null = null
 
-  const fetchUrl = `https://solar.googleapis.com/v1/geoTiff:get?id=${imageId}&key=${apiKey}`
+const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 
-  const response = await fetch(fetchUrl)
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`geoTiff:get error: ${text}`)
-  }
+const initializeMap = async (lat: number, lng: number) => {
+  const loader = new Loader({
+    apiKey,
+    version: 'weekly',
+    libraries: ['places'],
+  })
+  await loader.load()
 
-  const blob = await response.blob()
-  return URL.createObjectURL(blob) // usable as <img :src="..." />
+  if (!mapRef.value) return
+
+  map = new google.maps.Map(mapRef.value, {
+    center: { lat, lng },
+    zoom: 18,
+    mapTypeId: 'satellite',
+    tilt: 0,
+    heading: 0,
+    gestureHandling: 'greedy',
+    rotateControl: false,
+    mapId: '',
+  })
 }
 
-===== END: src/services/imageFetcher.ts =====
+export const runSolarApi = async () => {
+  const { settings, jsonData } = useAppState()
 
-===== START: src/services/tiffToCanvas.ts =====
-type TypedArray =
-  | Uint8Array
-  | Uint16Array
-  | Uint32Array
-  | Int8Array
-  | Int16Array
-  | Int32Array
-  | Float32Array
-  | Float64Array
-import * as GeoTIFF from 'geotiff'
+  jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-export async function renderGeoTiffToCanvas(blob: Blob, canvas: HTMLCanvasElement) {
-  const arrayBuffer = await blob.arrayBuffer()
-  const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer)
-  const image = await tiff.getImage()
+  try {
+    const geo = await geocodeAddress(settings.address, apiKey)
+    await initializeMap(geo.lat, geo.lng)
+    jsonData.geoResult = JSON.stringify(geo, null, 2)
 
-  const width = image.getWidth()
-  const height = image.getHeight()
+    const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
+    jsonData.buildingResult = JSON.stringify(building, null, 2)
 
-  const samplesPerPixel = image.getSamplesPerPixel()
-  const raster = (await image.readRasters({ interleave: true })) as TypedArray
+    const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
+    jsonData.layerResult = JSON.stringify(data, null, 2)
 
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas context not available')
+    const layer = await getLayer('annualFlux', data, apiKey)
+    const canvas = layer.render(true, 0, 14)[0]
 
-  canvas.width = width
-  canvas.height = height
-
-  const imageData = ctx.createImageData(width, height)
-
-  for (let i = 0, j = 0; i < raster.length; i += samplesPerPixel, j += 4) {
-    if (samplesPerPixel === 1) {
-      // Grayscale
-      const v = raster[i]
-      imageData.data[j] = v
-      imageData.data[j + 1] = v
-      imageData.data[j + 2] = v
-      imageData.data[j + 3] = 255
-    } else if (samplesPerPixel === 3) {
-      // RGB
-      imageData.data[j] = raster[i]
-      imageData.data[j + 1] = raster[i + 1]
-      imageData.data[j + 2] = raster[i + 2]
-      imageData.data[j + 3] = 255
-    } else if (samplesPerPixel === 4) {
-      // RGBA
-      imageData.data[j] = raster[i]
-      imageData.data[j + 1] = raster[i + 1]
-      imageData.data[j + 2] = raster[i + 2]
-      imageData.data[j + 3] = raster[i + 3]
-    } else {
-      throw new Error(`Unsupported number of samples per pixel: ${samplesPerPixel}`)
-    }
+    overlay?.setMap(null)
+    overlay = new google.maps.GroundOverlay(canvas.toDataURL(), layer.bounds)
+    overlay.setMap(map!)
+  } catch (e: any) {
+    jsonData.error = e?.message || 'Unexpected error during solar data fetch.'
   }
-
-  ctx.putImageData(imageData, 0, 0)
 }
 
-===== END: src/services/tiffToCanvas.ts =====
+export const useMapRef = () => mapRef
+-e 
+===== END: src/services/useSolarApi.ts =====
 
 ===== START: src/services/geocodingApi.ts =====
 export interface GeocodeLatLng {
@@ -458,7 +459,7 @@ export async function geocodeAddress(address: string, apiKey: string): Promise<G
   const location = data.results[0].geometry.location
   return { lat: location.lat, lng: location.lng }
 }
-
+-e 
 ===== END: src/services/geocodingApi.ts =====
 
 ===== START: src/services/visualize.ts =====
@@ -691,7 +692,7 @@ export function rgbToColor({ r, g, b }: { r: number; g: number; b: number }): st
   }
   return `#${f(r)}${f(g)}${f(b)}`
 }
-
+-e 
 ===== END: src/services/visualize.ts =====
 
 ===== START: src/services/layer.ts =====
@@ -885,7 +886,7 @@ export async function getLayer(
     throw e
   }
 }
-
+-e 
 ===== END: src/services/layer.ts =====
 
 ===== START: src/services/solar.ts =====
@@ -1183,6 +1184,6 @@ export function showLatLng(point: LatLng) {
 export function showDate(date: Date) {
   return `${date.month}/${date.day}/${date.year}`
 }
-
+-e 
 ===== END: src/services/solar.ts =====
 

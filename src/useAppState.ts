@@ -1,10 +1,73 @@
 import { reactive } from 'vue'
 
-const settings = reactive({
-  calculationBasis: 'smartMax',
+interface SelectField {
+  label: string
+  description: string
+  value: string
+  options: Record<string, string>
+  sanitize: string
+  type: 'select'
+}
+
+interface TextField {
+  label: string
+  description: string
+  value: number
+  sanitize: string
+  type: 'number'
+  step?: string
+  options?: Record<string, string>
+}
+
+interface AppSettings {
+  calculationBasis: SelectField
+  powerConsumptionProfile: SelectField
+  yearlyEnergyUsageKwh: TextField
+  powerProfile: string
+  yearlyConsumption: number
+  targetPower: number
+  panelCount: number
+  address: string
+  [key: string]: any
+}
+
+const settings = reactive<AppSettings>({
+  calculationBasis: {
+    label: 'Laskentaperuste',
+    description: 'Choose the default:',
+    value: 'smartMax',
+    options: {
+      profileOptimum: 'Profiilioptimoitu paneelimäärä',
+      smartMax: 'Teho-optimoitu paneelimäärä',
+      targetPower: 'Tavoiteteho',
+      technicalMax: 'Tekninen maksimipaneelimäärä',
+    },
+    sanitize: 'sanitize_text_field',
+    type: 'select',
+  },
+  powerConsumptionProfile: {
+    label: 'Kulutusprofiili',
+    description: 'Valitse profiili',
+    value: 'profileA',
+    options: {
+      profileA: 'Profile A (Standard)',
+      profileB: 'Profile B (Industrial)',
+      profileC: 'Profile C (Evening-heavy)',
+      custom: 'Custom Profile',
+    },
+    sanitize: 'sanitize_text_field',
+    type: 'select',
+  },
+  yearlyEnergyUsageKwh: {
+    label: 'Vuotuinen sähkönkulutus (kWh/v)',
+    description: '-',
+    value: 12000,
+    sanitize: 'floatval',
+    type: 'number',
+  },
   powerProfile: 'default',
   yearlyConsumption: 12000,
-  targetPower: 6.0, // in kWp
+  targetPower: 6.0,
   panelCount: 15,
   address: 'Rajatorpantie 8',
   ...window.vueAppData?.settings,
@@ -20,18 +83,8 @@ const jsonData = reactive({
 declare global {
   interface Window {
     vueAppData?: {
-      settings?: Record<string, AppSetting>
+      settings?: Partial<AppSettings>
     }
-  }
-
-  interface AppSetting {
-    label: string
-    type: 'number' | 'text' | 'select' | 'checkbox' | 'textarea'
-    sanitize: string
-    description: string
-    value: string | number | boolean
-    step?: string
-    options?: Record<string, string>
   }
 }
 
