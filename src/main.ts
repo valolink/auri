@@ -4,7 +4,7 @@ import { createApp } from 'vue'
 import { useAppState } from './useAppState'
 import DataView from './components/DataView.vue'
 import MapView from './components/MapView.vue'
-import Inputs from './components/Inputs.vue'
+import CalculationInputs from './components/CalculationInputs.vue'
 
 const app = createApp({
   setup() {
@@ -14,7 +14,7 @@ const app = createApp({
   },
   components: {
     'data-view': DataView,
-    inputs: Inputs,
+    'calculation-inputs': CalculationInputs,
     'map-view': MapView,
   },
 })
