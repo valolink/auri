@@ -35,7 +35,7 @@ const initializeMap = async (lat: number, lng: number) => {
 }
 
 export const runSolarApi = async () => {
-  const { settings, jsonData } = useAppState()
+  const { output, settings, jsonData } = useAppState()
 
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
@@ -46,6 +46,9 @@ export const runSolarApi = async () => {
 
     const building = await findClosestBuilding(new google.maps.LatLng(geo.lat, geo.lng), apiKey)
     jsonData.buildingResult = JSON.stringify(building, null, 2)
+
+    // TODO add data to output
+    output.maxArrayPanelsCount = building.solarPotential?.maxArrayPanelsCount
 
     const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
     jsonData.layerResult = JSON.stringify(data, null, 2)

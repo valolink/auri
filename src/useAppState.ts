@@ -31,6 +31,7 @@ type Setting = SelectSetting | CheckboxSetting | NumberSetting | TextSetting
 export type AppSettings = Record<string, Setting>
 
 const settings = reactive<AppSettings>({
+  address: 'Rajatorpantie 8',
   ...window.vueAppData?.settings,
 })
 
@@ -40,6 +41,8 @@ const jsonData = reactive({
   layerResult: null as string | null,
   error: null as string | null,
 })
+
+const output = reactive({})
 
 declare global {
   interface Window {
@@ -53,5 +56,6 @@ export function useAppState() {
   return {
     settings,
     jsonData,
+    output,
   }
 }
