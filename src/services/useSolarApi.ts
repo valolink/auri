@@ -51,8 +51,41 @@ export const runSolarApi = async () => {
     output.maxArrayPanelsCount = building.solarPotential?.maxArrayPanelsCount
     output.maxArrayAreaMeters2 = building.solarPotential?.maxArrayAreaMeters2
     output.areaMeters2 = building.solarPotential?.buildingStats?.areaMeters2
-    output.maxCapacityKwp = building.solarPotential?.maxArrayPanelsCount * building.solarPotential?.panelCapacityWatts/1000
-    output.totalEnergyPriceSntPerKwh = Number(settings.energyPriceSnt.value) + (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value) / 100) * (1 + Number(settings.vat.value) / 100)
+    output.maxCapacityKwp =
+      (building.solarPotential?.maxArrayPanelsCount * building.solarPotential?.panelCapacityWatts) /
+      1000
+    output.totalEnergyPriceSntPerKwh =
+      Number(settings.energyPriceSnt.value) +
+      (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value) / 100) *
+        (1 + Number(settings.vat.value) / 100)
+
+    // Sort the data by panelsCount in ascending order
+    const sortedConfigs = building.solarPotential.solarPanelConfigs.sort(
+      (a, b) => a.panelsCount - b.panelsCount,
+    )
+
+    // Loop to find when the energy gain per additional panel falls below 320 kWh
+    for (let i = 1; i < sortedConfigs.length; i++) {
+      const prev = sortedConfigs[i - 1]
+      const curr = sortedConfigs[i]
+      const panelDiff = curr.panelsCount - prev.panelsCount
+      const energyGain = curr.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
+      const gainPerPanel = energyGain / panelDiff
+
+      console.log(
+        `From ${prev.panelsCount} to ${curr.panelsCount} panels: Gain = ${energyGain.toFixed(2)} kWh, Gain per panel = ${gainPerPanel.toFixed(2)} kWh`,
+      )
+
+      if (gainPerPanel < 320) {
+        console.log(
+          `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
+        )
+        break
+      }
+
+      output.smartPanelsCount = prev.panelsCount
+      output.smartCapacityKwp = (prev.panelsCount * 400) / 1000
+    }
 
     const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
     jsonData.layerResult = JSON.stringify(data, null, 2)
