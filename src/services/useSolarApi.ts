@@ -49,6 +49,10 @@ export const runSolarApi = async () => {
 
     // TODO add data to output
     output.maxArrayPanelsCount = building.solarPotential?.maxArrayPanelsCount
+    output.maxArrayAreaMeters2 = building.solarPotential?.maxArrayAreaMeters2
+    output.areaMeters2 = building.solarPotential?.buildingStats?.areaMeters2
+    output.maxCapacityKwp = building.solarPotential?.maxArrayPanelsCount * building.solarPotential?.panelCapacityWatts/1000
+    output.totalEnergyPriceSntPerKwh = Number(settings.energyPriceSnt.value) + (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value) / 100) * (1 + Number(settings.vat.value) / 100)
 
     const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
     jsonData.layerResult = JSON.stringify(data, null, 2)
