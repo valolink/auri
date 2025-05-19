@@ -52,11 +52,21 @@ const output = reactive({
 })
 
 const calculateConfig = function (config) {
+  const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
+  const panelsCount = config.panelsCount
+  const capacityKwp = (panelsCount * 400) / 1000
+  const yearlyCarbonOffset = Number(settings.emissionsFactor.value) * yearlyEnergyDcKwh
+  const savingsYear1 = yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh/1000
+  const installationCostEuros =  Number(settings.installationCostPerKwp.value) * capacityKwp
+
   return {
-    yearlyEnergyDcKwh: config.yearlyEnergyDcKwh,
-    panelsCount: config.panelsCount,
-    capacityKwp: (config.panelsCount * 400) / 1000,
-  }
+    yearlyEnergyDcKwh,
+    panelsCount,
+    capacityKwp,
+    yearlyCarbonOffset,
+    savingsYear1,
+    installationCostEuros
+  };
 }
 
 declare global {
