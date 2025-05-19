@@ -35,7 +35,7 @@ const initializeMap = async (lat: number, lng: number) => {
 }
 
 export const runSolarApi = async () => {
-  const { output, settings, jsonData } = useAppState()
+  const { output, settings, jsonData, calculateConfig } = useAppState()
 
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
@@ -48,13 +48,8 @@ export const runSolarApi = async () => {
     jsonData.buildingResult = JSON.stringify(building, null, 2)
 
     // TODO add data to output
-    output.maxArrayPanelsCount = building.solarPotential?.maxArrayPanelsCount
-    output.maxArrayAreaMeters2 = building.solarPotential?.maxArrayAreaMeters2
-    output.areaMeters2 = building.solarPotential?.buildingStats?.areaMeters2
-    output.maxCapacityKwp =
-      (building.solarPotential?.maxArrayPanelsCount * building.solarPotential?.panelCapacityWatts) /
-      1000
-    output.totalEnergyPriceSntPerKwh =
+    output.static.areaMeters2 = building.solarPotential?.buildingStats?.areaMeters2
+    output.static.totalEnergyPriceSntPerKwh =
       Number(settings.energyPriceSnt.value) +
       (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value) / 100) *
         (1 + Number(settings.vat.value) / 100)
@@ -63,6 +58,8 @@ export const runSolarApi = async () => {
     const sortedConfigs = building.solarPotential.solarPanelConfigs.sort(
       (a, b) => a.panelsCount - b.panelsCount,
     )
+
+    output.technicalMax = calculateConfig(sortedConfigs[sortedConfigs.length - 1])
 
     // Loop to find when the energy gain per additional panel falls below 320 kWh
     for (let i = 1; i < sortedConfigs.length; i++) {
@@ -83,8 +80,7 @@ export const runSolarApi = async () => {
         break
       }
 
-      output.smartPanelsCount = prev.panelsCount
-      output.smartCapacityKwp = (prev.panelsCount * 400) / 1000
+      output.smartMax = calculateConfig(prev)
     }
 
     const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)

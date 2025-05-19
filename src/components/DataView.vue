@@ -1,7 +1,7 @@
 <template>
   <div>
     <p>Output:</p>
-    <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed sort />
+    <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed />
 
     <p>Settings:</p>
     <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
@@ -23,7 +23,6 @@
       :expand-depth="2"
       copyable
       boxed
-      sort
     />
 
     <p>Data Layers:</p>
@@ -33,7 +32,6 @@
       :expand-depth="2"
       copyable
       boxed
-      sort
     />
     <p v-if="jsonData.error" style="color: red; margin-top: 1rem">{{ jsonData.error }}</p>
   </div>

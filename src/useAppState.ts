@@ -42,7 +42,22 @@ const jsonData = reactive({
   error: null as string | null,
 })
 
-const output = reactive({})
+const output = reactive({
+  technicalMax: {},
+  smartMax: {},
+  profileOptimum: {},
+  targetPower: {},
+  targetPanelCount: {},
+  static: {},
+})
+
+const calculateConfig = function (config) {
+  return {
+    yearlyEnergyDcKwh: config.yearlyEnergyDcKwh,
+    panelsCount: config.panelsCount,
+    capacityKwp: (config.panelsCount * 400) / 1000,
+  }
+}
 
 declare global {
   interface Window {
@@ -57,5 +72,6 @@ export function useAppState() {
     settings,
     jsonData,
     output,
+    calculateConfig,
   }
 }
