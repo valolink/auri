@@ -58,7 +58,7 @@
 import { NForm, NFormItem, NSelect, NInputNumber, NInput, NButton, NInputGroup } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { runSolarApi } from '@/services/useSolarApi'
-
+import { updatePanelConfig } from '@/services/configUtils'
 const { settings } = useAppState()
 
 const panelCapacity = 400 // watts per panel
@@ -67,6 +67,7 @@ const updateFromPower = () => {
   if (settings.targetPower && settings.panelCount) {
     settings.panelCount.value = Math.round((settings.targetPower.value * 1000) / panelCapacity)
   }
+  updatePanelConfig()
 }
 
 const updateFromPanels = () => {
@@ -75,6 +76,7 @@ const updateFromPanels = () => {
       ((settings.panelCount.value * panelCapacity) / 1000).toFixed(2),
     )
   }
+  updatePanelConfig()
 }
 </script>
 
