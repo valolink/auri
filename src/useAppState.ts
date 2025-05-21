@@ -56,17 +56,28 @@ const calculateConfig = function (config) {
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000
   const yearlyCarbonOffset = Number(settings.emissionsFactor.value) * yearlyEnergyDcKwh
-  const savingsYear1 = yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh/1000
-  const installationCostEuros =  Number(settings.installationCostPerKwp.value) * capacityKwp
-  const maintenanceCostsPerLifeSpan = installationCostEuros * (Number(settings.maintenanceCostFactor.value)/100) * Number(settings.installationLifeSpan.value)
+  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 1000
+  const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
+  const maintenanceCostsPerLifeSpan =
+    installationCostEuros *
+    (Number(settings.maintenanceCostFactor.value) / 100) *
+    Number(settings.installationLifeSpan.value)
 
-  const totalEnergyDcKwhPerLifeSpan = yearlyEnergyDcKwh *
-  ( 1 - ( 1 - (Number(settings.efficiencyDepreciationFactor.value)/100) ) ^ Number(settings.installationLifeSpan.value) ) /
-  (Number(settings.efficiencyDepreciationFactor.value)/100)
+  const totalEnergyDcKwhPerLifeSpan =
+    (yearlyEnergyDcKwh *
+      (1 - (1 - Number(settings.efficiencyDepreciationFactor.value) / 100)) **
+        Number(settings.installationLifeSpan.value)) /
+    (Number(settings.efficiencyDepreciationFactor.value) / 100)
 
-  const totalSavingsPerLifeSpan = yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh *
-  ( 1 - ( ( 1 - (Number(settings.efficiencyDepreciationFactor.value)/100)  ) * ( 1 + (Number(settings.costIncreaseFactor.value)/100)  ) ) ^ Number(settings.installationLifeSpan.value) ) /
-  ( 1 - ( ( 1 - (Number(settings.efficiencyDepreciationFactor.value)/100)  ) * ( 1 + (Number(settings.costIncreaseFactor.value)/100)  ) ) )
+  const totalSavingsPerLifeSpan =
+    (((yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100) *
+      (1 -
+        ((1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
+          (1 + Number(settings.costIncreaseFactor.value) / 100)) **
+          Number(settings.installationLifeSpan.value))) /
+    (1 -
+      (1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
+        (1 + Number(settings.costIncreaseFactor.value) / 100))
 
   return {
     yearlyEnergyDcKwh,
@@ -77,8 +88,8 @@ const calculateConfig = function (config) {
     installationCostEuros,
     maintenanceCostsPerLifeSpan,
     totalEnergyDcKwhPerLifeSpan,
-    totalSavingsPerLifeSpan
-  };
+    totalSavingsPerLifeSpan,
+  }
 }
 
 declare global {
