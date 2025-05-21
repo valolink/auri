@@ -61,7 +61,13 @@ export const runSolarApi = async () => {
 
     output.technicalMax = calculateConfig(sortedConfigs[sortedConfigs.length - 1])
 
-    // Loop to find when the energy gain per additional panel falls below 320 kWh
+    let foundSmartMax = false
+    let foundTarget = false
+    let foundEnergyTarget = false
+
+    let bestUnderEnergyConfig = null
+    let closestEnergyDiff = Infinity
+
     for (let i = 1; i < sortedConfigs.length; i++) {
       const prev = sortedConfigs[i - 1]
       const curr = sortedConfigs[i]
@@ -69,18 +75,48 @@ export const runSolarApi = async () => {
       const energyGain = curr.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
       const gainPerPanel = energyGain / panelDiff
 
-      console.log(
-        `From ${prev.panelsCount} to ${curr.panelsCount} panels: Gain = ${energyGain.toFixed(2)} kWh, Gain per panel = ${gainPerPanel.toFixed(2)} kWh`,
-      )
+      console.log()
 
-      if (gainPerPanel < 320) {
+      // 1. Smart max detection
+      if (!foundSmartMax && gainPerPanel < 320) {
+        output.smartMax = calculateConfig(prev)
         console.log(
           `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
         )
-        break
+        foundSmartMax = true
       }
 
-      output.smartMax = calculateConfig(prev)
+      // 2. Exact panel count match
+      if (!foundTarget && curr.panelsCount === settings.panelCount.value) {
+        output.targetPower = calculateConfig(curr)
+        console.log(`Found config with target panel count: ${settings.panelCount.value}`)
+        foundTarget = true
+      }
+
+      // 3. Closest under target energy
+      if (!foundEnergyTarget) {
+        if (curr.yearlyEnergyDcKwh <= settings.yearlyEnergyUsageKwh.value) {
+          const diff = settings.yearlyEnergyUsageKwh.value - curr.yearlyEnergyDcKwh
+          if (diff < closestEnergyDiff) {
+            closestEnergyDiff = diff
+            bestUnderEnergyConfig = curr
+          }
+        } else {
+          // crossed the threshold: finalize the best config found
+          if (bestUnderEnergyConfig !== null) {
+            output.profileOptimum = calculateConfig(bestUnderEnergyConfig)
+            console.log(
+              `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
+            )
+            foundEnergyTarget = true
+          }
+        }
+      }
+
+      // Stop when all three are found
+      if (foundSmartMax && foundTarget && foundEnergyTarget) {
+        break
+      }
     }
 
     const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)

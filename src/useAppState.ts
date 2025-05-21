@@ -47,7 +47,6 @@ const output = reactive({
   smartMax: {},
   profileOptimum: {},
   targetPower: {},
-  targetPanelCount: {},
   static: {},
 })
 
@@ -79,8 +78,13 @@ const calculateConfig = function (config) {
       (1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
         (1 + Number(settings.costIncreaseFactor.value) / 100))
 
-  const averageYearlySavingsEuros = totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
-  const totalMaintenanceCostsPerLifeSpan = Number(settings.installationCostPerKwp.value) * capacityKwp * (Number(settings.maintenanceCostFactor.value)/100) * Number(settings.installationLifeSpan.value)
+  const averageYearlySavingsEuros =
+    totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
+  const totalMaintenanceCostsPerLifeSpan =
+    Number(settings.installationCostPerKwp.value) *
+    capacityKwp *
+    (Number(settings.maintenanceCostFactor.value) / 100) *
+    Number(settings.installationLifeSpan.value)
 
   return {
     yearlyEnergyDcKwh,
