@@ -73,7 +73,7 @@ export function calculateConfig(config) {
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000
   const yearlyCarbonOffset = Number(settings.emissionsFactor.value) * yearlyEnergyDcKwh
-  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 1000
+  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
   const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
   const maintenanceCostsPerLifeSpan =
     installationCostEuros *
