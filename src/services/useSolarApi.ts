@@ -53,7 +53,7 @@ export const runSolarApi = async () => {
   output.static.areaMeters2 = buildingData.building.solarPotential?.buildingStats?.areaMeters2
   output.static.totalEnergyPriceSntPerKwh =
     Number(settings.energyPriceSnt.value) +
-    (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value) / 100) *
+    (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
       (1 + Number(settings.vat.value) / 100)
 
   // Sort the data by panelsCount in ascending order
