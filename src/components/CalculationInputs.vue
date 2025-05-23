@@ -30,52 +30,88 @@
       </n-form-item>
 
       <n-form-item :label="settings.yearlyEnergyUsageKwh.label">
-        <n-input-number v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" />
+      <n-space vertical>
+        <n-slider v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" :max="100000" :step="10"  />
+          <n-input-number v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" />
+        </n-space>
       </n-form-item>
 
       <n-form-item :label="settings.targetPower.label">
-        <n-input-number
-          v-model:value="settings.targetPower.value"
-          :min="0"
-          :step="0.01"
-          @update:value="updateFromPower"
-        />
+       <n-space vertical>
+          <n-slider v-model:value="settings.targetPower.value" :min="0" :max="output.technicalMax?.capacityKwp" :step="1" @update:value="updateFromPower" />
+          <n-input-number
+            v-model:value="settings.targetPower.value"
+            :min="0"
+            :max="output.technicalMax?.capacityKwp"
+            :step="0.1"
+            @update:value="updateFromPower"
+          />
+        </n-space>
       </n-form-item>
 
       <n-form-item :label="settings.panelCount.label">
-        <n-input-number
-          v-model:value="settings.panelCount.value"
-          :min="1"
-          :step="1"
-          @update:value="updateFromPanels"
-        />
+        <n-space vertical>
+          <n-slider v-model:value="settings.panelCount.value" :min="1" :max="output.technicalMax?.panelsCount" :step="1" @update:value="updateFromPanels" />
+          <n-input-number
+            v-model:value="settings.panelCount.value"
+            :min="1"
+            :max="output.technicalMax?.panelsCount"
+            :step="5"
+            @update:value="updateFromPanels"
+          />
+        </n-space>
       </n-form-item>
     </n-form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { NForm, NFormItem, NSelect, NInputNumber, NInput, NButton, NInputGroup } from 'naive-ui'
+import { NForm, NFormItem, NSelect, NInputNumber, NInput, NButton, NInputGroup, NSlider, NSpace } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { runSolarApi } from '@/services/useSolarApi'
 import { updatePanelConfig } from '@/services/configUtils'
-const { settings } = useAppState()
+import { computed } from 'vue'
+const { settings, output, buildingData } = useAppState()
 
 const panelCapacity = 400 // watts per panel
 
+const validPanelCounts = computed(() =>
+  buildingData?.sortedConfigs?.map(config => config.panelsCount) || []
+)
+
 const updateFromPower = () => {
-  if (settings.targetPower && settings.panelCount) {
-    settings.panelCount.value = Math.round((settings.targetPower.value * 1000) / panelCapacity)
-  }
+  if (!settings.targetPower || !settings.panelCount || !validPanelCounts.value.length) return
+
+  const estimatedCount = Math.round((settings.targetPower.value * 1000) / panelCapacity)
+
+  // Snap to closest valid panel count
+  const closestCount = validPanelCounts.value.reduce((prev, curr) =>
+    Math.abs(curr - estimatedCount) < Math.abs(prev - estimatedCount) ? curr : prev
+  )
+
+  settings.panelCount.value = closestCount
   updatePanelConfig()
 }
 
 const updateFromPanels = () => {
-  if (settings.panelCount && settings.targetPower) {
-    settings.targetPower.value = parseFloat(
-      ((settings.panelCount.value * panelCapacity) / 1000).toFixed(2),
-    )
+  if (!settings.panelCount || !settings.targetPower || !validPanelCounts.value.length) return
+
+  const enteredCount = settings.panelCount.value
+
+  // Snap to closest valid count
+  const closestCount = validPanelCounts.value.reduce((prev, curr) =>
+    Math.abs(curr - enteredCount) < Math.abs(prev - enteredCount) ? curr : prev
+  )
+
+  if (closestCount !== enteredCount) {
+    settings.panelCount.value = closestCount
   }
+
+  // Update corresponding power
+  settings.targetPower.value = parseFloat(
+    ((closestCount * panelCapacity) / 1000).toFixed(2)
+  )
+
   updatePanelConfig()
 }
 </script>
