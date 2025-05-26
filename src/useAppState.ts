@@ -48,6 +48,7 @@ const output = reactive({
   profileOptimum: {},
   targetPower: {},
   static: {},
+  monthlyDistribution: [] as number[],
 })
 
 const buildingData = reactive({

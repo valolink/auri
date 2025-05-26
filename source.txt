@@ -1,0 +1,1385 @@
+===== START: src/components/CalculationInputs.vue =====
+<template>
+  <div class="input-container">
+    <n-form>
+      <n-form-item label="Osoite">
+        <n-input-group>
+          <n-input
+            v-model:value="settings.address"
+            type="text"
+            placeholder="Syötä osoite"
+            :style="{ width: '75%' }"
+          />
+          <n-button type="primary" @click="runSolarApi">Hae</n-button>
+        </n-input-group>
+      </n-form-item>
+
+      <n-form-item :label="settings.calculationBasis.label">
+        <n-select
+          v-model:value="settings.calculationBasis.value"
+          :options="settings.calculationBasis.options"
+          :placeholder="settings.calculationBasis.description"
+        />
+      </n-form-item>
+
+      <n-form-item :label="settings.powerConsumptionProfile.label">
+        <n-select
+          v-model:value="settings.powerConsumptionProfile.value"
+          :options="settings.powerConsumptionProfile.options"
+          :placeholder="settings.powerConsumptionProfile.description"
+        />
+      </n-form-item>
+
+      <n-form-item :label="settings.yearlyEnergyUsageKwh.label">
+      <n-space vertical>
+        <n-slider v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" :max="100000" :step="10"  />
+          <n-input-number v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" />
+        </n-space>
+      </n-form-item>
+
+      <n-form-item :label="settings.targetPower.label">
+       <n-space vertical>
+          <n-slider v-model:value="settings.targetPower.value" :min="0" :max="output.technicalMax?.capacityKwp" :step="1" @update:value="updateFromPower" />
+          <n-input-number
+            v-model:value="settings.targetPower.value"
+            :min="0"
+            :max="output.technicalMax?.capacityKwp"
+            :step="0.1"
+            @update:value="updateFromPower"
+          />
+        </n-space>
+      </n-form-item>
+
+      <n-form-item :label="settings.panelCount.label">
+        <n-space vertical>
+          <n-slider v-model:value="settings.panelCount.value" :min="1" :max="output.technicalMax?.panelsCount" :step="1" @update:value="updateFromPanels" />
+          <n-input-number
+            v-model:value="settings.panelCount.value"
+            :min="1"
+            :max="output.technicalMax?.panelsCount"
+            :step="5"
+            @update:value="updateFromPanels"
+          />
+        </n-space>
+      </n-form-item>
+    </n-form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { NForm, NFormItem, NSelect, NInputNumber, NInput, NButton, NInputGroup, NSlider, NSpace } from 'naive-ui'
+import { useAppState } from '@/useAppState'
+import { runSolarApi } from '@/services/useSolarApi'
+import { updatePanelConfig } from '@/services/configUtils'
+import { computed } from 'vue'
+const { settings, output, buildingData } = useAppState()
+
+const panelCapacity = 400 // watts per panel
+
+const validPanelCounts = computed(() =>
+  buildingData?.sortedConfigs?.map(config => config.panelsCount) || []
+)
+
+const updateFromPower = () => {
+  if (!settings.targetPower || !settings.panelCount || !validPanelCounts.value.length) return
+
+  const estimatedCount = Math.round((settings.targetPower.value * 1000) / panelCapacity)
+
+  // Snap to closest valid panel count
+  const closestCount = validPanelCounts.value.reduce((prev, curr) =>
+    Math.abs(curr - estimatedCount) < Math.abs(prev - estimatedCount) ? curr : prev
+  )
+
+  settings.panelCount.value = closestCount
+  updatePanelConfig()
+}
+
+const updateFromPanels = () => {
+  if (!settings.panelCount || !settings.targetPower || !validPanelCounts.value.length) return
+
+  const enteredCount = settings.panelCount.value
+
+  // Snap to closest valid count
+  const closestCount = validPanelCounts.value.reduce((prev, curr) =>
+    Math.abs(curr - enteredCount) < Math.abs(prev - enteredCount) ? curr : prev
+  )
+
+  if (closestCount !== enteredCount) {
+    settings.panelCount.value = closestCount
+  }
+
+  // Update corresponding power
+  settings.targetPower.value = parseFloat(
+    ((closestCount * panelCapacity) / 1000).toFixed(2)
+  )
+
+  updatePanelConfig()
+}
+</script>
+
+<style scoped>
+.input-container {
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
+}
+</style>
+
+===== END: src/components/CalculationInputs.vue =====
+
+===== START: src/components/DataView.vue =====
+<template>
+  <div>
+    <p>Output:</p>
+    <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed />
+
+    <p>Settings:</p>
+    <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
+
+    <p>Geocode:</p>
+    <json-viewer
+      v-if="jsonData.geoResult"
+      :value="JSON.parse(jsonData.geoResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+      sort
+    />
+
+    <p>Building:</p>
+    <json-viewer
+      v-if="jsonData.buildingResult"
+      :value="JSON.parse(jsonData.buildingResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+    />
+
+    <p>Data Layers:</p>
+    <json-viewer
+      v-if="jsonData.layerResult"
+      :value="JSON.parse(jsonData.layerResult)"
+      :expand-depth="2"
+      copyable
+      boxed
+    />
+    <p v-if="jsonData.error" style="color: red; margin-top: 1rem">{{ jsonData.error }}</p>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useAppState } from '@/useAppState'
+// @ts-expect-error no types for jsonviewer
+import JsonViewer from 'vue-json-viewer'
+import 'vue-json-viewer/style.css'
+
+const { output, settings, jsonData } = useAppState()
+</script>
+
+===== END: src/components/DataView.vue =====
+
+===== START: src/components/MapView.vue =====
+<template>
+  <div style="padding: 1rem; max-width: 600px; margin: auto">
+    <div
+      ref="mapRef"
+      style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
+    ></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { useMapRef } from '@/services/useSolarApi'
+
+const mapRef = useMapRef()
+
+onMounted(() => {
+  // This ensures the reference is available before `runSolarApi` tries to use it.
+  console.log('Map ref ready', mapRef.value)
+})
+</script>
+
+===== END: src/components/MapView.vue =====
+
+===== START: src/assets/base.css =====
+/* color palette from <https://github.com/vuejs/theme> */
+:root {
+  --vt-c-white: #ffffff;
+  --vt-c-white-soft: #f8f8f8;
+  --vt-c-white-mute: #f2f2f2;
+
+  --vt-c-black: #181818;
+  --vt-c-black-soft: #222222;
+  --vt-c-black-mute: #282828;
+
+  --vt-c-indigo: #2c3e50;
+
+  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+  --vt-c-text-light-1: var(--vt-c-indigo);
+  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+  --vt-c-text-dark-1: var(--vt-c-white);
+  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+}
+
+/* semantic color variables for this project */
+:root {
+  --color-background: var(--vt-c-white);
+  --color-background-soft: var(--vt-c-white-soft);
+  --color-background-mute: var(--vt-c-white-mute);
+
+  --color-border: var(--vt-c-divider-light-2);
+  --color-border-hover: var(--vt-c-divider-light-1);
+
+  --color-heading: var(--vt-c-text-light-1);
+  --color-text: var(--vt-c-text-light-1);
+
+  --section-gap: 160px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--vt-c-black);
+    --color-background-soft: var(--vt-c-black-soft);
+    --color-background-mute: var(--vt-c-black-mute);
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-dark-1);
+    --color-text: var(--vt-c-text-dark-2);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition:
+    color 0.5s,
+    background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+===== END: src/assets/base.css =====
+
+===== START: src/assets/main.css =====
+/* @import './base.css'; */
+
+===== END: src/assets/main.css =====
+
+===== START: src/main.ts =====
+// main.ts
+import './assets/main.css'
+import { createApp } from 'vue'
+import { useAppState } from './useAppState'
+import DataView from './components/DataView.vue'
+import MapView from './components/MapView.vue'
+import CalculationInputs from './components/CalculationInputs.vue'
+
+const app = createApp({
+  setup() {
+    const state = useAppState()
+    console.log('settings', state.settings)
+    return state
+  },
+  components: {
+    'data-view': DataView,
+    'calculation-inputs': CalculationInputs,
+    'map-view': MapView,
+  },
+})
+
+app.mount('#content')
+
+===== END: src/main.ts =====
+
+===== START: src/useAppState.ts =====
+import { reactive } from 'vue'
+
+interface BaseSetting<T = string | number | boolean> {
+  label: string
+  description: string
+  value: T
+  sanitize: string
+  type: 'text' | 'number' | 'select' | 'checkbox' | 'textarea'
+  step?: string
+}
+
+interface SelectSetting extends BaseSetting<string> {
+  type: 'select'
+  options: { label: string; value: string }[]
+}
+
+interface CheckboxSetting extends BaseSetting<boolean> {
+  type: 'checkbox'
+}
+
+interface NumberSetting extends BaseSetting<number> {
+  type: 'number'
+}
+
+interface TextSetting extends BaseSetting<string> {
+  type: 'text' | 'textarea'
+}
+
+type Setting = SelectSetting | CheckboxSetting | NumberSetting | TextSetting
+
+export type AppSettings = Record<string, Setting>
+
+const settings = reactive<AppSettings>({
+  address: 'Rajatorpantie 8',
+  ...window.vueAppData?.settings,
+})
+
+const jsonData = reactive({
+  geoResult: null as string | null,
+  buildingResult: null as string | null,
+  layerResult: null as string | null,
+  error: null as string | null,
+})
+
+const output = reactive({
+  technicalMax: {},
+  smartMax: {},
+  profileOptimum: {},
+  targetPower: {},
+  static: {},
+})
+
+const buildingData = reactive({
+  building: {},
+  sortedConfigs: [],
+})
+
+declare global {
+  interface Window {
+    vueAppData?: {
+      settings?: AppSettings
+    }
+  }
+}
+
+export function useAppState() {
+  return {
+    settings,
+    jsonData,
+    output,
+    buildingData,
+  }
+}
+
+===== END: src/useAppState.ts =====
+
+===== START: src/services/colors.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+export const binaryPalette = ['212121', 'B3E5FC']
+export const rainbowPalette = ['3949AB', '81D4FA', '66BB6A', 'FFE082', 'E53935']
+export const ironPalette = ['00000A', '91009C', 'E64616', 'FEB400', 'FFFFF6']
+export const sunlightPalette = ['212121', 'FFCA28']
+export const panelsPalette = ['E8EAF6', '1A237E']
+
+===== END: src/services/colors.ts =====
+
+===== START: src/services/useSolarApi.ts =====
+// src/composables/useSolarApi.ts
+import { ref } from 'vue'
+import { Loader } from '@googlemaps/js-api-loader'
+import { geocodeAddress } from '@/services/geocodingApi'
+import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
+import { getLayer } from '@/services/layer'
+import { useAppState } from '@/useAppState'
+import { calculateConfig, findConfigs } from '@/services/configUtils'
+
+const mapRef = ref<HTMLElement | null>(null)
+let map: google.maps.Map | null = null
+let overlay: google.maps.GroundOverlay | null = null
+
+const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
+
+const initializeMap = async (lat: number, lng: number) => {
+  const loader = new Loader({
+    apiKey,
+    version: 'weekly',
+    libraries: ['places'],
+  })
+  await loader.load()
+
+  if (!mapRef.value) return
+
+  map = new google.maps.Map(mapRef.value, {
+    center: { lat, lng },
+    zoom: 18,
+    mapTypeId: 'satellite',
+    tilt: 0,
+    heading: 0,
+    gestureHandling: 'greedy',
+    rotateControl: false,
+    mapId: '',
+  })
+}
+
+export const runSolarApi = async () => {
+  const { output, settings, jsonData, buildingData } = useAppState()
+
+  jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
+
+  const geo = await geocodeAddress(settings.address, apiKey)
+  await initializeMap(geo.lat, geo.lng)
+  jsonData.geoResult = JSON.stringify(geo, null, 2)
+
+  buildingData.building = await findClosestBuilding(
+    new google.maps.LatLng(geo.lat, geo.lng),
+    apiKey,
+  )
+  jsonData.buildingResult = JSON.stringify(buildingData.building, null, 2)
+  // TODO add data to output
+  output.static.areaMeters2 = buildingData.building.solarPotential?.buildingStats?.areaMeters2
+  output.static.totalEnergyPriceSntPerKwh =
+    Number(settings.energyPriceSnt.value) +
+    (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
+      (1 + Number(settings.vat.value) / 100)
+
+  // Sort the data by panelsCount in ascending order
+  buildingData.sortedConfigs = buildingData.building.solarPotential.solarPanelConfigs.sort(
+    (a, b) => a.panelsCount - b.panelsCount,
+  )
+
+  output.technicalMax = calculateConfig(
+    buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1],
+  )
+
+  findConfigs(false, false, false)
+
+  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
+  jsonData.layerResult = JSON.stringify(data, null, 2)
+
+  const layer = await getLayer('annualFlux', data, apiKey)
+  const canvas = layer.render(true, 0, 14)[0]
+
+  overlay?.setMap(null)
+  overlay = new google.maps.GroundOverlay(canvas.toDataURL(), layer.bounds)
+  overlay.setMap(map!)
+}
+
+export const useMapRef = () => mapRef
+
+===== END: src/services/useSolarApi.ts =====
+
+===== START: src/services/geocodingApi.ts =====
+export interface GeocodeLatLng {
+  lat: number
+  lng: number
+}
+
+export async function geocodeAddress(address: string, apiKey: string): Promise<GeocodeLatLng> {
+  const encoded = encodeURIComponent(address)
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encoded}&key=${apiKey}`
+
+  const response = await fetch(url)
+  const data = await response.json()
+
+  if (data.status !== 'OK') {
+    console.error('Geocoding error:', data)
+    throw new Error(data.error_message || 'Geocoding failed')
+  }
+
+  const location = data.results[0].geometry.location
+  return { lat: location.lat, lng: location.lng }
+}
+
+===== END: src/services/geocodingApi.ts =====
+
+===== START: src/services/configUtils.ts =====
+import { useAppState } from '@/useAppState'
+const { settings, output, buildingData } = useAppState()
+
+export function updatePanelConfig() {
+  findConfigs(false, true, false)
+}
+
+export function updateProfileConfig() {
+  findConfigs(true, false, false)
+}
+
+export function findConfigs(panelCount = true, energyTarget = true, smartMax = true) {
+  let foundSmartMax = smartMax
+  let foundTarget = panelCount
+  let foundEnergyTarget = energyTarget
+
+  let bestUnderEnergyConfig = null
+  let closestEnergyDiff = Infinity
+
+  for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
+    const prev = buildingData.sortedConfigs[i - 1]
+    const curr = buildingData.sortedConfigs[i]
+    const panelDiff = curr.panelsCount - prev.panelsCount
+    const energyGain = curr.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
+    const gainPerPanel = energyGain / panelDiff
+
+    // TODO add raja-arvo to settings
+    // 1. Smart max detection
+    if (!foundSmartMax && gainPerPanel < 320) {
+      output.smartMax = calculateConfig(prev)
+      console.log(
+        `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
+      )
+      foundSmartMax = true
+    }
+
+    // 2. Exact panel count match
+    if (!foundTarget && curr.panelsCount === settings.panelCount.value) {
+      output.targetPower = calculateConfig(curr)
+      console.log(`Found config with target panel count: ${settings.panelCount.value}`)
+      foundTarget = true
+    }
+
+    // 3. Closest under target energy
+    if (!foundEnergyTarget) {
+      if (curr.yearlyEnergyDcKwh <= settings.yearlyEnergyUsageKwh.value) {
+        const diff = settings.yearlyEnergyUsageKwh.value - curr.yearlyEnergyDcKwh
+        if (diff < closestEnergyDiff) {
+          closestEnergyDiff = diff
+          bestUnderEnergyConfig = curr
+        }
+      } else {
+        // crossed the threshold: finalize the best config found
+        if (bestUnderEnergyConfig !== null) {
+          output.profileOptimum = calculateConfig(bestUnderEnergyConfig)
+          console.log(
+            `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
+          )
+          foundEnergyTarget = true
+        }
+      }
+    }
+
+    // Stop when all three are found
+    if (foundSmartMax && foundTarget && foundEnergyTarget) {
+      break
+    }
+  }
+}
+
+export function calculateConfig(config) {
+  const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
+  const panelsCount = config.panelsCount
+  const capacityKwp = (panelsCount * 400) / 1000
+  const yearlyCarbonOffset = Number(settings.emissionsFactor.value) * yearlyEnergyDcKwh
+  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
+  const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
+  const maintenanceCostsPerLifeSpan =
+    installationCostEuros *
+    (Number(settings.maintenanceCostFactor.value) / 100) *
+    Number(settings.installationLifeSpan.value)
+
+  const totalEnergyDcKwhPerLifeSpan =
+    (yearlyEnergyDcKwh *
+      (1 - (1 - Number(settings.efficiencyDepreciationFactor.value) / 100)) **
+        Number(settings.installationLifeSpan.value)) /
+    (Number(settings.efficiencyDepreciationFactor.value) / 100)
+
+  const totalSavingsPerLifeSpan =
+    (((yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100) *
+      (1 -
+        ((1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
+          (1 + Number(settings.costIncreaseFactor.value) / 100)) **
+          Number(settings.installationLifeSpan.value))) /
+    (1 -
+      (1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
+        (1 + Number(settings.costIncreaseFactor.value) / 100))
+
+  const averageYearlySavingsEuros =
+    totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
+  const totalMaintenanceCostsPerLifeSpan =
+    Number(settings.installationCostPerKwp.value) *
+    capacityKwp *
+    (Number(settings.maintenanceCostFactor.value) / 100) *
+    Number(settings.installationLifeSpan.value)
+
+  return {
+    yearlyEnergyDcKwh,
+    panelsCount,
+    capacityKwp,
+    yearlyCarbonOffset,
+    savingsYear1,
+    installationCostEuros,
+    maintenanceCostsPerLifeSpan,
+    totalEnergyDcKwhPerLifeSpan,
+    totalSavingsPerLifeSpan,
+    averageYearlySavingsEuros,
+    totalMaintenanceCostsPerLifeSpan,
+  }
+}
+
+===== END: src/services/configUtils.ts =====
+
+===== START: src/services/visualize.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import type { GeoTiff } from './solar'
+
+// [START visualize_render_rgb]
+/**
+ * Renders an RGB GeoTiff image into an HTML canvas.
+ *
+ * The GeoTiff image must include 3 rasters (bands) which
+ * correspond to [Red, Green, Blue] in that order.
+ *
+ * @param  {GeoTiff} rgb   GeoTiff with RGB values of the image.
+ * @param  {GeoTiff} mask  Optional mask for transparency, defaults to opaque.
+ * @return {HTMLCanvasElement}  Canvas element with the rendered image.
+ */
+export function renderRGB(rgb: GeoTiff, mask?: GeoTiff): HTMLCanvasElement {
+  // Create an HTML canvas to draw the image.
+  // https://www.w3schools.com/tags/canvas_createimagedata.asp
+  const canvas = document.createElement('canvas')
+
+  // Set the canvas size to the mask size if it's available,
+  // otherwise set it to the RGB data layer size.
+  canvas.width = mask ? mask.width : rgb.width
+  canvas.height = mask ? mask.height : rgb.height
+
+  // Since the mask size can be different than the RGB data layer size,
+  // we calculate the "delta" between the RGB layer size and the canvas/mask
+  // size. For example, if the RGB layer size is the same as the canvas size,
+  // the delta is 1. If the RGB layer size is smaller than the canvas size,
+  // the delta would be greater than 1.
+  // This is used to translate the index from the canvas to the RGB layer.
+  const dw = rgb.width / canvas.width
+  const dh = rgb.height / canvas.height
+
+  // Get the canvas image data buffer.
+  const ctx = canvas.getContext('2d')!
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+  // Fill in every pixel in the canvas with the corresponding RGB layer value.
+  // Since Javascript doesn't support multidimensional arrays or tensors,
+  // everything is stored in flat arrays and we have to keep track of the
+  // indices for each row and column ourselves.
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      // RGB index keeps track of the RGB layer position.
+      // This is multiplied by the deltas since it might be a different
+      // size than the image size.
+      const rgbIdx = Math.floor(y * dh) * rgb.width + Math.floor(x * dw)
+      // Mask index keeps track of the mask layer position.
+      const maskIdx = y * canvas.width + x
+
+      // Image index keeps track of the canvas image position.
+      // HTML canvas expects a flat array with consecutive RGBA values.
+      // Each value in the image buffer must be between 0 and 255.
+      // The Alpha value is the transparency of that pixel,
+      // if a mask was not provided, we default to 255 which is opaque.
+      const imgIdx = y * canvas.width * 4 + x * 4
+      img.data[imgIdx + 0] = rgb.rasters[0][rgbIdx] // Red
+      img.data[imgIdx + 1] = rgb.rasters[1][rgbIdx] // Green
+      img.data[imgIdx + 2] = rgb.rasters[2][rgbIdx] // Blue
+      img.data[imgIdx + 3] = mask // Alpha
+        ? mask.rasters[0][maskIdx] * 255
+        : 255
+    }
+  }
+
+  // Draw the image data buffer into the canvas context.
+  ctx.putImageData(img, 0, 0)
+  return canvas
+}
+// [END visualize_render_rgb]
+
+// [START visualize_render_palette]
+/**
+ * Renders a single value GeoTiff image into an HTML canvas.
+ *
+ * The GeoTiff image must include 1 raster (band) which contains
+ * the values we want to display.
+ *
+ * @param  {GeoTiff}  data    GeoTiff with the values of interest.
+ * @param  {GeoTiff}  mask    Optional mask for transparency, defaults to opaque.
+ * @param  {string[]} colors  Hex color palette, defaults to ['000000', 'ffffff'].
+ * @param  {number}   min     Minimum value of the data range, defaults to 0.
+ * @param  {number}   max     Maximum value of the data range, defaults to 1.
+ * @param  {number}   index   Raster index for the data, defaults to 0.
+ * @return {HTMLCanvasElement}  Canvas element with the rendered image.
+ */
+export function renderPalette({
+  data,
+  mask,
+  colors,
+  min,
+  max,
+  index,
+}: {
+  data: GeoTiff
+  mask?: GeoTiff
+  colors?: string[]
+  min?: number
+  max?: number
+  index?: number
+}): HTMLCanvasElement {
+  // First create a palette from a list of hex colors.
+  const palette = createPalette(colors ?? ['000000', 'ffffff'])
+  // Normalize each value of our raster/band of interest into indices,
+  // such that they always map into a value within the palette.
+  const indices = data.rasters[index ?? 0]
+    .map((x) => normalize(x, max ?? 1, min ?? 0))
+    .map((x) => Math.round(x * (palette.length - 1)))
+  return renderRGB(
+    {
+      ...data,
+      // Map each index into the corresponding RGB values.
+      rasters: [
+        indices.map((i: number) => palette[i].r),
+        indices.map((i: number) => palette[i].g),
+        indices.map((i: number) => palette[i].b),
+      ],
+    },
+    mask,
+  )
+}
+
+/**
+ * Creates an {r, g, b} color palette from a hex list of colors.
+ *
+ * Each {r, g, b} value is a number between 0 and 255.
+ * The created palette is always of size 256, regardless of the number of
+ * hex colors passed in. Inbetween values are interpolated.
+ *
+ * @param  {string[]} hexColors  List of hex colors for the palette.
+ * @return {{r, g, b}[]}         RGB values for the color palette.
+ */
+export function createPalette(hexColors: string[]): { r: number; g: number; b: number }[] {
+  // Map each hex color into an RGB value.
+  const rgb = hexColors.map(colorToRGB)
+  // Create a palette with 256 colors derived from our rgb colors.
+  const size = 256
+  const step = (rgb.length - 1) / (size - 1)
+  return Array(size)
+    .fill(0)
+    .map((_, i) => {
+      // Get the lower and upper indices for each color.
+      const index = i * step
+      const lower = Math.floor(index)
+      const upper = Math.ceil(index)
+      // Interpolate between the colors to get the shades.
+      return {
+        r: lerp(rgb[lower].r, rgb[upper].r, index - lower),
+        g: lerp(rgb[lower].g, rgb[upper].g, index - lower),
+        b: lerp(rgb[lower].b, rgb[upper].b, index - lower),
+      }
+    })
+}
+
+/**
+ * Convert a hex color into an {r, g, b} color.
+ *
+ * @param  {string} color  Hex color like 0099FF or #0099FF.
+ * @return {{r, g, b}}     RGB values for that color.
+ */
+export function colorToRGB(color: string): { r: number; g: number; b: number } {
+  const hex = color.startsWith('#') ? color.slice(1) : color
+  return {
+    r: parseInt(hex.substring(0, 2), 16),
+    g: parseInt(hex.substring(2, 4), 16),
+    b: parseInt(hex.substring(4, 6), 16),
+  }
+}
+
+/**
+ * Normalizes a number to a given data range.
+ *
+ * @param  {number} x    Value of interest.
+ * @param  {number} max  Maximum value in data range, defaults to 1.
+ * @param  {number} min  Minimum value in data range, defaults to 0.
+ * @return {number}      Normalized value.
+ */
+export function normalize(x: number, max: number = 1, min: number = 0): number {
+  const y = (x - min) / (max - min)
+  return clamp(y, 0, 1)
+}
+
+/**
+ * Calculates the linear interpolation for a value within a range.
+ *
+ * @param  {number} x  Lower value in the range, when `t` is 0.
+ * @param  {number} y  Upper value in the range, when `t` is 1.
+ * @param  {number} t  "Time" between 0 and 1.
+ * @return {number}    Inbetween value for that "time".
+ */
+export function lerp(x: number, y: number, t: number): number {
+  return x + t * (y - x)
+}
+
+/**
+ * Clamps a value to always be within a range.
+ *
+ * @param  {number} x    Value to clamp.
+ * @param  {number} min  Minimum value in the range.
+ * @param  {number} max  Maximum value in the range.
+ * @return {number}      Clamped value.
+ */
+export function clamp(x: number, min: number, max: number): number {
+  return Math.min(Math.max(x, min), max)
+}
+// [END visualize_render_palette]
+
+export function rgbToColor({ r, g, b }: { r: number; g: number; b: number }): string {
+  const f = (x: number) => {
+    const hex = Math.round(x).toString(16)
+    return hex.length == 1 ? `0${hex}` : hex
+  }
+  return `#${f(r)}${f(g)}${f(b)}`
+}
+
+===== END: src/services/visualize.ts =====
+
+===== START: src/services/layer.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+import { binaryPalette, ironPalette, rainbowPalette, sunlightPalette } from './colors'
+import { downloadGeoTIFF, type DataLayersResponse, type LayerId, type Bounds } from './solar'
+import { renderPalette, renderRGB } from './visualize'
+
+export interface Palette {
+  colors: string[]
+  min: string
+  max: string
+}
+
+export interface Layer {
+  id: LayerId
+  render: (showRoofOnly: boolean, month: number, day: number) => HTMLCanvasElement[]
+  bounds: Bounds
+  palette?: Palette
+}
+
+export async function getLayer(
+  layerId: LayerId,
+  urls: DataLayersResponse,
+  googleMapsApiKey: string,
+): Promise<Layer> {
+  const get: Record<LayerId, () => Promise<Layer>> = {
+    mask: async () => {
+      const mask = await downloadGeoTIFF(urls.maskUrl, googleMapsApiKey)
+      const colors = binaryPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'No roof',
+          max: 'Roof',
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: mask,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+          }),
+        ],
+      }
+    },
+    dsm: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.dsmUrl, googleMapsApiKey),
+      ])
+      const sortedValues = Array.from(data.rasters[0]).sort((x, y) => x - y)
+      const minValue = sortedValues[0]
+      const maxValue = sortedValues.slice(-1)[0]
+      const colors = rainbowPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: `${minValue.toFixed(1)} m`,
+          max: `${maxValue.toFixed(1)} m`,
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: data,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+            min: sortedValues[0],
+            max: sortedValues.slice(-1)[0],
+          }),
+        ],
+      }
+    },
+    rgb: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.rgbUrl, googleMapsApiKey),
+      ])
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        render: (showRoofOnly) => [renderRGB(data, showRoofOnly ? mask : undefined)],
+      }
+    },
+    annualFlux: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.annualFluxUrl, googleMapsApiKey),
+      ])
+      const colors = ironPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shady',
+          max: 'Sunny',
+        },
+        render: (showRoofOnly) => [
+          renderPalette({
+            data: data,
+            mask: showRoofOnly ? mask : undefined,
+            colors: colors,
+            min: 0,
+            max: 1800,
+          }),
+        ],
+      }
+    },
+    monthlyFlux: async () => {
+      const [mask, data] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        downloadGeoTIFF(urls.monthlyFluxUrl, googleMapsApiKey),
+      ])
+      const colors = ironPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shady',
+          max: 'Sunny',
+        },
+        render: (showRoofOnly) =>
+          [...Array(12).keys()].map((month) =>
+            renderPalette({
+              data: data,
+              mask: showRoofOnly ? mask : undefined,
+              colors: colors,
+              min: 0,
+              max: 200,
+              index: month,
+            }),
+          ),
+      }
+    },
+    hourlyShade: async () => {
+      const [mask, ...months] = await Promise.all([
+        downloadGeoTIFF(urls.maskUrl, googleMapsApiKey),
+        ...urls.hourlyShadeUrls.map((url) => downloadGeoTIFF(url, googleMapsApiKey)),
+      ])
+      const colors = sunlightPalette
+      return {
+        id: layerId,
+        bounds: mask.bounds,
+        palette: {
+          colors: colors,
+          min: 'Shade',
+          max: 'Sun',
+        },
+        render: (showRoofOnly, month, day) =>
+          [...Array(24).keys()].map((hour) =>
+            renderPalette({
+              data: {
+                ...months[month],
+                rasters: months[month].rasters.map((values) =>
+                  values.map((x) => x & (1 << (day - 1))),
+                ),
+              },
+              mask: showRoofOnly ? mask : undefined,
+              colors: colors,
+              min: 0,
+              max: 1,
+              index: hour,
+            }),
+          ),
+      }
+    },
+  }
+  try {
+    return get[layerId]()
+  } catch (e) {
+    console.error(`Error getting layer: ${layerId}\n`, e)
+    throw e
+  }
+}
+
+===== END: src/services/layer.ts =====
+
+===== START: src/services/solar.ts =====
+/*
+ Copyright 2023 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+ */
+
+// [START solar_api_data_types]
+export interface DataLayersResponse {
+  imageryDate: Date
+  imageryProcessedDate: Date
+  dsmUrl: string
+  rgbUrl: string
+  maskUrl: string
+  annualFluxUrl: string
+  monthlyFluxUrl: string
+  hourlyShadeUrls: string[]
+  imageryQuality: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+export interface Bounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
+// https://developers.google.com/maps/documentation/solar/reference/rest/v1/buildingInsights/findClosest
+export interface BuildingInsightsResponse {
+  name: string
+  center: LatLng
+  boundingBox: LatLngBox
+  imageryDate: Date
+  imageryProcessedDate: Date
+  postalCode: string
+  administrativeArea: string
+  statisticalArea: string
+  regionCode: string
+  solarPotential: SolarPotential
+  imageryQuality: 'HIGH' | 'MEDIUM' | 'LOW'
+}
+
+export interface SolarPotential {
+  maxArrayPanelsCount: number
+  panelCapacityWatts: number
+  panelHeightMeters: number
+  panelWidthMeters: number
+  panelLifetimeYears: number
+  maxArrayAreaMeters2: number
+  maxSunshineHoursPerYear: number
+  carbonOffsetFactorKgPerMwh: number
+  wholeRoofStats: SizeAndSunshineStats
+  buildingStats: SizeAndSunshineStats
+  roofSegmentStats: RoofSegmentSizeAndSunshineStats[]
+  solarPanels: SolarPanel[]
+  solarPanelConfigs: SolarPanelConfig[]
+  financialAnalyses: object
+}
+
+export interface SizeAndSunshineStats {
+  areaMeters2: number
+  sunshineQuantiles: number[]
+  groundAreaMeters2: number
+}
+
+export interface RoofSegmentSizeAndSunshineStats {
+  pitchDegrees: number
+  azimuthDegrees: number
+  stats: SizeAndSunshineStats
+  center: LatLng
+  boundingBox: LatLngBox
+  planeHeightAtCenterMeters: number
+}
+
+export interface SolarPanel {
+  center: LatLng
+  orientation: 'LANDSCAPE' | 'PORTRAIT'
+  segmentIndex: number
+  yearlyEnergyDcKwh: number
+}
+
+export interface SolarPanelConfig {
+  panelsCount: number
+  yearlyEnergyDcKwh: number
+  roofSegmentSummaries: RoofSegmentSummary[]
+}
+
+export interface RoofSegmentSummary {
+  pitchDegrees: number
+  azimuthDegrees: number
+  panelsCount: number
+  yearlyEnergyDcKwh: number
+  segmentIndex: number
+}
+
+export interface LatLng {
+  latitude: number
+  longitude: number
+}
+
+export interface LatLngBox {
+  sw: LatLng
+  ne: LatLng
+}
+
+export interface Date {
+  year: number
+  month: number
+  day: number
+}
+
+export interface RequestError {
+  error: {
+    code: number
+    message: string
+    status: string
+  }
+}
+// [END solar_api_data_types]
+
+// https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers
+export type LayerId = 'mask' | 'dsm' | 'rgb' | 'annualFlux' | 'monthlyFlux' | 'hourlyShade'
+
+// [START solar_api_building_insights]
+/**
+ * Fetches the building insights information from the Solar API.
+ *   https://developers.google.com/maps/documentation/solar/building-insights
+ *
+ * @param  {LatLng} location      Point of interest as latitude longitude.
+ * @param  {string} apiKey        Google Cloud API key.
+ * @return {Promise<DataLayersResponse>}  Building Insights response.
+ */
+export async function findClosestBuilding(
+  location: google.maps.LatLng,
+  apiKey: string,
+): Promise<BuildingInsightsResponse> {
+  const args = {
+    'location.latitude': location.lat().toFixed(5),
+    'location.longitude': location.lng().toFixed(5),
+  }
+  console.log('GET buildingInsights\n', args)
+  const params = new URLSearchParams({ ...args, key: apiKey })
+  // https://developers.google.com/maps/documentation/solar/reference/rest/v1/buildingInsights/findClosest
+  return fetch(`https://solar.googleapis.com/v1/buildingInsights:findClosest?${params}`).then(
+    async (response) => {
+      const content = await response.json()
+      if (response.status != 200) {
+        console.error('findClosestBuilding\n', content)
+        throw content
+      }
+      console.log('buildingInsightsResponse', content)
+      return content
+    },
+  )
+}
+// [END solar_api_building_insights]
+
+// [START solar_api_data_layers]
+/**
+ * Fetches the data layers information from the Solar API.
+ *   https://developers.google.com/maps/documentation/solar/data-layers
+ *
+ * @param  {LatLng} location      Point of interest as latitude longitude.
+ * @param  {number} radiusMeters  Radius of the data layer size in meters.
+ * @param  {string} apiKey        Google Cloud API key.
+ * @return {Promise<DataLayersResponse>}  Data Layers response.
+ */
+export async function getDataLayerUrls(
+  location: LatLng,
+  radiusMeters: number,
+  apiKey: string,
+): Promise<DataLayersResponse> {
+  const args = {
+    'location.latitude': location.latitude.toFixed(5),
+    'location.longitude': location.longitude.toFixed(5),
+    radius_meters: radiusMeters.toString(),
+    // The Solar API always returns the highest quality imagery available.
+    // By default the API asks for HIGH quality, which means that HIGH quality isn't available,
+    // but there is an existing MEDIUM or LOW quality, it won't return anything.
+    // Here we ask for *at least* LOW quality, but if there's a higher quality available,
+    // the Solar API will return us the highest quality available.
+    required_quality: 'LOW',
+  }
+  console.log('GET dataLayers\n', args)
+  const params = new URLSearchParams({ ...args, key: apiKey })
+  // https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers/get
+  return fetch(`https://solar.googleapis.com/v1/dataLayers:get?${params}`).then(
+    async (response) => {
+      const content = await response.json()
+      if (response.status != 200) {
+        console.error('getDataLayerUrls\n', content)
+        throw content
+      }
+      console.log('dataLayersResponse', content)
+      return content
+    },
+  )
+}
+// [END solar_api_data_layers]
+
+// [START solar_api_data_layer_custom_type]
+export interface GeoTiff {
+  width: number
+  height: number
+  rasters: Array<number>[]
+  bounds: Bounds
+}
+// [END solar_api_data_layer_custom_type]
+
+// [START solar_api_download_geotiff]
+// npm install geotiff geotiff-geokeys-to-proj4 proj4
+
+import * as geotiff from 'geotiff'
+import * as geokeysToProj4 from 'geotiff-geokeys-to-proj4'
+import proj4 from 'proj4'
+
+/**
+ * Downloads the pixel values for a Data Layer URL from the Solar API.
+ *
+ * @param  {string} url        URL from the Data Layers response.
+ * @param  {string} apiKey     Google Cloud API key.
+ * @return {Promise<GeoTiff>}  Pixel values with shape and lat/lon bounds.
+ */
+export async function downloadGeoTIFF(url: string, apiKey: string): Promise<GeoTiff> {
+  console.log(`Downloading data layer: ${url}`)
+
+  // Include your Google Cloud API key in the Data Layers URL.
+  const solarUrl = url.includes('solar.googleapis.com') ? url + `&key=${apiKey}` : url
+  const response = await fetch(solarUrl)
+  if (response.status != 200) {
+    const error = await response.json()
+    console.error(`downloadGeoTIFF failed: ${url}\n`, error)
+    throw error
+  }
+
+  // Get the GeoTIFF rasters, which are the pixel values for each band.
+  const arrayBuffer = await response.arrayBuffer()
+  const tiff = await geotiff.fromArrayBuffer(arrayBuffer)
+  const image = await tiff.getImage()
+  const rasters = await image.readRasters()
+
+  // Reproject the bounding box into lat/lon coordinates.
+  const geoKeys = image.getGeoKeys()
+  const projObj = geokeysToProj4.toProj4(geoKeys)
+  const projection = proj4(projObj.proj4, 'WGS84')
+  const box = image.getBoundingBox()
+  const sw = projection.forward({
+    x: box[0] * projObj.coordinatesConversionParameters.x,
+    y: box[1] * projObj.coordinatesConversionParameters.y,
+  })
+  const ne = projection.forward({
+    x: box[2] * projObj.coordinatesConversionParameters.x,
+    y: box[3] * projObj.coordinatesConversionParameters.y,
+  })
+
+  return {
+    // Width and height of the data layer image in pixels.
+    // Used to know the row and column since Javascript
+    // stores the values as flat arrays.
+    width: rasters.width,
+    height: rasters.height,
+    // Each raster reprents the pixel values of each band.
+    // We convert them from `geotiff.TypedArray`s into plain
+    // Javascript arrays to make them easier to process.
+    rasters: [...Array(rasters.length).keys()].map((i) =>
+      Array.from(rasters[i] as geotiff.TypedArray),
+    ),
+    // The bounding box as a lat/lon rectangle.
+    bounds: {
+      north: ne.y,
+      south: sw.y,
+      east: ne.x,
+      west: sw.x,
+    },
+  }
+}
+// [END solar_api_download_geotiff]
+
+export function showLatLng(point: LatLng) {
+  return `(${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)})`
+}
+
+export function showDate(date: Date) {
+  return `${date.month}/${date.day}/${date.year}`
+}
+
+===== END: src/services/solar.ts =====
+

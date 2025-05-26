@@ -2,24 +2,28 @@
 import { ref } from 'vue'
 import { Loader } from '@googlemaps/js-api-loader'
 import { geocodeAddress } from '@/services/geocodingApi'
-import { findClosestBuilding, getDataLayerUrls } from '@/services/solar'
+import { downloadGeoTIFF, findClosestBuilding, getDataLayerUrls } from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { calculateConfig, findConfigs } from '@/services/configUtils'
+import { drawSolarPanels } from '@/services/drawSolarPanels'
 
-const mapRef = ref<HTMLElement | null>(null)
-let map: google.maps.Map | null = null
+export const mapRef = ref<HTMLElement | null>(null)
+export let map: google.maps.Map | null = null
+export let geometry: typeof google.maps.geometry
 let overlay: google.maps.GroundOverlay | null = null
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 
+const loader = new Loader({
+  apiKey,
+  version: 'weekly',
+  libraries: ['geometry'], // ensure 'geometry' is loaded
+})
+
 const initializeMap = async (lat: number, lng: number) => {
-  const loader = new Loader({
-    apiKey,
-    version: 'weekly',
-    libraries: ['places'],
-  })
   await loader.load()
+  geometry = google.maps.geometry
 
   if (!mapRef.value) return
 
@@ -66,8 +70,9 @@ export const runSolarApi = async () => {
   )
 
   findConfigs(false, false, false)
+  renderPanels(output.smartMax.panelsCount)
 
-  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 100, apiKey)
+  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 
   const layer = await getLayer('annualFlux', data, apiKey)
@@ -76,6 +81,42 @@ export const runSolarApi = async () => {
   overlay?.setMap(null)
   overlay = new google.maps.GroundOverlay(canvas.toDataURL(), layer.bounds)
   overlay.setMap(map!)
+
+  const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, apiKey)
+  const brightnessByMonth = monthlyFlux.rasters.map((raster) =>
+    raster.reduce((sum, value) => sum + value, 0),
+  )
+  const totalBrightness = brightnessByMonth.reduce((a, b) => a + b, 0)
+  const distribution = brightnessByMonth.map((value) => (value / totalBrightness) * 100)
+
+  output.monthlyDistribution = distribution
 }
 
 export const useMapRef = () => mapRef
+
+let currentPolygons: google.maps.Polygon[] = []
+
+export const renderPanels = (panelCount: number) => {
+  const { building, sortedConfigs } = useAppState().buildingData
+
+  if (!map || !geometry || sortedConfigs.length === 0) return
+
+  // Clear old polygons
+  currentPolygons.forEach((p) => p.setMap(null))
+  currentPolygons = []
+
+  const solarPotential = building.solarPotential
+  const panelConfig = sortedConfigs.find((c) => c.panelsCount === panelCount)
+
+  if (!panelConfig) return
+
+  currentPolygons = drawSolarPanels({
+    config: panelConfig,
+    solarPanels: solarPotential.solarPanels,
+    roofSegments: solarPotential.roofSegmentStats,
+    panelWidth: solarPotential.panelWidthMeters,
+    panelHeight: solarPotential.panelHeightMeters,
+    map,
+    geometry,
+  })
+}
