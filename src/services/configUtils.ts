@@ -98,11 +98,12 @@ export function calculateConfig(config) {
 
   const averageYearlySavingsEuros =
     totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
-  const totalMaintenanceCostsPerLifeSpan =
-    Number(settings.installationCostPerKwp.value) *
-    capacityKwp *
-    (Number(settings.maintenanceCostFactor.value) / 100) *
-    Number(settings.installationLifeSpan.value)
+
+  const totalFinanceCostsPerLifeSpan = ( Number(settings.loan?.value) *  (Number(settings.interestRate.value)/100) + Number(settings.loan?.value) / Number(settings.loanDurationYears?.value) * (Number(settings.interestRate.value)/100) ) / 2 *  Number(settings.loanDurationYears?.value)
+
+  const lcoeSntPerKwh = ( installationCostEuros + maintenanceCostsPerLifeSpan + totalFinanceCostsPerLifeSpan + (Number(settings.inverterReplacementCostFactor.value)/100) ) / totalEnergyDcKwhPerLifeSpan
+
+  const paybackYears = Number(settings.installationCostPerKwp.value) * capacityKwp / ( savingsYear1 - Number(settings.installationCostPerKwp.value) * capacityKwp * (Number(settings.maintenanceCostFactor.value)/100) )
 
   return {
     yearlyEnergyDcKwh,
@@ -115,6 +116,8 @@ export function calculateConfig(config) {
     totalEnergyDcKwhPerLifeSpan,
     totalSavingsPerLifeSpan,
     averageYearlySavingsEuros,
-    totalMaintenanceCostsPerLifeSpan,
+    totalFinanceCostsPerLifeSpan,
+    lcoeSntPerKwh,
+    paybackYears,
   }
 }
