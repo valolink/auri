@@ -39,6 +39,80 @@ const initializeMap = async (lat: number, lng: number) => {
   })
 }
 
+function isPointInPolygon(
+  point: google.maps.LatLngLiteral,
+  polygon: google.maps.LatLngLiteral[],
+): boolean {
+  const googlePolygon = new google.maps.Polygon({ paths: polygon })
+  return google.maps.geometry.poly.containsLocation(
+    new google.maps.LatLng(point.lat, point.lng),
+    googlePolygon,
+  )
+}
+
+function getLatLngForPixel(
+  x: number,
+  y: number,
+  bounds: any,
+  width: number,
+  height: number,
+): google.maps.LatLngLiteral {
+  const lat = bounds.north - (y / height) * (bounds.north - bounds.south)
+  const lng = bounds.west + (x / width) * (bounds.east - bounds.west)
+  return { lat, lng }
+}
+
+function getPanelPolygon(
+  panel: any,
+  azimuth: number,
+  width: number,
+  height: number,
+): google.maps.LatLngLiteral[] {
+  const w = width / 2
+  const h = height / 2
+  const orientation = panel.orientation === 'PORTRAIT' ? 90 : 0
+
+  const corners = [
+    { x: +w, y: +h },
+    { x: +w, y: -h },
+    { x: -w, y: -h },
+    { x: -w, y: +h },
+    { x: +w, y: +h },
+  ]
+
+  return corners.map(({ x, y }) =>
+    google.maps.geometry.spherical
+      .computeOffset(
+        { lat: panel.center.latitude, lng: panel.center.longitude },
+        Math.sqrt(x * x + y * y),
+        Math.atan2(y, x) * (180 / Math.PI) + orientation + azimuth,
+      )
+      .toJSON(),
+  )
+}
+
+function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiteral[]): number[] {
+  const width = layer.width
+  const height = layer.height
+  const results = new Array(12).fill(0)
+  const counts = new Array(12).fill(0)
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const latlng = getLatLngForPixel(x, y, layer.bounds, width, height)
+      if (isPointInPolygon(latlng, polygon)) {
+        for (let month = 0; month < 12; month++) {
+          const idx = y * width + x
+          results[month] += layer.rasters[month][idx]
+          counts[month] += 1
+        }
+      }
+    }
+  }
+
+  return results.map((sum, i) => sum / (counts[i] || 1)) // average irradiance per month
+}
+
 export const runSolarApi = async () => {
   const { output, settings, jsonData, buildingData } = useAppState()
 
@@ -90,6 +164,25 @@ export const runSolarApi = async () => {
   const distribution = brightnessByMonth.map((value) => (value / totalBrightness) * 100)
 
   output.monthlyDistribution = distribution
+
+  const bestPanel = buildingData.building.solarPotential.solarPanels.reduce((a, b) =>
+    a.yearlyEnergyDcKwh > b.yearlyEnergyDcKwh ? a : b,
+  )
+  const azimuth =
+    buildingData.building.solarPotential.roofSegmentStats[bestPanel.segmentIndex].azimuthDegrees
+
+  const panelPolygon = getPanelPolygon(
+    bestPanel,
+    azimuth,
+    buildingData.building.solarPotential.panelWidthMeters,
+    buildingData.building.solarPotential.panelHeightMeters,
+  )
+
+  const monthlyFluxValues = getMonthlyFluxForPanelArea(monthlyFlux, panelPolygon)
+  const total = monthlyFluxValues.reduce((a, b) => a + b, 0)
+  const bestPanelDistribution = monthlyFluxValues.map((v) => (v / total) * 100)
+
+  output.bestPanelMonthlyDistribution = bestPanelDistribution
 }
 
 export const useMapRef = () => mapRef
