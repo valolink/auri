@@ -14,11 +14,16 @@
       </n-form-item>
 
       <n-form-item :label="settings.calculationBasis.label">
-        <n-select
-          v-model:value="settings.calculationBasis.value"
-          :options="settings.calculationBasis.options"
-          :placeholder="settings.calculationBasis.description"
-        />
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <n-button
+            v-for="option in settings.calculationBasis.options"
+            :key="option.value"
+            :type="settings.calculationBasis.value === option.value ? 'primary' : 'default'"
+            @click="changeCalculationBasis(option.value)"
+          >
+            {{ option.label }}
+          </n-button>
+        </div>
       </n-form-item>
 
       <n-form-item :label="settings.powerConsumptionProfile.label">
@@ -140,6 +145,10 @@ const updateFromPanels = () => {
 
   updatePanelConfig()
   renderPanels(output.targetPower.panelsCount)
+}
+
+const changeCalculationBasis = (value) =>{
+  settings.calculationBasis.value = value
 }
 </script>
 
