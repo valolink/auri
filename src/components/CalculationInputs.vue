@@ -123,7 +123,7 @@ const updateFromPower = () => {
 
   settings.panelCount.value = closestCount
   updatePanelConfig()
-  renderPanels(output.targetPower.panelsCount)
+  renderPanels(output.active.panelsCount)
 }
 
 const updateFromPanels = () => {
@@ -144,11 +144,24 @@ const updateFromPanels = () => {
   settings.targetPower.value = parseFloat(((closestCount * panelCapacity) / 1000).toFixed(2))
 
   updatePanelConfig()
-  renderPanels(output.targetPower.panelsCount)
+  renderPanels(output.active.panelsCount)
 }
 
 const changeCalculationBasis = (value) =>{
   settings.calculationBasis.value = value
+  if(value == 'smartMax'){
+    output.active = output.smartMax
+    output.active.label = 'smartMax'
+    settings.panelCount.value = output.smartMax.panelsCount
+    settings.targetPower.value = output.smartMax.capacityKwp
+  } else if(value == 'technicalMax'){
+    output.active = output.technicalMax
+    output.active.label = 'technicalMax'
+    settings.panelCount.value = output.technicalMax.panelsCount
+    settings.targetPower.value = output.technicalMax.capacityKwp
+  } else {
+    output.active.label = 'optimized'
+  }
 }
 </script>
 

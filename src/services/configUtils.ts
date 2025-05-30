@@ -36,7 +36,7 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
 
     // 2. Exact panel count match
     if (!foundTarget && curr.panelsCount === settings.panelCount.value) {
-      output.targetPower = calculateConfig(curr)
+      output.active = calculateConfig(curr)
       console.log(`Found config with target panel count: ${settings.panelCount.value}`)
       foundTarget = true
     }
@@ -52,7 +52,7 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
       } else {
         // crossed the threshold: finalize the best config found
         if (bestUnderEnergyConfig !== null) {
-          output.profileOptimum = calculateConfig(bestUnderEnergyConfig)
+          output.active = calculateConfig(bestUnderEnergyConfig)
           console.log(
             `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
           )
@@ -63,6 +63,13 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
 
     // Stop when all three are found
     if (foundSmartMax && foundTarget && foundEnergyTarget) {
+      if(settings.panelCount.value == output.smartMax.panelsCount){
+        settings.calculationBasis.value = 'smartMax'
+        output.active.label = 'smartMax'
+      }else if(settings.panelCount.value == output.technicalMax.panelsCount){
+        settings.calculationBasis.value = 'technicalMax'
+        output.active.label = 'technicalMax'
+      }
       break
     }
   }

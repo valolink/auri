@@ -145,6 +145,11 @@ export const runSolarApi = async () => {
 
   findConfigs(false, false, false)
   renderPanels(output.smartMax.panelsCount)
+  settings.panelCount.value = output.smartMax.panelsCount
+  settings.targetPower.value = output.smartMax.capacityKwp
+  output.active = output.smartMax
+  output.active.label = 'smartMax'
+  settings.calculationBasis.value = 'smartMax'
 
   const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)

@@ -45,8 +45,7 @@ const jsonData = reactive({
 const output = reactive({
   technicalMax: {},
   smartMax: {},
-  profileOptimum: {},
-  targetPower: {},
+  active: {},
   static: {},
   monthlyDistribution: [] as number[],
   bestPanelMonthlyDistribution: [] as number[],
