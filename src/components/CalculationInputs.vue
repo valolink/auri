@@ -14,7 +14,7 @@
       </n-form-item>
 
       <n-form-item :label="settings.calculationBasis.label">
-        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
           <n-button
             v-for="option in settings.calculationBasis.options"
             :key="option.value"
@@ -124,6 +124,18 @@ const updateFromPower = () => {
   settings.panelCount.value = closestCount
   updatePanelConfig()
   renderPanels(output.active.panelsCount)
+
+  if (closestCount == output.smartMax?.panelsCount) {
+    settings.calculationBasis.value = 'smartMax'
+  } else if (closestCount == output.technicalMax?.panelsCount) {
+    settings.calculationBasis.value = 'technicalMax'
+  } else if (closestCount == output.optimized?.panelsCount) {
+    settings.calculationBasis.value = 'optimized'
+  } else {
+    settings.calculationBasis.value = 'targetPower'
+  }
+  console.log(output.smartMax?.panelsCount == closestCount)
+  console.log(closestCount)
 }
 
 const updateFromPanels = () => {
@@ -147,14 +159,14 @@ const updateFromPanels = () => {
   renderPanels(output.active.panelsCount)
 }
 
-const changeCalculationBasis = (value) =>{
+const changeCalculationBasis = (value) => {
   settings.calculationBasis.value = value
-  if(value == 'smartMax'){
+  if (value == 'smartMax') {
     output.active = output.smartMax
     output.active.label = 'smartMax'
     settings.panelCount.value = output.smartMax.panelsCount
     settings.targetPower.value = output.smartMax.capacityKwp
-  } else if(value == 'technicalMax'){
+  } else if (value == 'technicalMax') {
     output.active = output.technicalMax
     output.active.label = 'technicalMax'
     settings.panelCount.value = output.technicalMax.panelsCount
