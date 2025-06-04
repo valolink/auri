@@ -26,14 +26,14 @@
         </div>
       </n-form-item>
 
-      <n-form-item :label="settings.powerConsumptionProfile.label">
+      <n-form-item :label="settings.buildingType.label">
         <n-select
-          v-model:value="settings.powerConsumptionProfile.value"
-          :options="settings.powerConsumptionProfile.options"
-          :placeholder="settings.powerConsumptionProfile.description"
+          v-model:value="settings.buildingType.value"
+          :options="settings.buildingTypes.value"
+          @update:value="updateOptimized"
         />
       </n-form-item>
-
+      <n-tag style="margin-bottom: 20px" size="small">{{ settings.buildingType.value }}</n-tag>
       <n-form-item :label="settings.yearlyEnergyUsageKwh.label">
         <n-space vertical>
           <n-slider
@@ -41,8 +41,13 @@
             :min="0"
             :max="100000"
             :step="10"
+            @update:value="updateOptimized"
           />
-          <n-input-number v-model:value="settings.yearlyEnergyUsageKwh.value" :min="0" />
+          <n-input-number
+            v-model:value="settings.yearlyEnergyUsageKwh.value"
+            :min="0"
+            @update:value="updateOptimized"
+          />
         </n-space>
       </n-form-item>
 
@@ -98,10 +103,11 @@ import {
   NInputGroup,
   NSlider,
   NSpace,
+  NTag,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { runSolarApi, renderPanels } from '@/services/useSolarApi'
-import { updatePanelConfig } from '@/services/configUtils'
+import { calculateOptimized, updatePanelConfig } from '@/services/configUtils'
 import { computed } from 'vue'
 const { settings, output, buildingData } = useAppState()
 
@@ -136,6 +142,10 @@ const updateFromPower = () => {
   }
   console.log(output.smartMax?.panelsCount == closestCount)
   console.log(closestCount)
+}
+
+const updateOptimized = () => {
+  calculateOptimized()
 }
 
 const updateFromPanels = () => {

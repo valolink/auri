@@ -63,16 +63,29 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
 
     // Stop when all three are found
     if (foundSmartMax && foundTarget && foundEnergyTarget) {
-      if(settings.panelCount.value == output.smartMax.panelsCount){
+      if (settings.panelCount.value == output.smartMax.panelsCount) {
         settings.calculationBasis.value = 'smartMax'
         output.active.label = 'smartMax'
-      }else if(settings.panelCount.value == output.technicalMax.panelsCount){
+      } else if (settings.panelCount.value == output.technicalMax.panelsCount) {
         settings.calculationBasis.value = 'technicalMax'
         output.active.label = 'technicalMax'
       }
       break
     }
   }
+}
+
+export function calculateOptimized(config) {
+  const calculationMonth = 0
+  const minDiff = 100
+  for (let i = 0; i < 12; i++) {
+    const diff = Math.abs(settings.buildingType.value[i] * 100 - output.monthlyDistribution[i])
+    console.log(settings.buildingTypes.value[i])
+    if (diff < minDiff) {
+      calculationMonth = i
+    }
+  }
+  console.log(calculationMonth)
 }
 
 export function calculateConfig(config) {
@@ -106,11 +119,26 @@ export function calculateConfig(config) {
   const averageYearlySavingsEuros =
     totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
 
-  const totalFinanceCostsPerLifeSpan = ( Number(settings.loan?.value) *  (Number(settings.interestRate.value)/100) + Number(settings.loan?.value) / Number(settings.loanDurationYears?.value) * (Number(settings.interestRate.value)/100) ) / 2 *  Number(settings.loanDurationYears?.value)
+  const totalFinanceCostsPerLifeSpan =
+    ((Number(settings.loan?.value) * (Number(settings.interestRate.value) / 100) +
+      (Number(settings.loan?.value) / Number(settings.loanDurationYears?.value)) *
+        (Number(settings.interestRate.value) / 100)) /
+      2) *
+    Number(settings.loanDurationYears?.value)
 
-  const lcoeSntPerKwh = ( installationCostEuros + maintenanceCostsPerLifeSpan + totalFinanceCostsPerLifeSpan + (Number(settings.inverterReplacementCostFactor.value)/100) ) / totalEnergyDcKwhPerLifeSpan
+  const lcoeSntPerKwh =
+    (installationCostEuros +
+      maintenanceCostsPerLifeSpan +
+      totalFinanceCostsPerLifeSpan +
+      Number(settings.inverterReplacementCostFactor.value) / 100) /
+    totalEnergyDcKwhPerLifeSpan
 
-  const paybackYears = Number(settings.installationCostPerKwp.value) * capacityKwp / ( savingsYear1 - Number(settings.installationCostPerKwp.value) * capacityKwp * (Number(settings.maintenanceCostFactor.value)/100) )
+  const paybackYears =
+    (Number(settings.installationCostPerKwp.value) * capacityKwp) /
+    (savingsYear1 -
+      Number(settings.installationCostPerKwp.value) *
+        capacityKwp *
+        (Number(settings.maintenanceCostFactor.value) / 100))
 
   return {
     yearlyEnergyDcKwh,
