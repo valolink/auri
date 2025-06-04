@@ -76,16 +76,23 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
 }
 
 export function calculateOptimized(config) {
-  const calculationMonth = 0
-  const minDiff = 100
+  let calculationMonth = 0
+  let minDiff = 100
+  const profile = JSON.parse(settings.buildingType.value)
+  console.log('profile', profile)
   for (let i = 0; i < 12; i++) {
-    const diff = Math.abs(settings.buildingType.value[i] * 100 - output.monthlyDistribution[i])
-    console.log(settings.buildingTypes.value[i])
+    const diff = profile[i] * 100 - Number(output.monthlyDistribution[i])
+
+    console.log(i, 'profile[i]', profile[i] * 100)
+    console.log(i, 'output.monthlyDistribution ', Number(output.monthlyDistribution[i]))
+    console.log('diff ', i, diff)
     if (diff < minDiff) {
+      minDiff = diff
       calculationMonth = i
     }
   }
   console.log(calculationMonth)
+  output.calculationMonth = calculationMonth
 }
 
 export function calculateConfig(config) {
