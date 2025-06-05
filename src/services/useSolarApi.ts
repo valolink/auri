@@ -5,7 +5,6 @@ import { geocodeAddress } from '@/services/geocodingApi'
 import { downloadGeoTIFF, findClosestBuilding, getDataLayerUrls } from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
-import { calculateConfig, findConfigs } from '@/services/configUtils'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
 
 const { output, input, settings, jsonData, buildingData } = useAppState()
@@ -115,10 +114,14 @@ function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiter
   return results.map((sum, i) => sum / (counts[i] || 1)) // average irradiance per month
 }
 
-export const runSolarApi = async () => {
+export const getGeo = async () => {
+  const geo = await geocodeAddress(input.address, apiKey)
+  return geo
+}
+
+export const getBuildingData = async (geo) => {
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-  const geo = await geocodeAddress(input.address, apiKey)
   await initializeMap(geo.lat, geo.lng)
   jsonData.geoResult = JSON.stringify(geo, null, 2)
 
@@ -127,7 +130,6 @@ export const runSolarApi = async () => {
     apiKey,
   )
   jsonData.buildingResult = JSON.stringify(buildingData.building, null, 2)
-  // TODO add data to output
   output.static.areaMeters2 = buildingData.building.solarPotential?.buildingStats?.areaMeters2
   output.static.totalEnergyPriceSntPerKwh =
     Number(settings.energyPriceSnt.value) +
@@ -138,19 +140,9 @@ export const runSolarApi = async () => {
   buildingData.sortedConfigs = buildingData.building.solarPotential.solarPanelConfigs.sort(
     (a, b) => a.panelsCount - b.panelsCount,
   )
+}
 
-  output.technicalMax = calculateConfig(
-    buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1],
-  )
-
-  findConfigs(false, false, false)
-  renderPanels(output.smartMax.panelsCount)
-  settings.panelCount.value = output.smartMax.panelsCount
-  settings.targetPower.value = output.smartMax.capacityKwp
-  output.active = output.smartMax
-  input.calculationBasis.value = 'smartMax'
-  output.calculationBasis.value = 'smartMax'
-
+export const getLayerData = async (geo) => {
   const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 
@@ -194,7 +186,7 @@ export const useMapRef = () => mapRef
 
 let currentPolygons: google.maps.Polygon[] = []
 
-export const renderPanels = (panelCount: number = input.panelsCount?.value) => {
+export const renderPanels = (panelCount: number = input.panelCount?.value) => {
   const { building, sortedConfigs } = buildingData
   if (!map || !geometry || sortedConfigs.length === 0) return
 

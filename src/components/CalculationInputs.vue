@@ -9,7 +9,7 @@
             placeholder="Syötä osoite"
             :style="{ width: '75%' }"
           />
-          <n-button type="primary" @click="runSolarApi">Hae</n-button>
+          <n-button type="primary" @click="runSearch">Hae</n-button>
         </n-input-group>
       </n-form-item>
 
@@ -19,7 +19,7 @@
             v-for="option in settings.calculationBasis.options"
             :key="option.value"
             :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
-            @click="changeCalculationBasis(option)"
+            @click="updateCalculationBasis(option)"
           >
             {{ option.label }}
           </n-button>
@@ -106,12 +106,29 @@ import {
   NTag,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
-import { runSolarApi, renderPanels } from '@/services/useSolarApi'
-import { calculateOptimized, updatePanelConfig } from '@/services/configUtils'
+import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { computed } from 'vue'
 const { settings, input, output, buildingData } = useAppState()
+import {
+  calculateConfig,
+  findOptimized,
+  findSmartMax,
+  findTarget,
+  findTechnicalMax,
+} from '@/services/configUtils'
 
 const panelCapacity = 400 // watts per panel
+
+const runSearch = async () => {
+  const geo = await getGeo()
+  await getBuildingData(geo)
+  output.technicalMax = calculateConfig(findTechnicalMax())
+  output.smartMax = calculateConfig(findSmartMax())
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'smartMax'),
+  )
+  getLayerData(geo)
+}
 
 const validPanelCounts = computed(
   () => buildingData?.sortedConfigs?.map((config) => config.panelsCount) || [],
@@ -128,24 +145,9 @@ const updateFromPower = () => {
   )
 
   input.panelCount.value = closestCount
-  updatePanelConfig()
-  renderPanels()
-
-  if (closestCount == output.smartMax?.panelsCount) {
-    input.calculationBasis.value = 'smartMax'
-  } else if (closestCount == output.technicalMax?.panelsCount) {
-    input.calculationBasis.value = 'technicalMax'
-  } else if (closestCount == output.optimized?.panelsCount) {
-    input.calculationBasis.value = 'optimized'
-  } else {
-    input.calculationBasis.value = 'targetPower'
-  }
-  console.log(output.smartMax?.panelsCount == closestCount)
-  console.log(closestCount)
-}
-
-const updateOptimized = () => {
-  calculateOptimized()
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'targetPower'),
+  )
 }
 
 const updateFromPanels = () => {
@@ -164,28 +166,31 @@ const updateFromPanels = () => {
 
   // Update corresponding power
   input.targetPower.value = parseFloat(((closestCount * panelCapacity) / 1000).toFixed(2))
-
-  updatePanelConfig()
-  renderPanels()
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'targetPower'),
+  )
 }
 
-const changeCalculationBasis = (option) => {
-  console.log('option', typeof option.value)
+const updateCalculationBasis = (option) => {
   input.calculationBasis = option
-  if (option.value == 'smartMax') {
-    output.active = output.smartMax
-    input.panelCount.value = output.smartMax.panelsCount
-    input.targetPower.value = output.smartMax.capacityKwp
-  } else if (output.value == 'technicalMax') {
-    output.active = output.technicalMax
-    input.panelCount.value = output.technicalMax.panelsCount
-    input.targetPower.value = output.technicalMax.capacityKwp
-  } else if (output.value == 'optimized') {
-  } else {
-    input.panelCount.value = 10
-    updateFromPanels()
-  }
   output.calculationBasis = option
+  if (option.value == 'smartMax') {
+    const smartMax = calculateConfig(findSmartMax())
+    output.active = smartMax
+    input.panelCount.value = smartMax.panelsCount
+    input.targetPower.value = parseFloat(((smartMax.panelsCount * panelCapacity) / 1000).toFixed(2))
+  } else if (option.value == 'technicalMax') {
+    const technicalMax = calculateConfig(findTechnicalMax())
+    output.active = technicalMax
+    input.panelCount.value = technicalMax.panelsCount
+    input.targetPower.value = parseFloat(
+      ((technicalMax.panelsCount * panelCapacity) / 1000).toFixed(2),
+    )
+  } else if (option.value == 'optimized') {
+    output.active = calculateConfig(findOptimized())
+  } else {
+    output.active = calculateConfig(findTarget())
+  }
   renderPanels()
 }
 </script>

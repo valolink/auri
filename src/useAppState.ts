@@ -41,7 +41,7 @@ const jsonData = reactive({
   error: null as string | null,
 })
 
-const inputReference = {
+const inputRef = {
   address: 'Rajatorpantie 8',
   calculationBasis:
     window.vueAppData?.settings.calculationBasis.options.find(
@@ -55,7 +55,7 @@ const inputReference = {
   buildingType: window.vueAppData?.settings.buildingType,
 }
 
-const input = reactive(structuredClone(inputReference))
+const input = reactive(structuredClone(inputRef))
 
 const output = reactive({
   technicalMax: {},
@@ -63,7 +63,7 @@ const output = reactive({
   active: {},
   static: {},
   calculationBasis: {
-    name: null as string | null,
+    label: null as string | null,
     value: null as string | null,
   },
   monthlyDistribution: [] as number[],

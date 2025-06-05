@@ -1,22 +1,11 @@
 import { useAppState } from '@/useAppState'
-const { settings, output, buildingData } = useAppState()
+const { settings, input, output, buildingData } = useAppState()
 
-export function updatePanelConfig() {
-  findConfigs(false, true, false)
+export function findTechnicalMax() {
+  return buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1]
 }
 
-export function updateProfileConfig() {
-  findConfigs(true, false, false)
-}
-
-export function findConfigs(panelCount = true, energyTarget = true, smartMax = true) {
-  let foundSmartMax = smartMax
-  let foundTarget = panelCount
-  let foundEnergyTarget = energyTarget
-
-  let bestUnderEnergyConfig = null
-  let closestEnergyDiff = Infinity
-
+export function findSmartMax() {
   for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
     const prev = buildingData.sortedConfigs[i - 1]
     const curr = buildingData.sortedConfigs[i]
@@ -26,62 +15,42 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
 
     // TODO add raja-arvo to settings
     // 1. Smart max detection
-    if (!foundSmartMax && gainPerPanel < 320) {
-      output.smartMax = calculateConfig(prev)
+    if (gainPerPanel < 320) {
       console.log(
         `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
       )
-      foundSmartMax = true
-    }
-
-    // 2. Exact panel count match
-    if (!foundTarget && curr.panelsCount === settings.panelCount.value) {
-      output.active = calculateConfig(curr)
-      console.log(`Found config with target panel count: ${settings.panelCount.value}`)
-      foundTarget = true
-    }
-
-    // 3. Closest under target energy
-    if (!foundEnergyTarget) {
-      if (curr.yearlyEnergyDcKwh <= settings.yearlyEnergyUsageKwh.value) {
-        const diff = settings.yearlyEnergyUsageKwh.value - curr.yearlyEnergyDcKwh
-        if (diff < closestEnergyDiff) {
-          closestEnergyDiff = diff
-          bestUnderEnergyConfig = curr
-        }
-      } else {
-        // crossed the threshold: finalize the best config found
-        if (bestUnderEnergyConfig !== null) {
-          output.active = calculateConfig(bestUnderEnergyConfig)
-          console.log(
-            `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
-          )
-          foundEnergyTarget = true
-        }
-      }
-    }
-
-    // Stop when all three are found
-    if (foundSmartMax && foundTarget && foundEnergyTarget) {
-      if (settings.panelCount.value == output.smartMax.panelsCount) {
-        settings.calculationBasis.value = 'smartMax'
-        output.calculationBasis.name = 'Teho-optimoitu'
-        output.calculationBasis.value = settings.calculationBasis.value
-      } else if (settings.panelCount.value == output.technicalMax.panelsCount) {
-        settings.calculationBasis.value = 'technicalMax'
-        output.calculationBasis.name = 'Tekninen maksimi'
-        output.calculationBasis.value = settings.calculationBasis.value
-      } else{
-        settings.calculationBasis.value = 'targetPower'
-        output.calculationBasis.name = 'Tavoiteteho'
-        output.calculationBasis.value = settings.calculationBasis.value
-      }
-      break
+      return prev
     }
   }
 }
 
-export function calculateOptimized(config) {
+export function findTarget() {
+  let bestUnderEnergyConfig = null
+  let closestEnergyDiff = Infinity
+
+  for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
+    const curr = buildingData.sortedConfigs[i]
+
+    // Closest under target energy
+    if (curr.yearlyEnergyDcKwh <= input.yearlyEnergyUsageKwh.value) {
+      const diff = input.yearlyEnergyUsageKwh.value - curr.yearlyEnergyDcKwh
+      if (diff < closestEnergyDiff) {
+        closestEnergyDiff = diff
+        bestUnderEnergyConfig = curr
+      }
+    } else {
+      // crossed the threshold: finalize the best config found
+      if (bestUnderEnergyConfig !== null) {
+        console.log(
+          `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
+        )
+        return bestUnderEnergyConfig
+      }
+    }
+  }
+}
+
+export function findOptimized() {
   let calculationMonth = 0
   let minDiff = 100
   const profile = JSON.parse(settings.buildingType.value)
