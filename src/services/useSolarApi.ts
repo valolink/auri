@@ -8,6 +8,8 @@ import { useAppState } from '@/useAppState'
 import { calculateConfig, findConfigs } from '@/services/configUtils'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
 
+const { output, input, settings, jsonData, buildingData } = useAppState()
+
 export const mapRef = ref<HTMLElement | null>(null)
 export let map: google.maps.Map | null = null
 export let geometry: typeof google.maps.geometry
@@ -114,11 +116,9 @@ function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiter
 }
 
 export const runSolarApi = async () => {
-  const { output, settings, jsonData, buildingData } = useAppState()
-
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-  const geo = await geocodeAddress(settings.address, apiKey)
+  const geo = await geocodeAddress(input.address, apiKey)
   await initializeMap(geo.lat, geo.lng)
   jsonData.geoResult = JSON.stringify(geo, null, 2)
 
@@ -148,8 +148,8 @@ export const runSolarApi = async () => {
   settings.panelCount.value = output.smartMax.panelsCount
   settings.targetPower.value = output.smartMax.capacityKwp
   output.active = output.smartMax
-  settings.calculationBasis.value = 'smartMax'
-  output.calculationBasis.value = settings.calculationBasis.value
+  input.calculationBasis.value = 'smartMax'
+  output.calculationBasis.value = 'smartMax'
 
   const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)
@@ -194,9 +194,8 @@ export const useMapRef = () => mapRef
 
 let currentPolygons: google.maps.Polygon[] = []
 
-export const renderPanels = (panelCount: number) => {
-  const { building, sortedConfigs } = useAppState().buildingData
-
+export const renderPanels = (panelCount: number = input.panelsCount?.value) => {
+  const { building, sortedConfigs } = buildingData
   if (!map || !geometry || sortedConfigs.length === 0) return
 
   // Clear old polygons

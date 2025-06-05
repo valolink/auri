@@ -3,6 +3,9 @@
     <p>Output:</p>
     <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed />
 
+    <p>Input:</p>
+    <json-viewer v-if="input" :value="input" :expand-depth="1" copyable boxed />
+
     <p>Settings:</p>
     <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
 
@@ -43,5 +46,5 @@ import { useAppState } from '@/useAppState'
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-const { output, settings, jsonData } = useAppState()
+const { output, input, settings, jsonData } = useAppState()
 </script>

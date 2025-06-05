@@ -31,7 +31,6 @@ type Setting = SelectSetting | CheckboxSetting | NumberSetting | TextSetting
 export type AppSettings = Record<string, Setting>
 
 const settings = reactive<AppSettings>({
-  address: 'Rajatorpantie 8',
   ...window.vueAppData?.settings,
 })
 
@@ -42,14 +41,30 @@ const jsonData = reactive({
   error: null as string | null,
 })
 
+const inputReference = {
+  address: 'Rajatorpantie 8',
+  calculationBasis:
+    window.vueAppData?.settings.calculationBasis.options.find(
+      // (option) => option.value === window.vueAppData?.settings.calculationBasis.value,
+      (option) => option.value === 'targetPower',
+    ) || null,
+  buildingType: window.vueAppData?.settings.buildingType,
+  targetPower: window.vueAppData?.settings.targetPower,
+  panelCount: window.vueAppData?.settings.panelCount,
+  yearlyEnergyUsageKwh: window.vueAppData?.settings.yearlyEnergyUsageKwh,
+  buildingType: window.vueAppData?.settings.buildingType,
+}
+
+const input = reactive(structuredClone(inputReference))
+
 const output = reactive({
   technicalMax: {},
   smartMax: {},
   active: {},
   static: {},
   calculationBasis: {
-    name: 'Teho-optimoitu',
-    value: 'smartMax'
+    name: null as string | null,
+    value: null as string | null,
   },
   monthlyDistribution: [] as number[],
   bestPanelMonthlyDistribution: [] as number[],
@@ -73,6 +88,7 @@ export function useAppState() {
   return {
     settings,
     jsonData,
+    input,
     output,
     buildingData,
   }

@@ -4,7 +4,7 @@
       <n-form-item label="Osoite">
         <n-input-group>
           <n-input
-            v-model:value="settings.address"
+            v-model:value="input.address"
             type="text"
             placeholder="Syötä osoite"
             :style="{ width: '75%' }"
@@ -18,50 +18,50 @@
           <n-button
             v-for="option in settings.calculationBasis.options"
             :key="option.value"
-            :type="settings.calculationBasis.value === option.value ? 'primary' : 'default'"
-            @click="changeCalculationBasis(option.value)"
+            :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
+            @click="changeCalculationBasis(option)"
           >
             {{ option.label }}
           </n-button>
         </div>
       </n-form-item>
 
-      <n-form-item :label="settings.buildingType.label">
+      <n-form-item :label="input.buildingType.label">
         <n-select
-          v-model:value="settings.buildingType.value"
+          v-model:value="input.buildingType.value"
           :options="settings.buildingTypes.value"
           @update:value="updateOptimized"
         />
       </n-form-item>
-      <n-tag style="margin-bottom: 20px" size="small">{{ settings.buildingType.value }}</n-tag>
-      <n-form-item :label="settings.yearlyEnergyUsageKwh.label">
+      <n-tag style="margin-bottom: 20px" size="small">{{ input.buildingType.value }}</n-tag>
+      <n-form-item :label="input.yearlyEnergyUsageKwh.label">
         <n-space vertical>
           <n-slider
-            v-model:value="settings.yearlyEnergyUsageKwh.value"
+            v-model:value="input.yearlyEnergyUsageKwh.value"
             :min="0"
             :max="100000"
             :step="10"
             @update:value="updateOptimized"
           />
           <n-input-number
-            v-model:value="settings.yearlyEnergyUsageKwh.value"
+            v-model:value="input.yearlyEnergyUsageKwh.value"
             :min="0"
             @update:value="updateOptimized"
           />
         </n-space>
       </n-form-item>
 
-      <n-form-item :label="settings.targetPower.label">
+      <n-form-item :label="input.targetPower.label">
         <n-space vertical>
           <n-slider
-            v-model:value="settings.targetPower.value"
+            v-model:value="input.targetPower.value"
             :min="0"
             :max="output.technicalMax?.capacityKwp"
             :step="1"
             @update:value="updateFromPower"
           />
           <n-input-number
-            v-model:value="settings.targetPower.value"
+            v-model:value="input.targetPower.value"
             :min="0"
             :max="output.technicalMax?.capacityKwp"
             :step="0.1"
@@ -70,17 +70,17 @@
         </n-space>
       </n-form-item>
 
-      <n-form-item :label="settings.panelCount.label">
+      <n-form-item :label="input.panelCount.label">
         <n-space vertical>
           <n-slider
-            v-model:value="settings.panelCount.value"
+            v-model:value="input.panelCount.value"
             :min="1"
             :max="output.technicalMax?.panelsCount"
             :step="1"
             @update:value="updateFromPanels"
           />
           <n-input-number
-            v-model:value="settings.panelCount.value"
+            v-model:value="input.panelCount.value"
             :min="1"
             :max="output.technicalMax?.panelsCount"
             :step="5"
@@ -109,7 +109,7 @@ import { useAppState } from '@/useAppState'
 import { runSolarApi, renderPanels } from '@/services/useSolarApi'
 import { calculateOptimized, updatePanelConfig } from '@/services/configUtils'
 import { computed } from 'vue'
-const { settings, output, buildingData } = useAppState()
+const { settings, input, output, buildingData } = useAppState()
 
 const panelCapacity = 400 // watts per panel
 
@@ -118,27 +118,27 @@ const validPanelCounts = computed(
 )
 
 const updateFromPower = () => {
-  if (!settings.targetPower || !settings.panelCount || !validPanelCounts.value.length) return
+  if (!input.targetPower || !input.panelCount || !validPanelCounts.value.length) return
 
-  const estimatedCount = Math.round((settings.targetPower.value * 1000) / panelCapacity)
+  const estimatedCount = Math.round((input.targetPower.value * 1000) / panelCapacity)
 
   // Snap to closest valid panel count
   const closestCount = validPanelCounts.value.reduce((prev, curr) =>
     Math.abs(curr - estimatedCount) < Math.abs(prev - estimatedCount) ? curr : prev,
   )
 
-  settings.panelCount.value = closestCount
+  input.panelCount.value = closestCount
   updatePanelConfig()
-  renderPanels(output.active.panelsCount)
+  renderPanels()
 
   if (closestCount == output.smartMax?.panelsCount) {
-    settings.calculationBasis.value = 'smartMax'
+    input.calculationBasis.value = 'smartMax'
   } else if (closestCount == output.technicalMax?.panelsCount) {
-    settings.calculationBasis.value = 'technicalMax'
+    input.calculationBasis.value = 'technicalMax'
   } else if (closestCount == output.optimized?.panelsCount) {
-    settings.calculationBasis.value = 'optimized'
+    input.calculationBasis.value = 'optimized'
   } else {
-    settings.calculationBasis.value = 'targetPower'
+    input.calculationBasis.value = 'targetPower'
   }
   console.log(output.smartMax?.panelsCount == closestCount)
   console.log(closestCount)
@@ -149,9 +149,9 @@ const updateOptimized = () => {
 }
 
 const updateFromPanels = () => {
-  if (!settings.panelCount || !settings.targetPower || !validPanelCounts.value.length) return
+  if (!input.panelCount || !input.targetPower || !validPanelCounts.value.length) return
 
-  const enteredCount = settings.panelCount.value
+  const enteredCount = input.panelCount.value
 
   // Snap to closest valid count
   const closestCount = validPanelCounts.value.reduce((prev, curr) =>
@@ -159,42 +159,34 @@ const updateFromPanels = () => {
   )
 
   if (closestCount !== enteredCount) {
-    settings.panelCount.value = closestCount
+    input.panelCount.value = closestCount
   }
 
   // Update corresponding power
-  settings.targetPower.value = parseFloat(((closestCount * panelCapacity) / 1000).toFixed(2))
+  input.targetPower.value = parseFloat(((closestCount * panelCapacity) / 1000).toFixed(2))
 
   updatePanelConfig()
-  renderPanels(output.active.panelsCount)
+  renderPanels()
 }
 
-const changeCalculationBasis = (value) => {
-  settings.calculationBasis.value = value
-  if (value == 'smartMax') {
+const changeCalculationBasis = (option) => {
+  console.log('option', typeof option.value)
+  input.calculationBasis = option
+  if (option.value == 'smartMax') {
     output.active = output.smartMax
-    output.calculationBasis.name = 'Teho-optimoitu'
-    output.calculationBasis.value = value
-    settings.panelCount.value = output.smartMax.panelsCount
-    settings.targetPower.value = output.smartMax.capacityKwp
-    renderPanels(output.active.panelsCount)
-  } else if (value == 'technicalMax') {
+    input.panelCount.value = output.smartMax.panelsCount
+    input.targetPower.value = output.smartMax.capacityKwp
+  } else if (output.value == 'technicalMax') {
     output.active = output.technicalMax
-    output.calculationBasis.name = 'Tekninen maksimi'
-    output.calculationBasis.value = value
-    settings.panelCount.value = output.technicalMax.panelsCount
-    settings.targetPower.value = output.technicalMax.capacityKwp
-    renderPanels(output.active.panelsCount)
-  } else if (value == 'optimized') {
-    output.calculationBasis.name = 'Kulutusoptimoitu'
-    output.calculationBasis.value = value
-    renderPanels(output.active.panelsCount)
+    input.panelCount.value = output.technicalMax.panelsCount
+    input.targetPower.value = output.technicalMax.capacityKwp
+  } else if (output.value == 'optimized') {
   } else {
-    output.calculationBasis.name = 'Tavoiteteho'
-    output.calculationBasis.value = value
-    settings.panelCount.value = 10
+    input.panelCount.value = 10
     updateFromPanels()
   }
+  output.calculationBasis = option
+  renderPanels()
 }
 </script>
 
