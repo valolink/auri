@@ -173,16 +173,27 @@ const changeCalculationBasis = (value) => {
   settings.calculationBasis.value = value
   if (value == 'smartMax') {
     output.active = output.smartMax
-    output.active.label = 'smartMax'
+    output.calculationBasis.name = 'Teho-optimoitu'
+    output.calculationBasis.value = value
     settings.panelCount.value = output.smartMax.panelsCount
     settings.targetPower.value = output.smartMax.capacityKwp
+    renderPanels(output.active.panelsCount)
   } else if (value == 'technicalMax') {
     output.active = output.technicalMax
-    output.active.label = 'technicalMax'
+    output.calculationBasis.name = 'Tekninen maksimi'
+    output.calculationBasis.value = value
     settings.panelCount.value = output.technicalMax.panelsCount
     settings.targetPower.value = output.technicalMax.capacityKwp
+    renderPanels(output.active.panelsCount)
+  } else if (value == 'optimized') {
+    output.calculationBasis.name = 'Kulutusoptimoitu'
+    output.calculationBasis.value = value
+    renderPanels(output.active.panelsCount)
   } else {
-    output.active.label = 'optimized'
+    output.calculationBasis.name = 'Tavoiteteho'
+    output.calculationBasis.value = value
+    settings.panelCount.value = 10
+    updateFromPanels()
   }
 }
 </script>

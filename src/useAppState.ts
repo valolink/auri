@@ -47,6 +47,10 @@ const output = reactive({
   smartMax: {},
   active: {},
   static: {},
+  calculationBasis: {
+    name: 'Teho-optimoitu',
+    value: 'smartMax'
+  },
   monthlyDistribution: [] as number[],
   bestPanelMonthlyDistribution: [] as number[],
   calculationMonth: null as number,

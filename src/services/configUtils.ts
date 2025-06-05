@@ -65,10 +65,16 @@ export function findConfigs(panelCount = true, energyTarget = true, smartMax = t
     if (foundSmartMax && foundTarget && foundEnergyTarget) {
       if (settings.panelCount.value == output.smartMax.panelsCount) {
         settings.calculationBasis.value = 'smartMax'
-        output.active.label = 'smartMax'
+        output.calculationBasis.name = 'Teho-optimoitu'
+        output.calculationBasis.value = settings.calculationBasis.value
       } else if (settings.panelCount.value == output.technicalMax.panelsCount) {
         settings.calculationBasis.value = 'technicalMax'
-        output.active.label = 'technicalMax'
+        output.calculationBasis.name = 'Tekninen maksimi'
+        output.calculationBasis.value = settings.calculationBasis.value
+      } else{
+        settings.calculationBasis.value = 'targetPower'
+        output.calculationBasis.name = 'Tavoiteteho'
+        output.calculationBasis.value = settings.calculationBasis.value
       }
       break
     }
