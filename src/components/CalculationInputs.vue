@@ -12,82 +12,83 @@
           <n-button type="primary" @click="runSearch">Hae</n-button>
         </n-input-group>
       </n-form-item>
+      <div v-if="output.technicalMax.panelsCount">
+        <n-form-item :label="settings.calculationBasis.label">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <n-button
+              v-for="option in settings.calculationBasis.options"
+              :key="option.value"
+              :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
+              @click="updateCalculationBasis(option)"
+            >
+              {{ option.label }}
+            </n-button>
+          </div>
+        </n-form-item>
 
-      <n-form-item :label="settings.calculationBasis.label">
-        <div style="display: flex; flex-wrap: wrap; gap: 8px">
-          <n-button
-            v-for="option in settings.calculationBasis.options"
-            :key="option.value"
-            :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
-            @click="updateCalculationBasis(option)"
-          >
-            {{ option.label }}
-          </n-button>
-        </div>
-      </n-form-item>
-
-      <n-form-item :label="input.buildingType.label">
-        <n-select
-          v-model:value="input.buildingType.value"
-          :options="settings.buildingTypes.value"
-          @update:value="updateOptimized"
-        />
-      </n-form-item>
-      <n-tag style="margin-bottom: 20px" size="small">{{ input.buildingType.value }}</n-tag>
-      <n-form-item :label="input.yearlyEnergyUsageKwh.label">
-        <n-space vertical>
-          <n-slider
-            v-model:value="input.yearlyEnergyUsageKwh.value"
-            :min="0"
-            :max="100000"
-            :step="10"
+        <n-form-item :label="input.buildingType.label">
+          <n-select
+            v-model:value="input.buildingType.value"
+            :options="settings.buildingTypes.value"
             @update:value="updateOptimized"
           />
-          <n-input-number
-            v-model:value="input.yearlyEnergyUsageKwh.value"
-            :min="0"
-            @update:value="updateOptimized"
-          />
-        </n-space>
-      </n-form-item>
+        </n-form-item>
+        <n-tag style="margin-bottom: 20px" size="small">{{ input.buildingType.value }}</n-tag>
+        <n-form-item :label="input.yearlyEnergyUsageKwh.label">
+          <n-space vertical>
+            <n-slider
+              v-model:value="input.yearlyEnergyUsageKwh.value"
+              :min="0"
+              :max="100000"
+              :step="10"
+              @update:value="updateOptimized"
+            />
+            <n-input-number
+              v-model:value="input.yearlyEnergyUsageKwh.value"
+              :min="0"
+              @update:value="updateOptimized"
+            />
+          </n-space>
+        </n-form-item>
 
-      <n-form-item :label="input.targetPower.label">
-        <n-space vertical>
-          <n-slider
-            v-model:value="input.targetPower.value"
-            :min="0"
-            :max="output.technicalMax?.capacityKwp"
-            :step="1"
-            @update:value="updateFromPower"
-          />
-          <n-input-number
-            v-model:value="input.targetPower.value"
-            :min="0"
-            :max="output.technicalMax?.capacityKwp"
-            :step="0.1"
-            @update:value="updateFromPower"
-          />
-        </n-space>
-      </n-form-item>
+        <n-form-item :label="input.targetPower.label">
+          <n-space vertical>
+            <n-slider
+              v-model:value="input.targetPower.value"
+              :min="0"
+              :max="output.technicalMax?.capacityKwp"
+              :step="1"
+              @update:value="updateFromPower"
+            />
+            <n-input-number
+              v-model:value="input.targetPower.value"
+              :min="0"
+              :max="output.technicalMax?.capacityKwp"
+              :step="0.1"
+              @update:value="updateFromPower"
+            />
+          </n-space>
+        </n-form-item>
 
-      <n-form-item :label="input.panelCount.label">
-        <n-space vertical>
-          <n-slider
-            v-model:value="input.panelCount.value"
-            :min="1"
-            :max="output.technicalMax?.panelsCount"
-            :step="1"
-            @update:value="updateFromPanels"
-          />
-          <n-input-number
-            v-model:value="input.panelCount.value"
-            :min="1"
-            :max="output.technicalMax?.panelsCount"
-            :step="5"
-            @update:value="updateFromPanels"
-          />
-        </n-space>
-      </n-form-item>
+        <n-form-item :label="input.panelCount.label">
+          <n-space vertical>
+            <n-slider
+              v-model:value="input.panelCount.value"
+              :min="1"
+              :max="output.technicalMax?.panelsCount"
+              :step="1"
+              @update:value="updateFromPanels"
+            />
+            <n-input-number
+              v-model:value="input.panelCount.value"
+              :min="1"
+              :max="output.technicalMax?.panelsCount"
+              :step="5"
+              @update:value="updateFromPanels"
+            />
+          </n-space>
+        </n-form-item>
+      </div>
     </n-form>
   </div>
 </template>
@@ -147,6 +148,7 @@ const updateFromPower = () => {
   input.panelCount.value = closestCount
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'targetPower'),
+    false,
   )
 }
 
@@ -168,10 +170,12 @@ const updateFromPanels = () => {
   input.targetPower.value = parseFloat(((closestCount * panelCapacity) / 1000).toFixed(2))
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'targetPower'),
+    false,
   )
 }
 
-const updateCalculationBasis = (option) => {
+const updateCalculationBasis = (option, updatePanelInput = true) => {
+  const optionUnchanged = option == input.calculationBasis
   input.calculationBasis = option
   output.calculationBasis = option
   if (option.value == 'smartMax') {
@@ -188,7 +192,10 @@ const updateCalculationBasis = (option) => {
     )
   } else if (option.value == 'optimized') {
     output.active = calculateConfig(findOptimized())
-  } else {
+  } else if (option.value == 'targetPower') {
+    if (updatePanelInput && !optionUnchanged) {
+      input.panelCount.value = 20
+    }
     output.active = calculateConfig(findTarget())
   }
   renderPanels()
