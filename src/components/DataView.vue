@@ -9,6 +9,9 @@
     <p>Settings:</p>
     <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
 
+    <p>Building:</p>
+    <json-viewer v-if="buildingData" :value="buildingData" :expand-depth="2" copyable boxed />
+
     <p>Geocode:</p>
     <json-viewer
       v-if="jsonData.geoResult"
@@ -17,15 +20,6 @@
       copyable
       boxed
       sort
-    />
-
-    <p>Building:</p>
-    <json-viewer
-      v-if="jsonData.buildingResult"
-      :value="JSON.parse(jsonData.buildingResult)"
-      :expand-depth="2"
-      copyable
-      boxed
     />
 
     <p>Data Layers:</p>
@@ -46,5 +40,5 @@ import { useAppState } from '@/useAppState'
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-const { output, input, settings, jsonData } = useAppState()
+const { buildingData, output, input, settings, jsonData } = useAppState()
 </script>

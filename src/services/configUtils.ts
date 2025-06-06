@@ -24,30 +24,8 @@ export function findSmartMax() {
   }
 }
 
-export function findTarget() {
-  let bestUnderEnergyConfig = null
-  let closestEnergyDiff = Infinity
-
-  for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
-    const curr = buildingData.sortedConfigs[i]
-
-    // Closest under target energy
-    if (curr.yearlyEnergyDcKwh <= input.yearlyEnergyUsageKwh.value) {
-      const diff = input.yearlyEnergyUsageKwh.value - curr.yearlyEnergyDcKwh
-      if (diff < closestEnergyDiff) {
-        closestEnergyDiff = diff
-        bestUnderEnergyConfig = curr
-      }
-    } else {
-      // crossed the threshold: finalize the best config found
-      if (bestUnderEnergyConfig !== null) {
-        console.log(
-          `Found closest config under target energy (${settings.yearlyEnergyUsageKwh.value} kWh): ${bestUnderEnergyConfig.yearlyEnergyDcKwh} kWh with ${bestUnderEnergyConfig.panelsCount} panels`,
-        )
-        return bestUnderEnergyConfig
-      }
-    }
-  }
+export function findConfigWithPanelCount(panelsCount) {
+  return buildingData.sortedConfigs.find((panel) => panel.panelsCount === panelsCount)
 }
 
 export function findOptimized() {

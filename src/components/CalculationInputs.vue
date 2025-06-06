@@ -114,21 +114,21 @@ import {
   calculateConfig,
   findOptimized,
   findSmartMax,
-  findTarget,
+  findConfigWithPanelCount,
   findTechnicalMax,
 } from '@/services/configUtils'
 
 const panelCapacity = 400 // watts per panel
 
 const runSearch = async () => {
-  const geo = await getGeo()
-  await getBuildingData(geo)
+  const coordinates = await getGeo()
+  await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax'),
   )
-  getLayerData(geo)
+  getLayerData(coordinates)
 }
 
 const validPanelCounts = computed(
@@ -195,8 +195,10 @@ const updateCalculationBasis = (option, updatePanelInput = true) => {
   } else if (option.value == 'targetPower') {
     if (updatePanelInput && !optionUnchanged) {
       input.panelCount.value = 20
+      updateFromPanels()
+    } else {
+      output.active = calculateConfig(findConfigWithPanelCount(input.panelCount.value))
     }
-    output.active = calculateConfig(findTarget())
   }
   renderPanels()
 }

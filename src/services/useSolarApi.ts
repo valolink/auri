@@ -114,8 +114,8 @@ function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiter
   return results.map((sum, i) => sum / (counts[i] || 1)) // average irradiance per month
 }
 
-export const getGeo = async () => {
-  const geo = await geocodeAddress(input.address, apiKey)
+export const getGeo = async (address = input.address) => {
+  const geo = await geocodeAddress(address, apiKey)
   return geo
 }
 
