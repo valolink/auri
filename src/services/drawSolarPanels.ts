@@ -1,4 +1,4 @@
-import type { SolarPanelConfig, RoofSegmentSummary, LatLng } from '@/services/solar'
+import type { SolarPanelConfig, LatLng } from '@/services/solar'
 import { createPalette, normalize, rgbToColor } from '@/services/visualize'
 import { panelsPalette } from '@/services/colors'
 
@@ -33,9 +33,7 @@ export function drawSolarPanels({
   roofSegments: {
     azimuthDegrees: number
     pitchDegrees: number
-    stats: any
     center: LatLng
-    boundingBox: any
     planeHeightAtCenterMeters: number
   }[]
   panelWidth: number

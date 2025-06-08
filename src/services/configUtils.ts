@@ -1,11 +1,13 @@
 import { useAppState } from '@/useAppState'
-const { settings, input, output, buildingData } = useAppState()
+import type { SolarPanelConfig } from './solar'
+const { settings, output, buildingData } = useAppState()
 
 export function findTechnicalMax() {
   return buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1]
 }
 
-export function findSmartMax() {
+export function findSmartMax(): SolarPanelConfig {
+  let smartMax = buildingData.sortedConfigs[0]
   for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
     const prev = buildingData.sortedConfigs[i - 1]
     const curr = buildingData.sortedConfigs[i]
@@ -14,17 +16,25 @@ export function findSmartMax() {
     const gainPerPanel = energyGain / panelDiff
 
     // TODO add raja-arvo to settings
-    // 1. Smart max detection
+    // Smart max threshold check
     if (gainPerPanel < 320) {
       console.log(
         `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
       )
-      return prev
+      smartMax = prev
+      break // No need to keep scanning
+    }
+
+    // If we're at the end and no drop happened, take the last one
+    if (i === buildingData.sortedConfigs.length - 1) {
+      smartMax = curr
     }
   }
+
+  return smartMax
 }
 
-export function findConfigWithPanelCount(panelsCount) {
+export function findConfigWithPanelCount(panelsCount: number) {
   return buildingData.sortedConfigs.find((panel) => panel.panelsCount === panelsCount)
 }
 
@@ -48,7 +58,9 @@ export function findOptimized() {
   output.calculationMonth = calculationMonth
 }
 
-export function calculateConfig(config) {
+import type { SolarCalculationResult } from '@/types'
+
+export function calculateConfig(config: SolarPanelConfig): SolarCalculationResult {
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000

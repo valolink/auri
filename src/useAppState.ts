@@ -1,37 +1,11 @@
-import { reactive } from 'vue'
+import { reactive, toRaw } from 'vue'
 
-interface BaseSetting<T = string | number | boolean> {
-  label: string
-  description: string
-  value: T
-  sanitize: string
-  type: 'text' | 'number' | 'select' | 'checkbox' | 'textarea'
-  step?: string
-}
+import type { SolarPanelConfig } from '@/services/solar'
 
-interface SelectSetting extends BaseSetting<string> {
-  type: 'select'
-  options: { label: string; value: string }[]
-}
+import type { SolarCalculationResult, AppSettings } from '@/types'
 
-interface CheckboxSetting extends BaseSetting<boolean> {
-  type: 'checkbox'
-}
-
-interface NumberSetting extends BaseSetting<number> {
-  type: 'number'
-}
-
-interface TextSetting extends BaseSetting<string> {
-  type: 'text' | 'textarea'
-}
-
-type Setting = SelectSetting | CheckboxSetting | NumberSetting | TextSetting
-
-export type AppSettings = Record<string, Setting>
-
-const settings = reactive<AppSettings>({
-  ...window.vueAppData?.settings,
+const settings = reactive({
+  ...(window.vueAppData!.settings as AppSettings),
 })
 
 const jsonData = reactive({
@@ -43,37 +17,39 @@ const jsonData = reactive({
 
 const inputRef = {
   address: 'Rajatorpantie 8',
-  calculationBasis:
-    window.vueAppData?.settings.calculationBasis.options.find(
-      // (option) => option.value === window.vueAppData?.settings.calculationBasis.value,
-      (option) => option.value === 'targetPower',
-    ) || null,
-  buildingType: window.vueAppData?.settings.buildingType,
-  targetPower: window.vueAppData?.settings.targetPower,
-  panelCount: window.vueAppData?.settings.panelCount,
-  yearlyEnergyUsageKwh: window.vueAppData?.settings.yearlyEnergyUsageKwh,
-  buildingType: window.vueAppData?.settings.buildingType,
+  calculationBasis: toRaw(
+    settings.calculationBasis.options.find((option) => option.value === 'targetPower') as {
+      label: string
+      value: string
+    },
+  ),
+  buildingType: toRaw(settings.buildingType),
+  targetPower: toRaw(settings.targetPower),
+  panelCount: toRaw(settings.panelCount),
+  yearlyEnergyUsageKwh: toRaw(settings.yearlyEnergyUsageKwh),
 }
 
 const input = reactive(structuredClone(inputRef))
 
 const output = reactive({
-  technicalMax: {},
-  smartMax: {},
-  active: {},
-  static: {},
+  technicalMax: {} as SolarCalculationResult,
+  smartMax: {} as SolarCalculationResult,
+  active: {} as SolarCalculationResult,
+  static: {
+    totalEnergyPriceSntPerKwh: 0,
+  },
   calculationBasis: {
     label: null as string | null,
     value: null as string | null,
   },
   monthlyDistribution: [] as number[],
   bestPanelMonthlyDistribution: [] as number[],
-  calculationMonth: null as number,
+  calculationMonth: null as number | null,
 })
 
 const buildingData = reactive({
   building: {},
-  sortedConfigs: [],
+  sortedConfigs: [] as SolarPanelConfig[],
 })
 
 declare global {

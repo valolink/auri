@@ -6,7 +6,6 @@ import { downloadGeoTIFF, findClosestBuilding, getDataLayerUrls } from '@/servic
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
-
 const { output, input, settings, jsonData, buildingData } = useAppState()
 
 export const mapRef = ref<HTMLElement | null>(null)
