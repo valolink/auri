@@ -163,13 +163,6 @@ export const getLayerData = async (geo: GeocodeLatLng) => {
   overlay.setMap(map!)
 
   const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, apiKey)
-  const brightnessByMonth = monthlyFlux.rasters.map((raster) =>
-    raster.reduce((sum, value) => sum + value, 0),
-  )
-  const totalBrightness = brightnessByMonth.reduce((a, b) => a + b, 0)
-  const distribution = brightnessByMonth.map((value) => (value / totalBrightness) * 100)
-
-  output.monthlyDistribution = distribution
 
   const bestPanel = buildingData.building.solarPotential.solarPanels.reduce((a, b) =>
     a.yearlyEnergyDcKwh > b.yearlyEnergyDcKwh ? a : b,
@@ -188,7 +181,7 @@ export const getLayerData = async (geo: GeocodeLatLng) => {
   const total = monthlyFluxValues.reduce((a, b) => a + b, 0)
   const bestPanelDistribution = monthlyFluxValues.map((v) => (v / total) * 100)
 
-  output.bestPanelMonthlyDistribution = bestPanelDistribution
+  output.monthlyDistribution = bestPanelDistribution
 }
 
 export const useMapRef = () => mapRef

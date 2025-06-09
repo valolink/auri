@@ -44,7 +44,6 @@ const output = reactive({
     value: null as string | null,
   },
   monthlyDistribution: [] as number[],
-  bestPanelMonthlyDistribution: [] as number[],
   calculationMonth: null as number | null,
 })
 

@@ -83,4 +83,5 @@ export interface SolarCalculationResult {
   totalFinanceCostsPerLifeSpan: number
   lcoeSntPerKwh: number
   paybackYears: number
+  calculationMonth?: number
 }

@@ -38,24 +38,34 @@ export function findConfigWithPanelCount(panelsCount: number) {
   return buildingData.sortedConfigs.find((panel) => panel.panelsCount === panelsCount)
 }
 
-export function findOptimized() {
-  let calculationMonth = 0
-  let minDiff = 100
-  const profile = JSON.parse(settings.buildingType.value)
+export function findOptimized(annualPowerUsage: number, buildingProfile: string): SolarPanelConfig {
+  console.log('annualPowerUsage', annualPowerUsage)
+  let calculationMonth: number = -1
+  let minPower: number = Infinity
+  const profile: number[] = JSON.parse(buildingProfile)
   console.log('profile', profile)
   for (let i = 0; i < 12; i++) {
-    const diff = profile[i] * 100 - Number(output.monthlyDistribution[i])
-
-    console.log(i, 'profile[i]', profile[i] * 100)
-    console.log(i, 'output.monthlyDistribution ', Number(output.monthlyDistribution[i]))
-    console.log('diff ', i, diff)
-    if (diff < minDiff) {
-      minDiff = diff
+    const monthUsage = profile[i] * annualPowerUsage
+    const annualPower = monthUsage / (output.monthlyDistribution[i] / 100)
+    console.log(i, 'annualPower', annualPower)
+    if (annualPower < minPower) {
+      minPower = annualPower
       calculationMonth = i
     }
   }
-  console.log(calculationMonth)
+  console.log('calculationMonth', calculationMonth)
+  console.log('minPower', minPower)
   output.calculationMonth = calculationMonth
+
+  const optimized = buildingData.sortedConfigs.reduce((closest, curr): SolarPanelConfig => {
+    if (curr.yearlyEnergyDcKwh > minPower) return closest
+    if (closest.yearlyEnergyDcKwh > minPower) return curr
+    return curr.yearlyEnergyDcKwh - minPower > closest.yearlyEnergyDcKwh - minPower ? curr : closest
+  })
+  console.log('findOptimized result:', optimized)
+  console.log(optimized.yearlyEnergyDcKwh > minPower)
+  console.log(optimized.yearlyEnergyDcKwh < minPower)
+  return optimized
 }
 
 import type { SolarCalculationResult } from '@/types'

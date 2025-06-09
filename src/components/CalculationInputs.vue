@@ -31,7 +31,7 @@
             v-if="input.buildingType"
             v-model:value="input.buildingType.value"
             :options="settings.buildingTypes.value"
-            @update:value="updateOptimized"
+            @update:value="updateCalculationBasis(input.calculationBasis)"
           />
         </n-form-item>
         <n-tag style="margin-bottom: 20px" size="small">{{ input.buildingType?.value }}</n-tag>
@@ -43,13 +43,13 @@
               :min="0"
               :max="100000"
               :step="10"
-              @update:value="updateOptimized"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
             />
             <n-input-number
               v-if="input.yearlyEnergyUsageKwh"
               v-model:value="input.yearlyEnergyUsageKwh.value"
               :min="0"
-              @update:value="updateOptimized"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
             />
           </n-space>
         </n-form-item>
@@ -201,7 +201,14 @@ const updateCalculationBasis = (
       ((technicalMax.panelsCount * panelCapacity) / 1000).toFixed(2),
     )
   } else if (option.value == 'optimized') {
-    output.active = calculateConfig(findOptimized())
+    const optimized = calculateConfig(
+      findOptimized(input.yearlyEnergyUsageKwh.value, input.buildingType.value),
+    )
+    output.active = optimized
+    input.panelCount.value = optimized.panelsCount
+    input.targetPower.value = parseFloat(
+      ((optimized.panelsCount * panelCapacity) / 1000).toFixed(2),
+    )
   } else if (option.value == 'targetPower') {
     if (updatePanelInput && !optionUnchanged) {
       input.panelCount.value = 20
