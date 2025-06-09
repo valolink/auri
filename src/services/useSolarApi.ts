@@ -1,8 +1,15 @@
 // src/composables/useSolarApi.ts
 import { ref } from 'vue'
 import { Loader } from '@googlemaps/js-api-loader'
-import { geocodeAddress } from '@/services/geocodingApi'
-import { downloadGeoTIFF, findClosestBuilding, getDataLayerUrls } from '@/services/solar'
+import { geocodeAddress, type GeocodeLatLng } from '@/services/geocodingApi'
+import {
+  type SolarPanel,
+  type Bounds,
+  type GeoTiff,
+  downloadGeoTIFF,
+  findClosestBuilding,
+  getDataLayerUrls,
+} from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
@@ -53,7 +60,7 @@ function isPointInPolygon(
 function getLatLngForPixel(
   x: number,
   y: number,
-  bounds: any,
+  bounds: Bounds,
   width: number,
   height: number,
 ): google.maps.LatLngLiteral {
@@ -63,7 +70,7 @@ function getLatLngForPixel(
 }
 
 function getPanelPolygon(
-  panel: any,
+  panel: SolarPanel,
   azimuth: number,
   width: number,
   height: number,
@@ -91,7 +98,10 @@ function getPanelPolygon(
   )
 }
 
-function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiteral[]): number[] {
+function getMonthlyFluxForPanelArea(
+  layer: GeoTiff,
+  polygon: google.maps.LatLngLiteral[],
+): number[] {
   const width = layer.width
   const height = layer.height
   const results = new Array(12).fill(0)
@@ -113,12 +123,12 @@ function getMonthlyFluxForPanelArea(layer: any, polygon: google.maps.LatLngLiter
   return results.map((sum, i) => sum / (counts[i] || 1)) // average irradiance per month
 }
 
-export const getGeo = async (address = input.address) => {
+export const getGeo = async (address = input.address): Promise<GeocodeLatLng> => {
   const geo = await geocodeAddress(address, apiKey)
   return geo
 }
 
-export const getBuildingData = async (geo) => {
+export const getBuildingData = async (geo: GeocodeLatLng) => {
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
   await initializeMap(geo.lat, geo.lng)
@@ -129,7 +139,7 @@ export const getBuildingData = async (geo) => {
     apiKey,
   )
   jsonData.buildingResult = JSON.stringify(buildingData.building, null, 2)
-  output.static.areaMeters2 = buildingData.building.solarPotential?.buildingStats?.areaMeters2
+  output.static.areaMeters2 = buildingData.building.solarPotential.buildingStats.areaMeters2
   output.static.totalEnergyPriceSntPerKwh =
     Number(settings.energyPriceSnt.value) +
     (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
@@ -141,7 +151,7 @@ export const getBuildingData = async (geo) => {
   )
 }
 
-export const getLayerData = async (geo) => {
+export const getLayerData = async (geo: GeocodeLatLng) => {
   const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 

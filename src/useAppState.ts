@@ -1,6 +1,6 @@
 import { reactive, toRaw } from 'vue'
 
-import type { SolarPanelConfig } from '@/services/solar'
+import type { BuildingInsightsResponse, SolarPanelConfig } from '@/services/solar'
 
 import type { SolarCalculationResult, AppSettings } from '@/types'
 
@@ -37,6 +37,7 @@ const output = reactive({
   active: {} as SolarCalculationResult,
   static: {
     totalEnergyPriceSntPerKwh: 0,
+    areaMeters2: 0,
   },
   calculationBasis: {
     label: null as string | null,
@@ -48,7 +49,7 @@ const output = reactive({
 })
 
 const buildingData = reactive({
-  building: {},
+  building: {} as BuildingInsightsResponse,
   sortedConfigs: [] as SolarPanelConfig[],
 })
 
