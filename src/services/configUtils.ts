@@ -74,8 +74,9 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 
   const totalEnergyDcKwhPerLifeSpan =
     (yearlyEnergyDcKwh *
-      (1 - (1 - Number(settings.efficiencyDepreciationFactor.value) / 100)) **
-        Number(settings.installationLifeSpan.value)) /
+      (1 -
+        (1 - Number(settings.efficiencyDepreciationFactor.value) / 100) **
+          Number(settings.installationLifeSpan.value))) /
     (Number(settings.efficiencyDepreciationFactor.value) / 100)
 
   const totalSavingsPerLifeSpan =
