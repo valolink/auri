@@ -57,8 +57,8 @@ export function findOptimized(annualPowerUsage: number, buildingProfile: string)
   console.log('minPower', minPower)
   output.calculationMonth = calculationMonth
 
-  //TODO add dailyMaxUtilizationFactor here:
-  //minPower = minPower * dailyMaxUtilizationFactor
+  minPower = minPower * Number(settings.dailyMaxUtilizationFactor.value)
+  console.log('minPower * dailyMaxUtilizationFactor', minPower)
 
   const optimized = buildingData.sortedConfigs.reduce((closest, curr): SolarPanelConfig => {
     if (curr.yearlyEnergyDcKwh > minPower) return closest

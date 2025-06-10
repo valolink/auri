@@ -63,6 +63,7 @@ export interface AppSettings {
   minYearlyEnergyPerPanelAdded: NumberSetting
   panelCapacityWatts: NumberSetting
   discountRate: NumberSetting
+  dailyMaxUtilizationFactor: NumberSetting
   buildingTypes: RepeaterSetting
   buildingType: TextSetting
   enable_feature: CheckboxSetting

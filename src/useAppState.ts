@@ -27,6 +27,7 @@ const inputRef = {
   targetPower: toRaw(settings.targetPower),
   panelCount: toRaw(settings.panelCount),
   yearlyEnergyUsageKwh: toRaw(settings.yearlyEnergyUsageKwh),
+  dailyMaxUtilizationFactor: toRaw(settings.dailyMaxUtilizationFactor),
 }
 
 const input = reactive(structuredClone(inputRef))
