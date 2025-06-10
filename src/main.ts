@@ -5,6 +5,7 @@ import { useAppState } from './useAppState'
 import DataView from './components/DataView.vue'
 import MapView from './components/MapView.vue'
 import CalculationInputs from './components/CalculationInputs.vue'
+import BarChart from '@/components/BarChart.vue'
 
 const app = createApp({
   setup() {
@@ -16,6 +17,7 @@ const app = createApp({
     'data-view': DataView,
     'calculation-inputs': CalculationInputs,
     'map-view': MapView,
+    'bar-chart': BarChart,
   },
 })
 

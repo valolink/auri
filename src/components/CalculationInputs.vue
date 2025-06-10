@@ -114,6 +114,7 @@ import {
   NTag,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
+import { updateChartData } from '@/components/BarChart.vue'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { computed } from 'vue'
 const { settings, input, output, buildingData } = useAppState()
@@ -219,6 +220,7 @@ const updateCalculationBasis = (
     }
   }
   renderPanels()
+  updateChartData(output.active.yearlyEnergyDcKwh, output.monthlyDistribution)
 }
 </script>
 
