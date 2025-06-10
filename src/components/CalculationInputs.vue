@@ -114,7 +114,7 @@ import {
   NTag,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
-import { updateChartData } from '@/components/BarChart.vue'
+import { updateChartData } from '@/services/chartUtils'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { computed } from 'vue'
 const { settings, input, output, buildingData } = useAppState()

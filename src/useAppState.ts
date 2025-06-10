@@ -1,4 +1,4 @@
-import { reactive, toRaw } from 'vue'
+import { ref, reactive, toRaw } from 'vue'
 import type { SolarCalculationResult, AppSettings } from '@/types'
 import type { ChartData } from 'chart.js'
 
@@ -65,9 +65,15 @@ const chartData: ChartData = reactive({
     {
       label: 'Solar power',
       backgroundColor: '#18a058',
-      data: [0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     },
   ],
+})
+
+const chartRef = ref()
+
+const chartOptions = reactive({
+  responsive: true,
 })
 
 export function useAppState() {
@@ -78,5 +84,7 @@ export function useAppState() {
     output,
     buildingData,
     chartData,
+    chartRef,
+    chartOptions,
   }
 }
