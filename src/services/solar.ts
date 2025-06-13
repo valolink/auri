@@ -146,6 +146,7 @@ export async function findClosestBuilding(
   const args = {
     'location.latitude': location.lat().toFixed(5),
     'location.longitude': location.lng().toFixed(5),
+    requiredQuality: 'LOW',
   }
   console.log('GET buildingInsights\n', args)
   const params = new URLSearchParams({ ...args, key: apiKey })
