@@ -1,21 +1,21 @@
 <template>
   <div>
-    <p>Output:</p>
+    <p>output:</p>
     <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed />
 
-    <p>chartData:</p>
-    <json-viewer v-if="chartData" :value="chartData" :expand-depth="1" copyable boxed />
+    <p>chart:</p>
+    <json-viewer v-if="chartRef" :value="chartRef.chart" :expand-depth="1" copyable boxed sort />
 
-    <p>Input:</p>
+    <p>input:</p>
     <json-viewer v-if="input" :value="input" :expand-depth="1" copyable boxed />
 
-    <p>Settings:</p>
+    <p>settings:</p>
     <json-viewer v-if="settings" :value="settings" :expand-depth="1" copyable boxed sort />
 
-    <p>Building:</p>
+    <p>building:</p>
     <json-viewer v-if="buildingData" :value="buildingData" :expand-depth="2" copyable boxed />
 
-    <p>Geocode:</p>
+    <p>geocode:</p>
     <json-viewer
       v-if="jsonData.geoResult"
       :value="JSON.parse(jsonData.geoResult)"
@@ -25,7 +25,7 @@
       sort
     />
 
-    <p>Data Layers:</p>
+    <p>dataLayers:</p>
     <json-viewer
       v-if="jsonData.layerResult"
       :value="JSON.parse(jsonData.layerResult)"
@@ -43,5 +43,5 @@ import { useAppState } from '@/useAppState'
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-const { buildingData, output, input, settings, jsonData, chartData } = useAppState()
+const { buildingData, output, input, settings, jsonData, chartRef } = useAppState()
 </script>

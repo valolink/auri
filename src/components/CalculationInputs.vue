@@ -220,7 +220,7 @@ const updateCalculationBasis = (
     }
   }
   renderPanels()
-  updateChartData(output.active.yearlyEnergyDcKwh, output.monthlyDistribution)
+  updateChartData()
 }
 </script>
 
