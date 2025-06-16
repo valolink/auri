@@ -12,6 +12,9 @@
           <n-button type="primary" @click="runSearch">Hae</n-button>
         </n-input-group>
       </n-form-item>
+      <n-form-item v-if="map" label="Vaihda rakennus kartalta:">
+        <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
+      </n-form-item>
       <div v-if="output.technicalMax.panelsCount">
         <n-form-item :label="settings.calculationBasis.label">
           <div style="display: flex; flex-wrap: wrap; gap: 8px">
@@ -116,7 +119,7 @@ import {
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { updateChartData } from '@/services/chartUtils'
-import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
+import { map, getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { computed } from 'vue'
 const { loading, settings, input, initialOutput, output, buildingData } = useAppState()
 import {
@@ -131,8 +134,13 @@ const panelCapacity = 400 // watts per panel
 
 const runSearch = async () => {
   loading.value = true
-  //TODO clear data
   const coordinates = await getGeo()
+  getSolarData(coordinates)
+  loading.value = false
+}
+
+const getSolarData = async (coordinates: { lat: number; lng: number }) => {
+  //TODO clear data
   await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
@@ -144,6 +152,25 @@ const runSearch = async () => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
+}
+
+const enableManualBuildingSelect = () => {
+  if (!map) return
+
+  const listener = map.addListener('click', async (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return
+    const lat = e.latLng.lat()
+    const lng = e.latLng.lng()
+
+    // Remove this listener to prevent repeated triggers
+    google.maps.event.removeListener(listener)
+
+    loading.value = true
+    // Re-run the solar analysis at the selected location
+    await getSolarData({ lat: lat, lng: lng })
+
+    loading.value = false
+  })
 }
 
 const validPanelCounts = computed(
