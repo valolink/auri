@@ -29,7 +29,7 @@ const inputRef = {
 
 const input = reactive(structuredClone(inputRef))
 
-const output = reactive({
+const initialOutput = {
   technicalMax: {} as SolarCalculationResult,
   smartMax: {} as SolarCalculationResult,
   active: {} as SolarCalculationResult,
@@ -43,7 +43,9 @@ const output = reactive({
   },
   monthlyDistribution: [] as number[],
   calculationMonth: null as number | null,
-})
+}
+
+const output = reactive(initialOutput)
 
 const buildingData = reactive({
   building: {} as BuildingInsightsResponse,
@@ -60,13 +62,17 @@ declare global {
 
 const chartRef = ref()
 
+const loading = ref(false)
+
 export function useAppState() {
   return {
     settings,
     jsonData,
     input,
     output,
+    initialOutput,
     buildingData,
     chartRef,
+    loading,
   }
 }

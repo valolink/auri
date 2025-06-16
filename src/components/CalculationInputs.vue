@@ -20,6 +20,7 @@
               :key="option.value"
               :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
               @click="updateCalculationBasis(option)"
+              :disabled="loading && option.value === 'optimized'"
             >
               {{ option.label }}
             </n-button>
@@ -117,7 +118,7 @@ import { useAppState } from '@/useAppState'
 import { updateChartData } from '@/services/chartUtils'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { computed } from 'vue'
-const { settings, input, output, buildingData } = useAppState()
+const { loading, settings, input, initialOutput, output, buildingData } = useAppState()
 import {
   calculateConfig,
   findOptimized,
@@ -129,6 +130,8 @@ import {
 const panelCapacity = 400 // watts per panel
 
 const runSearch = async () => {
+  loading.value = true
+  //TODO clear data
   const coordinates = await getGeo()
   await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())
@@ -136,7 +139,11 @@ const runSearch = async () => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  getLayerData(coordinates)
+  await getLayerData(coordinates)
+  loading.value = false
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
+  )
 }
 
 const validPanelCounts = computed(
@@ -220,7 +227,7 @@ const updateCalculationBasis = (
     }
   }
   renderPanels()
-  updateChartData()
+  if (output.monthlyDistribution.length > 0) updateChartData()
 }
 </script>
 

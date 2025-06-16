@@ -28,12 +28,12 @@ export function updateChartData(
     ]
     chartInstance.data.datasets.length = 0
     chartInstance.data.datasets.push({
-      label: 'Solar power',
+      label: 'Paneelien teho',
       backgroundColor: '#18a058',
       data: distribution.map((month) => (month * yearlyEnergy) / 100),
     })
     chartInstance.data.datasets.push({
-      label: 'Energy usage',
+      label: 'Sähkön kulutus',
       backgroundColor: 'rgb(233, 134, 134)',
       data: buildingProfile.map((month) => month * yearlyUsage),
     })

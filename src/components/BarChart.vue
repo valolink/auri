@@ -3,6 +3,7 @@
 </template>
 
 <script setup lang="ts">
+import { useAppState } from '@/useAppState'
 import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -14,19 +15,15 @@ import {
   LinearScale,
 } from 'chart.js'
 
-const options = reactive({
+const options = {
   responsive: true,
-})
+}
 
-const data = reactive({
+const data = {
   labels: [],
   datasets: [],
-})
-
-import { useAppState } from '@/useAppState'
-import { reactive } from 'vue'
+}
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
-
 const { chartRef } = useAppState()
 </script>
