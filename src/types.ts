@@ -68,6 +68,10 @@ export interface AppSettings {
   buildingType: TextSetting
   enable_feature: CheckboxSetting
   welcome_message: TextareaSetting
+  smartMaxRangeStart: NumberSetting
+  smartMaxRangeEnd: NumberSetting
+  smartMaxTreshold: NumberSetting
+  smartMaxFallbackTreshold: NumberSetting
 }
 
 export interface SolarCalculationResult {

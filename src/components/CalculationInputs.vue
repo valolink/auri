@@ -2,15 +2,15 @@
   <div class="input-container">
     <n-form>
       <n-form-item label="Osoite">
-        <n-input-group>
-          <n-input
-            v-model:value="input.address"
-            type="text"
-            placeholder="Syötä osoite"
-            :style="{ width: '75%' }"
-          />
-          <n-button type="primary" @click="runSearch">Hae</n-button>
-        </n-input-group>
+        <n-auto-complete
+          v-model:value="inputValue"
+          :options="suggestions"
+          placeholder="Syötä osoite"
+          clearable
+          remote
+          :input-props="{ autocomplete: 'off' }"
+          @select="onSelect"
+        />
       </n-form-item>
       <n-form-item v-if="map" label="Vaihda rakennus kartalta:">
         <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
@@ -107,6 +107,7 @@
 <script setup lang="ts">
 import {
   NForm,
+  NAutoComplete,
   NFormItem,
   NSelect,
   NInputNumber,
@@ -119,9 +120,9 @@ import {
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { updateChartData } from '@/services/chartUtils'
-import { map, getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
-import { computed } from 'vue'
-const { loading, settings, input, initialOutput, output, buildingData } = useAppState()
+import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
+import { ensureGoogleLoaded, getMap, setupAddressAutocomplete } from '@/services/mapService'
+import { ref, onMounted, useTemplateRef, computed } from 'vue'
 import {
   calculateConfig,
   findOptimized,
@@ -130,7 +131,68 @@ import {
   findTechnicalMax,
 } from '@/services/configUtils'
 
+const { loading, settings, input, initialOutput, output, buildingData } = useAppState()
+const map = getMap()
 const panelCapacity = 400 // watts per panel
+
+let autocompleteService: google.maps.places.AutocompleteService
+const valueRef = ref('')
+const suggestions = computed(() => {
+  console.log(valueRef.value)
+  if (!autocompleteService || !valueRef.value) return
+  let suggestionsArray
+  autocompleteService.getPlacePredictions(
+    {
+      input: valueRef.value,
+      types: ['address'],
+      componentRestrictions: { country: 'fi' },
+    },
+    (predictions, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+        suggestionsArray = predictions.map((p) => ({
+          label: p.description,
+          value: p.description,
+          place_id: p.place_id,
+        }))
+      } else {
+        suggestionsArray = []
+      }
+    },
+  )
+  return suggestionsArray
+})
+let placesService: google.maps.places.PlacesService
+const onSearch = () => {
+  console.log('fire')
+  if (!autocompleteService || !valueRef.value) return
+
+  autocompleteService.getPlacePredictions(
+    {
+      input: valueRef.value,
+      types: ['address'],
+      componentRestrictions: { country: 'fi' },
+    },
+    (predictions, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+        suggestions.value = predictions.map((p) => ({
+          label: p.description,
+          value: p.description,
+          place_id: p.place_id,
+        }))
+      } else {
+        suggestions.value = []
+      }
+    },
+  )
+}
+
+onMounted(async () => {
+  await ensureGoogleLoaded()
+
+  autocompleteService = new google.maps.places.AutocompleteService()
+  const dummyMap = document.createElement('div')
+  placesService = new google.maps.places.PlacesService(dummyMap) // required for getDetails
+})
 
 const runSearch = async () => {
   loading.value = true
@@ -140,6 +202,7 @@ const runSearch = async () => {
 }
 
 const getSolarData = async (coordinates: { lat: number; lng: number }) => {
+  loading.value = true
   //TODO clear data
   await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())

@@ -1,6 +1,5 @@
 // src/composables/useSolarApi.ts
 import { ref } from 'vue'
-import { Loader } from '@googlemaps/js-api-loader'
 import { geocodeAddress, type GeocodeLatLng } from '@/services/geocodingApi'
 import {
   type SolarPanel,
@@ -9,42 +8,18 @@ import {
   downloadGeoTIFF,
   findClosestBuilding,
   getDataLayerUrls,
+  type SolarPanelConfig,
 } from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
+import { initMap, getMap, getGeometry, updateOverlay } from '@/services/mapService'
+
 const { output, input, settings, jsonData, buildingData } = useAppState()
 
-export const mapRef = ref<HTMLElement | null>(null)
-export let map: google.maps.Map | null = null
-export let geometry: typeof google.maps.geometry
-let overlay: google.maps.GroundOverlay | null = null
-
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
-
-const loader = new Loader({
-  apiKey,
-  version: 'weekly',
-  libraries: ['geometry'], // ensure 'geometry' is loaded
-})
-
-const initializeMap = async (lat: number, lng: number) => {
-  await loader.load()
-  geometry = google.maps.geometry
-
-  if (!mapRef.value) return
-
-  map = new google.maps.Map(mapRef.value, {
-    center: { lat, lng },
-    zoom: 18,
-    mapTypeId: 'satellite',
-    tilt: 0,
-    heading: 0,
-    gestureHandling: 'greedy',
-    rotateControl: false,
-    mapId: '',
-  })
-}
+// Reactive reference for mounting the map container
+export const mapRef = ref<HTMLElement | null>(null)
 
 function isPointInPolygon(
   point: google.maps.LatLngLiteral,
@@ -131,7 +106,10 @@ export const getGeo = async (address = input.address): Promise<GeocodeLatLng> =>
 export const getBuildingData = async (geo: GeocodeLatLng) => {
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-  await initializeMap(geo.lat, geo.lng)
+  if (mapRef.value) {
+    await initMap(mapRef.value, geo.lat, geo.lng)
+  }
+
   jsonData.geoResult = JSON.stringify(geo, null, 2)
 
   buildingData.building = await findClosestBuilding(
@@ -145,10 +123,29 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
     (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
       (1 + Number(settings.vat.value) / 100)
 
-  // Sort the data by panelsCount in ascending order
-  buildingData.sortedConfigs = buildingData.building.solarPotential.solarPanelConfigs.sort(
-    (a, b) => a.panelsCount - b.panelsCount,
-  )
+  // Sort the data by panelsCount in ascending order and calculate gainPerPanel
+  const sorted: SolarPanelConfig[] = buildingData.building.solarPotential.solarPanelConfigs
+    .sort((a: SolarPanelConfig, b: SolarPanelConfig) => a.panelsCount - b.panelsCount)
+    .map((config: SolarPanelConfig, index: number, array: SolarPanelConfig[]) => {
+      if (index === 0) {
+        return {
+          ...config,
+          gainPerPanel: null, // First item has no previous to compare
+        }
+      }
+
+      const prev = array[index - 1]
+      const panelDiff = config.panelsCount - prev.panelsCount
+      const energyGain = config.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
+      const gainPerPanel = panelDiff > 0 ? energyGain / panelDiff : null
+
+      return {
+        ...config,
+        gainPerPanel,
+      }
+    })
+
+  buildingData.sortedConfigs = sorted
 }
 
 export const getLayerData = async (geo: GeocodeLatLng) => {
@@ -158,9 +155,7 @@ export const getLayerData = async (geo: GeocodeLatLng) => {
   const layer = await getLayer('annualFlux', data, apiKey)
   const canvas = layer.render(true, 0, 14)[0]
 
-  overlay?.setMap(null)
-  overlay = new google.maps.GroundOverlay(canvas.toDataURL(), layer.bounds)
-  overlay.setMap(map!)
+  updateOverlay(canvas, layer.bounds)
 
   const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, apiKey)
 
@@ -190,15 +185,16 @@ let currentPolygons: google.maps.Polygon[] = []
 
 export const renderPanels = (panelCount: number = input.panelCount?.value) => {
   const { building, sortedConfigs } = buildingData
+  const map = getMap()
+  const geometry = getGeometry()
+
   if (!map || !geometry || sortedConfigs.length === 0) return
 
-  // Clear old polygons
   currentPolygons.forEach((p) => p.setMap(null))
   currentPolygons = []
 
   const solarPotential = building.solarPotential
   const panelConfig = sortedConfigs.find((c) => c.panelsCount === panelCount)
-
   if (!panelConfig) return
 
   currentPolygons = drawSolarPanels({

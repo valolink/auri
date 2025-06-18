@@ -7,27 +7,46 @@ export function findTechnicalMax() {
 }
 
 export function findSmartMax(): SolarPanelConfig {
-  let smartMax = buildingData.sortedConfigs[0]
-  for (let i = 1; i < buildingData.sortedConfigs.length; i++) {
-    const prev = buildingData.sortedConfigs[i - 1]
-    const curr = buildingData.sortedConfigs[i]
-    const panelDiff = curr.panelsCount - prev.panelsCount
-    const energyGain = curr.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
-    const gainPerPanel = energyGain / panelDiff
+  const rangeStart = settings.smartMaxRangeStart.value
+  const rangeEnd = settings.smartMaxRangeEnd.value
+  const relativeThreshold = settings.smartMaxTreshold.value / 100
+  const fallbackAbsoluteThreshold = settings.smartMaxFallbackTreshold.value
 
-    // TODO add raja-arvo to settings
-    // Smart max threshold check
-    if (gainPerPanel < 320) {
+  const configs = buildingData.sortedConfigs
+  const smartMax = configs[0]
+
+  // Step 1: Check for relative drop in gainPerPanel within inspection range
+  for (let i = 1; i < configs.length; i++) {
+    const prev = configs[i - 1]
+    const curr = configs[i]
+
+    const inRange = curr.gainPerPanel >= rangeStart && curr.gainPerPanel <= rangeEnd
+    if (!inRange || curr.gainPerPanel == null || prev.gainPerPanel == null) continue
+
+    const dropRatio = (prev.gainPerPanel - curr.gainPerPanel) / prev.gainPerPanel
+
+    if (dropRatio >= relativeThreshold) {
       console.log(
-        `Gain per additional panel drops below 320 kWh from ${prev.panelsCount} to ${curr.panelsCount} panels.`,
+        `Relative drop in gainPerPanel of ${(dropRatio * 100).toFixed(2)}% detected from ${prev.gainPerPanel.toFixed(
+          2,
+        )} to ${curr.gainPerPanel.toFixed(2)}. Returning config before drop.`,
       )
-      smartMax = prev
-      break // No need to keep scanning
+      return prev
+    }
+  }
+
+  // Step 2: Fallback to absolute threshold check
+  for (let i = 1; i < configs.length; i++) {
+    const curr = configs[i]
+    if (curr.gainPerPanel != null && curr.gainPerPanel < fallbackAbsoluteThreshold) {
+      console.log(
+        `Gain per additional panel drops below ${fallbackAbsoluteThreshold} kWh at ${curr.panelsCount} panels.`,
+      )
+      return configs[i - 1]
     }
 
-    // If we're at the end and no drop happened, take the last one
-    if (i === buildingData.sortedConfigs.length - 1) {
-      smartMax = curr
+    if (i === configs.length - 1) {
+      return curr
     }
   }
 
