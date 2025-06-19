@@ -13,13 +13,12 @@ import {
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
-import { initMap, getMap, getGeometry, updateOverlay } from '@/services/mapService'
+import { loadGoogleMaps, initMap, getGeometry, updateOverlay } from '@/services/mapService'
 
-const { output, input, settings, jsonData, buildingData } = useAppState()
+const { mapRef, mapInstance, output, input, settings, jsonData, buildingData } = useAppState()
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 // Reactive reference for mounting the map container
-export const mapRef = ref<HTMLElement | null>(null)
 
 function isPointInPolygon(
   point: google.maps.LatLngLiteral,
@@ -106,9 +105,7 @@ export const getGeo = async (address = input.address): Promise<GeocodeLatLng> =>
 export const getBuildingData = async (geo: GeocodeLatLng) => {
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-  if (mapRef.value) {
-    await initMap(mapRef.value, geo.lat, geo.lng)
-  }
+  await initMap(geo.lat, geo.lng)
 
   jsonData.geoResult = JSON.stringify(geo, null, 2)
 
@@ -179,16 +176,13 @@ export const getLayerData = async (geo: GeocodeLatLng) => {
   output.monthlyDistribution = bestPanelDistribution
 }
 
-export const useMapRef = () => mapRef
-
 let currentPolygons: google.maps.Polygon[] = []
 
 export const renderPanels = (panelCount: number = input.panelCount?.value) => {
   const { building, sortedConfigs } = buildingData
-  const map = getMap()
+  // await loadGoogleMaps()
   const geometry = getGeometry()
-
-  if (!map || !geometry || sortedConfigs.length === 0) return
+  if (!mapRef.value || !geometry || sortedConfigs.length === 0) return
 
   currentPolygons.forEach((p) => p.setMap(null))
   currentPolygons = []
@@ -196,14 +190,13 @@ export const renderPanels = (panelCount: number = input.panelCount?.value) => {
   const solarPotential = building.solarPotential
   const panelConfig = sortedConfigs.find((c) => c.panelsCount === panelCount)
   if (!panelConfig) return
-
   currentPolygons = drawSolarPanels({
     config: panelConfig,
     solarPanels: solarPotential.solarPanels,
     roofSegments: solarPotential.roofSegmentStats,
     panelWidth: solarPotential.panelWidthMeters,
     panelHeight: solarPotential.panelHeightMeters,
-    map,
+    map: mapInstance.value,
     geometry,
   })
 }

@@ -61,7 +61,8 @@ declare global {
 }
 
 const chartRef = ref()
-
+const mapRef = ref<HTMLElement | null>(null)
+const mapInstance = ref<google.maps.Map | null>(null) // Google Map object
 const loading = ref(false)
 
 export function useAppState() {
@@ -73,6 +74,8 @@ export function useAppState() {
     initialOutput,
     buildingData,
     chartRef,
+    mapRef,
+    mapInstance,
     loading,
   }
 }

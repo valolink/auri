@@ -9,9 +9,9 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useMapRef } from '@/services/useSolarApi'
+import { useAppState } from '@/useAppState'
 
-const mapRef = useMapRef()
+const { mapRef } = useAppState()
 
 onMounted(() => {
   // This ensures the reference is available before `runSolarApi` tries to use it.

@@ -1,11 +1,10 @@
 import { Loader } from '@googlemaps/js-api-loader'
-
+import { useAppState } from '@/useAppState'
 // Internal state
-let map: google.maps.Map | null = null
 let geometry: typeof google.maps.geometry
 let overlay: google.maps.GroundOverlay | null = null
 
-let mapRefEl: HTMLElement | null = null
+const { mapRef, mapInstance } = useAppState()
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 
@@ -14,12 +13,6 @@ const loader = new Loader({
   version: 'weekly',
   libraries: ['geometry', 'places'],
 })
-
-export async function ensureGoogleLoaded(): Promise<void> {
-  if (!window.google?.maps) {
-    await loader.load()
-  }
-}
 
 // Load Maps and Geometry libraries
 export const loadGoogleMaps = async (): Promise<void> => {
@@ -30,15 +23,13 @@ export const loadGoogleMaps = async (): Promise<void> => {
 
 // Initialize and store the map
 export const initMap = async (
-  el: HTMLElement,
   lat: number,
   lng: number,
   zoom: number = 18,
 ): Promise<google.maps.Map> => {
   await loadGoogleMaps()
-  mapRefEl = el
 
-  map = new google.maps.Map(el, {
+  mapInstance.value = new google.maps.Map(mapRef.value, {
     center: { lat, lng },
     zoom,
     mapTypeId: 'satellite',
@@ -48,13 +39,10 @@ export const initMap = async (
     rotateControl: false,
   })
 
-  return map
+  return mapInstance.value
 }
 
-// Public getters
-export const getMap = () => map
 export const getGeometry = () => geometry
-export const getMapRefEl = () => mapRefEl
 
 // Overlay support
 export const updateOverlay = (
@@ -63,7 +51,7 @@ export const updateOverlay = (
 ) => {
   overlay?.setMap(null)
   overlay = new google.maps.GroundOverlay(canvas.toDataURL(), bounds)
-  overlay.setMap(map!)
+  overlay.setMap(mapInstance.value!)
 }
 
 export async function setupAddressAutocomplete(

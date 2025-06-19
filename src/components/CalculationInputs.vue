@@ -2,20 +2,21 @@
   <div class="input-container">
     <n-form>
       <n-form-item label="Osoite">
-        <n-auto-complete
-          v-model:value="inputValue"
-          :options="suggestions"
-          placeholder="Syötä osoite"
-          clearable
-          remote
-          :input-props="{ autocomplete: 'off' }"
-          @select="onSelect"
-        />
-      </n-form-item>
-      <n-form-item v-if="map" label="Vaihda rakennus kartalta:">
-        <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
+        <n-input-group>
+          <n-auto-complete
+            v-model:value="input.address"
+            :options="suggestions"
+            placeholder="Syötä osoite"
+            :input-props="{ autocomplete: 'off' }"
+            @input="getSuggestions"
+          />
+          <n-button type="primary" @click="runSearch">Hae</n-button>
+        </n-input-group>
       </n-form-item>
       <div v-if="output.technicalMax.panelsCount">
+        <n-form-item label="Vaihda rakennus kartalta:">
+          <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
+        </n-form-item>
         <n-form-item :label="settings.calculationBasis.label">
           <div style="display: flex; flex-wrap: wrap; gap: 8px">
             <n-button
@@ -121,7 +122,12 @@ import {
 import { useAppState } from '@/useAppState'
 import { updateChartData } from '@/services/chartUtils'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
-import { ensureGoogleLoaded, getMap, setupAddressAutocomplete } from '@/services/mapService'
+import {
+  ensureGoogleLoaded,
+  getMap,
+  loadGoogleMaps,
+  setupAddressAutocomplete,
+} from '@/services/mapService'
 import { ref, onMounted, useTemplateRef, computed } from 'vue'
 import {
   calculateConfig,
@@ -131,47 +137,40 @@ import {
   findTechnicalMax,
 } from '@/services/configUtils'
 
-const { loading, settings, input, initialOutput, output, buildingData } = useAppState()
-const map = getMap()
+const { mapRef, mapInstance, loading, settings, input, initialOutput, output, buildingData } =
+  useAppState()
 const panelCapacity = 400 // watts per panel
 
 let sessionToken: google.maps.places.AutocompleteSessionToken
 
-let autocompleteService: google.maps.places.AutocompleteService
-const inputValue = ref('')
-const suggestions = computed(async () => {
-  console.log(inputValue.value)
+const suggestions = ref([])
+async function getSuggestions() {
+  console.log(input.address)
   sessionToken = new google.maps.places.AutocompleteSessionToken()
   const autos = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-    input: query,
+    input: input.address,
     includedRegionCodes: ['fi'],
     sessionToken,
   })
-  suggestions.value = autos.map((s) => ({
+  console.log(autos)
+  suggestions.value = autos.suggestions.map((s) => ({
     label: s.placePrediction.text.text,
     value: s.placePrediction.text.text,
     placePrediction: s.placePrediction,
   }))
-})
-let placesService: google.maps.places.PlacesService
-
+}
 onMounted(async () => {
-  await ensureGoogleLoaded()
-
-  autocompleteService = new google.maps.places.AutocompleteService()
-  const dummyMap = document.createElement('div')
-  placesService = new google.maps.places.PlacesService(dummyMap) // required for getDetails
+  await loadGoogleMaps()
+  console.log(mapRef.value)
 })
 
 const runSearch = async () => {
   loading.value = true
   const coordinates = await getGeo()
   getSolarData(coordinates)
-  loading.value = false
 }
 
 const getSolarData = async (coordinates: { lat: number; lng: number }) => {
-  loading.value = true
   //TODO clear data
   await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())
@@ -180,16 +179,15 @@ const getSolarData = async (coordinates: { lat: number; lng: number }) => {
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
   await getLayerData(coordinates)
-  loading.value = false
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
+  loading.value = false
 }
 
-const enableManualBuildingSelect = () => {
-  if (!map) return
-
-  const listener = map.addListener('click', async (e: google.maps.MapMouseEvent) => {
+const enableManualBuildingSelect = async () => {
+  console.log(mapRef.value)
+  const listener = mapInstance.value.addListener('click', async (e: google.maps.MapMouseEvent) => {
     if (!e.latLng) return
     const lat = e.latLng.lat()
     const lng = e.latLng.lng()
@@ -198,10 +196,9 @@ const enableManualBuildingSelect = () => {
     google.maps.event.removeListener(listener)
 
     loading.value = true
+    console.log({ lat: lat, lng: lng })
     // Re-run the solar analysis at the selected location
     await getSolarData({ lat: lat, lng: lng })
-
-    loading.value = false
   })
 }
 
