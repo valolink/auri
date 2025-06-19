@@ -135,56 +135,25 @@ const { loading, settings, input, initialOutput, output, buildingData } = useApp
 const map = getMap()
 const panelCapacity = 400 // watts per panel
 
+let sessionToken: google.maps.places.AutocompleteSessionToken
+
 let autocompleteService: google.maps.places.AutocompleteService
-const valueRef = ref('')
-const suggestions = computed(() => {
-  console.log(valueRef.value)
-  if (!autocompleteService || !valueRef.value) return
-  let suggestionsArray
-  autocompleteService.getPlacePredictions(
-    {
-      input: valueRef.value,
-      types: ['address'],
-      componentRestrictions: { country: 'fi' },
-    },
-    (predictions, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-        suggestionsArray = predictions.map((p) => ({
-          label: p.description,
-          value: p.description,
-          place_id: p.place_id,
-        }))
-      } else {
-        suggestionsArray = []
-      }
-    },
-  )
-  return suggestionsArray
+const inputValue = ref('')
+const suggestions = computed(async () => {
+  console.log(inputValue.value)
+  sessionToken = new google.maps.places.AutocompleteSessionToken()
+  const autos = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+    input: query,
+    includedRegionCodes: ['fi'],
+    sessionToken,
+  })
+  suggestions.value = autos.map((s) => ({
+    label: s.placePrediction.text.text,
+    value: s.placePrediction.text.text,
+    placePrediction: s.placePrediction,
+  }))
 })
 let placesService: google.maps.places.PlacesService
-const onSearch = () => {
-  console.log('fire')
-  if (!autocompleteService || !valueRef.value) return
-
-  autocompleteService.getPlacePredictions(
-    {
-      input: valueRef.value,
-      types: ['address'],
-      componentRestrictions: { country: 'fi' },
-    },
-    (predictions, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-        suggestions.value = predictions.map((p) => ({
-          label: p.description,
-          value: p.description,
-          place_id: p.place_id,
-        }))
-      } else {
-        suggestions.value = []
-      }
-    },
-  )
-}
 
 onMounted(async () => {
   await ensureGoogleLoaded()
