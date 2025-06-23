@@ -1,15 +1,19 @@
 import { useAppState } from '@/useAppState'
+import { chartImage } from '@/services/chartUtils'
 
 const { ajaxUrl, settings, input, output, buildingData } = useAppState()
 
-export const requestPdf = async function (image) {
+export const requestPdf = async function () {
   const formData = new FormData()
   formData.append('action', 'pdf_report')
   formData.append('title', input.address)
 
-  if (image) {
-    formData.append('image', image)
-  }
+  // const imageUrl = chartImage()
+  // if (imageUrl) {
+  //   const res = await fetch(imageUrl)
+  //   const blob = await res.blob()
+  //   formData.append('image', blob, 'solarChart.png')
+  // }
 
   try {
     const response = await fetch(ajaxUrl, {

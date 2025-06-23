@@ -1,0 +1,289 @@
+[
+  {
+    "id": "yearlyEnergyUsageKwh",
+    "label": "Sähkön vuosikulutus (kWh/a)",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "Sähkön vuosikulutus (kWh/a)"
+  },
+  {
+    "id": "totalCapacityKwp",
+    "label": "Voimalan kokonaispaneeliteho (kWp)",
+    "type": "text",
+    "sanitize": "sanitize_text_field",
+    "description": "Voimalan kokonaispaneeliteho (kWp), oletus smartPanelsCount * panelCapacityWatts / 1000"
+  },
+  {
+	  "id": "targetPower",
+	  "label": "Tavoiteteho (kWp)",
+	  "type": "number",
+	  "sanitize": "floatval",
+	  "description": "-",
+	  "value": 6.0,
+	  "step": "0.01"
+  },
+  {
+	  "id": "panelCount",
+	  "label": "Paneelien määrä",
+	  "type": "number",
+	  "sanitize": "intval",
+	  "description": "-",
+	  "value": 15,
+	  "step": "1"
+	},
+  {
+    "id": "calculationBasis",
+    "label": "Laskentatapa",
+    "type": "select",
+    "sanitize": "sanitize_text_field",
+    "description": "Choose the default:",
+    "options": {
+      "smartMax": "Teho-optimoitu",
+      "technicalMax": "Tekninen maksimi",
+	  "optimized": "Kulutusoptimoitu",
+	  "targetPower": "Tavoiteteho"
+    }
+  },  
+  {
+    "id": "powerConsumptionProfile",
+    "label": "Rakennuksen sähkönkulutusprofiili",
+    "type": "select",
+    "sanitize": "sanitize_text_field",
+    "description": "Choose the default:",
+    "options": {
+      "profile1": "Profiili 1",
+      "profile2": "Profiili 2",
+      "profile2": "Räätälöity"
+    }
+  },
+  {
+    "id": "energyPriceSnt",
+    "label": "Sähkön hinta (snt)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+  {
+    "id": "transmissionPriceSnt",
+    "label": "Sähkön siirtohinta (snt)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "electricityTax",
+    "label": "Sähkövero (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "vat",
+    "label": "Arvonlisävero (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "costIncreaseFactor",
+    "label": "Sähkön hinnan vuosimuutos (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "efficiencyDepreciationFactor",
+    "label": "Paneelitehon vähenemä vuosittain (-%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "excessRate",
+    "label": "Ylijäämän osuus (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "excessSalePriceSnt",
+    "label": "Ylijäämän myyntihinta (snt)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "installationCostPerKwp",
+    "label": "Investointihinta per kWp (€/kWp)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "incentives",
+    "label": "Tuki/avustus (€)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "loan",
+    "label": "Laina (€)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "loanDurationYears",
+    "label": "Laina-aika vuosissa",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "-"
+  },
+	{
+    "id": "interestRate",
+    "label": "Vuosikorko (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "inverterReplacementCostFactor",
+    "label": "Invertterin vaihtokustannus (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "maintenanceCostFactor",
+    "label": "Ylläpitokulut (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "installationLifeSpan",
+    "label": "Paneeleiden elinikä (vuotta)",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "-"
+  },
+	{
+    "id": "endOfLifeCost",
+    "label": "Loppusijoituskustannus (€)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "emissionsFactor",
+    "label": "Päästökerroin (gCO2/kWh)",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "-"
+  },
+	{
+    "id": "minYearlyEnergyPerPanelAdded",
+    "label": "Paneelituoton kynnysarvo (kWh/a)",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "-"
+  },	
+	{
+    "id": "panelCapacityWatts",
+    "label": "Yksittäisen paneelin laskennallinen teho",
+    "type": "number",
+    "sanitize": "intval",
+    "description": "-"
+  },
+	{
+    "id": "discountRate",
+    "label": "Diskonttauskorko (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "dailyMaxUtilizationFactor",
+    "label": "Päivittäinen käyttöaste",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01"
+  },
+	{
+    "id": "smartMaxRangeStart",
+    "label": "Smartmax tarkastelualue alku",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "5"
+  },	
+	{
+    "id": "smartMaxRangeEnd",
+    "label": "Smartmax tarkastelualue loppu",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "5"
+  },
+	{
+    "id": "smartMaxTreshold",
+    "label": "Suhteellisen pudotuksen raja-arvo, %",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "1"
+  },
+	{
+    "id": "smartMaxFallbackTreshold",
+    "label": "'Vararaja-arvo' mikäli suhteellista pudotusta ei löydy",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "1"
+  },
+	{
+    "id": "buildingTypes",
+    "label": "Rakennustyypit",
+    "type": "repeater",
+    "description": "Add dynamic name/value pairs."
+  },
+	{
+    "id": "buildingType",
+    "label": "Rakennustyyppi",
+    "type": "text",
+    "sanitize": "sanitize_text_field",
+    "description": "Default buildingType."
+  },
+  {
+    "id": "enable_feature",
+    "label": "Enable Feature",
+    "type": "checkbox",
+    "sanitize": "boolval",
+    "description": "Turn on this feature for advanced users."
+  },
+  {
+    "id": "welcome_message",
+    "label": "Welcome Message",
+    "type": "textarea",
+    "sanitize": "sanitize_textarea_field",
+    "description": "Displayed on the user's dashboard."
+  }
+]

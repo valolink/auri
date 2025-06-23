@@ -1,5 +1,4 @@
 // src/composables/useSolarApi.ts
-import { ref } from 'vue'
 import { geocodeAddress, type GeocodeLatLng } from '@/services/geocodingApi'
 import {
   type SolarPanel,
@@ -13,7 +12,7 @@ import {
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
-import { loadGoogleMaps, initMap, getGeometry, updateOverlay } from '@/services/mapService'
+import { initMap, getGeometry, updateOverlay } from '@/services/mapService'
 
 const { mapRef, mapInstance, output, input, settings, jsonData, buildingData } = useAppState()
 

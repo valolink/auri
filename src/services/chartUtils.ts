@@ -2,6 +2,7 @@ import type { Chart } from 'chart.js'
 import { useAppState } from '@/useAppState'
 
 const { output, input, chartRef } = useAppState()
+
 export function updateChartData(
   yearlyEnergy: number = output.active.yearlyEnergyDcKwh,
   distribution: number[] = output.monthlyDistribution,
@@ -41,5 +42,24 @@ export function updateChartData(
     console.log('Chart updated with:', chartInstance.data.datasets[0].data)
   } else {
     console.warn('Chart instance not available')
+  }
+}
+
+export function downloadChartImage() {
+  const chartInstance = chartRef.value?.chart as Chart<'bar'> | undefined
+  if (chartInstance) {
+    const base64Image = chartInstance.toBase64Image()
+
+    const link = document.createElement('a')
+    link.href = base64Image
+    link.download = 'bar-chart.png'
+    link.click()
+  }
+}
+
+export function chartImage(): string | undefined {
+  const chartInstance = chartRef.value?.chart as Chart<'bar'> | undefined
+  if (chartInstance) {
+    return chartInstance.toBase64Image()
   }
 }

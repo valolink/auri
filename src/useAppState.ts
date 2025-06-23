@@ -66,6 +66,7 @@ const mapRef = ref<HTMLElement | null>(null)
 const mapInstance = ref<google.maps.Map | null>(null) // Google Map object
 const loading = ref(false)
 const ajaxUrl = window.vueAppData!.ajax_url
+
 export function useAppState() {
   return {
     settings,
