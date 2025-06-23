@@ -100,6 +100,7 @@
             />
           </n-space>
         </n-form-item>
+        <n-button type="primary" @click="requestPdf">Tulosta raportti</n-button>
       </div>
     </n-form>
   </div>
@@ -112,7 +113,6 @@ import {
   NFormItem,
   NSelect,
   NInputNumber,
-  NInput,
   NButton,
   NInputGroup,
   NSlider,
@@ -121,14 +121,10 @@ import {
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { updateChartData } from '@/services/chartUtils'
+import { requestPdf } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
-import {
-  ensureGoogleLoaded,
-  getMap,
-  loadGoogleMaps,
-  setupAddressAutocomplete,
-} from '@/services/mapService'
-import { ref, onMounted, useTemplateRef, computed } from 'vue'
+import { loadGoogleMaps } from '@/services/mapService'
+import { ref, onMounted, computed } from 'vue'
 import {
   calculateConfig,
   findOptimized,
@@ -137,13 +133,12 @@ import {
   findTechnicalMax,
 } from '@/services/configUtils'
 
-const { mapRef, mapInstance, loading, settings, input, initialOutput, output, buildingData } =
-  useAppState()
+const { mapRef, mapInstance, loading, settings, input, output, buildingData } = useAppState()
 const panelCapacity = 400 // watts per panel
 
 let sessionToken: google.maps.places.AutocompleteSessionToken
 
-const suggestions = ref([])
+const suggestions = ref<{ label: string; value: string }[]>([])
 async function getSuggestions() {
   console.log(input.address)
   sessionToken = new google.maps.places.AutocompleteSessionToken()
@@ -154,9 +149,8 @@ async function getSuggestions() {
   })
   console.log(autos)
   suggestions.value = autos.suggestions.map((s) => ({
-    label: s.placePrediction.text.text,
-    value: s.placePrediction.text.text,
-    placePrediction: s.placePrediction,
+    label: s.placePrediction?.text.text ?? '',
+    value: s.placePrediction?.text.text ?? '',
   }))
 }
 onMounted(async () => {
@@ -187,19 +181,24 @@ const getSolarData = async (coordinates: { lat: number; lng: number }) => {
 
 const enableManualBuildingSelect = async () => {
   console.log(mapRef.value)
-  const listener = mapInstance.value.addListener('click', async (e: google.maps.MapMouseEvent) => {
-    if (!e.latLng) return
-    const lat = e.latLng.lat()
-    const lng = e.latLng.lng()
+  if (mapInstance.value) {
+    const listener = mapInstance.value.addListener(
+      'click',
+      async (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return
+        const lat = e.latLng.lat()
+        const lng = e.latLng.lng()
 
-    // Remove this listener to prevent repeated triggers
-    google.maps.event.removeListener(listener)
+        // Remove this listener to prevent repeated triggers
+        google.maps.event.removeListener(listener)
 
-    loading.value = true
-    console.log({ lat: lat, lng: lng })
-    // Re-run the solar analysis at the selected location
-    await getSolarData({ lat: lat, lng: lng })
-  })
+        loading.value = true
+        console.log({ lat: lat, lng: lng })
+        // Re-run the solar analysis at the selected location
+        await getSolarData({ lat: lat, lng: lng })
+      },
+    )
+  }
 }
 
 const validPanelCounts = computed(

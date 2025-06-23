@@ -1,6 +1,6 @@
 import { ref, reactive, toRaw } from 'vue'
 import type { SolarCalculationResult, AppSettings } from '@/types'
-
+import type { BuildingInsightsResponse, SolarPanelConfig } from '@/services/solar'
 const settings = reactive({
   ...(window.vueAppData!.settings as AppSettings),
 })
@@ -55,7 +55,8 @@ const buildingData = reactive({
 declare global {
   interface Window {
     vueAppData?: {
-      settings?: AppSettings
+      settings: AppSettings
+      ajax_url: string
     }
   }
 }
@@ -64,7 +65,7 @@ const chartRef = ref()
 const mapRef = ref<HTMLElement | null>(null)
 const mapInstance = ref<google.maps.Map | null>(null) // Google Map object
 const loading = ref(false)
-
+const ajaxUrl = window.vueAppData!.ajax_url
 export function useAppState() {
   return {
     settings,
@@ -77,5 +78,6 @@ export function useAppState() {
     mapRef,
     mapInstance,
     loading,
+    ajaxUrl,
   }
 }
