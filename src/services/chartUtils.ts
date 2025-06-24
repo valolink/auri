@@ -60,6 +60,29 @@ export function downloadChartImage() {
 export function chartImage(): string | undefined {
   const chartInstance = chartRef.value?.chart as Chart<'bar'> | undefined
   if (chartInstance) {
-    return chartInstance.toBase64Image()
+    // Store original settings
+    const originalWidth = chartInstance.width
+    const originalHeight = chartInstance.height
+    const originalPixelRatio = chartInstance.options.devicePixelRatio
+
+    // Set high resolution (2x) and desired display size
+    chartInstance.options.devicePixelRatio = 2
+
+    // Resize to desired display dimensions (750x375)
+    // The actual canvas will be 1500x750 due to devicePixelRatio = 2
+    chartInstance.resize(600, 300)
+
+    // Update the chart to apply the new devicePixelRatio
+    chartInstance.update('none')
+
+    // Generate the high-res image
+    const base64Image = chartInstance.toBase64Image('image/png', 1.0)
+
+    // Restore original settings
+    chartInstance.options.devicePixelRatio = originalPixelRatio
+    chartInstance.resize(originalWidth, originalHeight)
+    chartInstance.update('none')
+
+    return base64Image
   }
 }

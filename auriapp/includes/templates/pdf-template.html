@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.2;
+            color: #333;
+            background: white;
+            width: 100%;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 575px; /* A4 width (595px) minus 20px total margins */
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        /* Replace flexbox with table-based layout for PDF compatibility */
+        .header {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+        
+        .header-left {
+            width: 50%;
+        }
+        
+        .header-right {
+            width: 50%;
+            text-align: right;
+        }
+        
+        .app-info h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .version-info {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .scores {
+            font-size: 11px;
+        }
+        
+        .scores div {
+            margin-bottom: 3px;
+        }
+        
+        .variable {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        /* Replace flexbox main content with table */
+        .main-content {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .main-table td {
+            vertical-align: top;
+            padding: 0 10px 0 0; /* Reduced padding between columns */
+        }
+        
+        .left-panel {
+            width: 50%;
+        }
+        
+        .right-panel {
+            width: 50%;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .address-section {
+            margin-bottom: 25px;
+        }
+        
+        .address-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .address-details {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .system-specs {
+            margin-bottom: 25px;
+        }
+        
+        .spec-item {
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        
+        .spec-label {
+            color: #333;
+        }
+        
+        .spec-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .spec-unit {
+            color: #333;
+            font-weight: normal;
+        }
+        
+        .heat-map {
+            width: 100%;
+            min-height: 150px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            background: #f5f5f5;
+            text-align: center;
+            color: #666;
+            overflow: hidden;
+        }
+        
+        .heat-map img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .chart-container {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .chart-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2ecc71;
+        }
+        
+        .chart-placeholder {
+            width: 100%;
+            min-height: 150px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+            text-align: center;
+            color: #666;
+            overflow: hidden;
+        }
+        
+        .chart-placeholder img {
+            max-width: 400px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        /* Replace flexbox bottom section with table */
+        .bottom-section {
+            width: 100%;
+            margin-top: 30px;
+        }
+        
+        .bottom-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .bottom-table td {
+            vertical-align: top;
+            width: 50%;
+            padding: 0 10px 0 0; /* Reduced padding */
+        }
+        
+        .lifecycle-chart {
+            width: 100%;
+        }
+        
+        .profitability-section {
+            width: 100%;
+        }
+        
+        .profitability-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .profit-item {
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+        
+        .profit-label {
+            color: #333;
+        }
+        
+        .profit-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .calculations-section {
+            margin-top: 30px;
+        }
+        
+        /* Replace flexbox calc columns with table */
+        .calc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .calc-table td {
+            vertical-align: top;
+            width: 33.33%;
+            padding: 0 8px 0 0; /* Reduced padding for tight fit */
+        }
+        
+        .calc-item {
+            margin-bottom: 6px;
+            font-size: 10px;
+        }
+        
+        .calc-label {
+            color: #333;
+        }
+        
+        .calc-value {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .image-placeholder {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            color: #666;
+            font-size: 11px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        /* PDF-specific adjustments */
+        @media print {
+            .container {
+                max-width: none;
+                width: 100%;
+                padding: 10px; /* 10px margins as requested */
+            }
+            
+            body {
+                font-size: 11px; /* Slightly smaller font for better fit */
+            }
+            
+            .calc-item {
+                font-size: 9px; /* Smaller text in calculation section */
+            }
+        }
+        
+        /* Ensure tables don't break across pages when possible */
+        .main-table, .bottom-table, .calc-table {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <table class="header-table">
+                <tr>
+                    <td class="header-left">
+                        <div class="app-info">
+                            <h1>AuriApp</h1>
+                            <div class="version-info">
+                                Versio <span class="variable">{{versionNumber}}</span><br>
+                                <span class="variable">{{currentDate}}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="header-right">
+                        <div class="scores">
+                            <div><strong>Arviointipisteet</strong></div>
+                            <div>Kannattavuus <span class="variable">{{scoreProfitability}}</span>/100</div>
+                            <div>Tuotanto <span class="variable">{{scoreProduction}}</span>/100</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <table class="main-table">
+                <tr>
+                    <td class="left-panel">
+                        <!-- Address Section -->
+                        <div class="address-section">
+                            <div class="section-title">Kohde</div>
+                            <div class="address-title">
+                                <span class="variable">{{address}}</span> (input)
+                            </div>
+                            <div class="address-details">
+                                Lat: <span class="variable">{{lat}}</span> (geocode), Lon: <span class="variable">{{lng}}</span> (geocode)
+                            </div>
+                        </div>
+
+                        <!-- System Specifications -->
+                        <div class="system-specs">
+                            <div class="section-title">Järjestelmätiedot</div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Voimatalteho:</span> 
+                                <span class="spec-value">{{capacityKwp}}</span> 
+                                <span class="spec-unit">kWp</span>
+                            </div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Paneelimäärä:</span> 
+                                <span class="spec-value">{{panelsCount}}</span> 
+                                <span class="spec-unit">kpl</span>
+                            </div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Aurinkosähkön vuosituotto:</span> 
+                                <span class="spec-value">{{yearlyEnergyDcKwh}}</span> 
+                                <span class="spec-unit">kWh</span>
+                            </div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Arvoitu investointihinta:</span> 
+                                <span class="spec-value">{{installationCostEuros}}</span> 
+                                <span class="spec-unit">€</span>
+                            </div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Vaikutus hiilijalanjälkeen:</span> 
+                                <span class="spec-value">-{{yearlyCarbonOffset}}</span> 
+                                <span class="spec-unit">kgCO2/vuosi</span>
+                            </div>
+                            
+                            <div class="spec-item">
+                                <span class="spec-label">Ylläpitokulut vuodessa:</span> 
+                                <span class="spec-value">{{maintenanceCostsPerYear}}</span> 
+                                <span class="spec-unit">€/vuosi</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="right-panel">
+                        <!-- Heat Map -->
+                        <div class="heat-map">
+                            {{#heatMapImage}}
+                            <img src="data:image/png;base64,{{heatMapImage}}" />
+                            {{/heatMapImage}}
+                            {{^heatMapImage}}
+                            <div class="image-placeholder">Heat Map Image Placeholder</div>
+                            {{/heatMapImage}}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Solar Power Chart -->
+        <div class="chart-container">
+            <div class="chart-title">■ Solar power</div>
+            <div class="chart-placeholder">
+                {{#solarChartImage}}
+                <img src="data:image/png;base64,{{solarChartImage}}" />
+                {{/solarChartImage}}
+                {{^solarChartImage}}
+                <div class="image-placeholder">Solar Power Chart Placeholder</div>
+                {{/solarChartImage}}
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="bottom-section">
+            <table class="bottom-table">
+                <tr>
+                    <td>
+                        <!-- Lifecycle Chart -->
+                        <div class="lifecycle-chart">
+                            <div class="section-title">Elinkaarisäästöt</div>
+                            <div class="chart-placeholder">
+                                {{#lifecycleChartImage}}
+                                <img src="data:image/png;base64,{{lifecycleChartImage}}" />
+                                {{/lifecycleChartImage}}
+                                {{^lifecycleChartImage}}
+                                <div class="image-placeholder">Lifecycle Chart Placeholder</div>
+                                {{/lifecycleChartImage}}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <!-- Profitability Section -->
+                        <div class="profitability-section">
+                            <div class="profitability-title">Kannattavuus</div>
+                            
+                            <div class="profit-item">
+                                <span class="profit-label">Takaisinmaksuaika:</span> 
+                                <span class="profit-value">{{paybackYears}}</span> 
+                                <span class="profit-label">vuotta</span>
+                            </div>
+                            
+                            <div class="profit-item">
+                                <span class="profit-label">Vuosisäästö:</span> 
+                                <span class="profit-value">{{averageYearlySavingsEuros}}</span> 
+                                <span class="profit-label">€/vuosi</span>
+                            </div>
+                            
+                            <div class="profit-item">
+                                <span class="profit-label">Aurinkosähkön omakustannushinta (LCOE):</span> 
+                                <span class="profit-value">{{lcoeSntkPerKwh}}</span> 
+                                <span class="profit-label">snt/kWh</span>
+                            </div>
+                            
+                            <div class="profit-item">
+                                <span class="profit-label">Nettonykyarvo (30v):</span> 
+                                <span class="profit-value">{{netPresentValueEuros}}</span> 
+                                <span class="profit-label">€</span>
+                            </div>
+                            
+                            <div class="profit-item">
+                                <span class="profit-label">Sisäinen korkokanta:</span> 
+                                <span class="profit-value">{{internalRateOfReturn}}</span> 
+                                <span class="profit-label">%</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Calculations Section -->
+        <div class="calculations-section">
+            <div class="section-title">Laskentaoletukset</div>
+            
+            <table class="calc-table">
+                <tr>
+                    <td>
+                        <div class="calc-item">
+                            <span class="calc-label">Sähkön hinta:</span> 
+                            <span class="calc-value">{{energyPriceSnt}}</span> 
+                            <span class="calc-label">snt/kWh</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Sähkön siirtohinta:</span> 
+                            <span class="calc-value">{{transmissionPriceSnt}}</span> 
+                            <span class="calc-label">snt/kWh</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Sähkövero ja huoltovarmmusmaksu:</span> 
+                            <span class="calc-value">{{electricityTaxSnt}}</span> 
+                            <span class="calc-label">snt/kWh</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Arvonlisävero:</span> 
+                            <span class="calc-value">{{vat}}</span> 
+                            <span class="calc-label">%</span>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <div class="calc-item">
+                            <span class="calc-label">Ylläpitokulut vuodessa:</span> 
+                            <span class="calc-value">{{maintenanceCostFactor}}</span> 
+                            <span class="calc-label">%</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">% investointikustannuksista</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Tehon alenema vuositain:</span> 
+                            <span class="calc-value">{{efficiencyDepreciationFactor}}</span> 
+                            <span class="calc-label">%</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Järjestelmän elinkaari:</span> 
+                            <span class="calc-value">{{installationLifeSpan}}</span> 
+                            <span class="calc-label">vuotta</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Paneelin teho:</span> 
+                            <span class="calc-value">{{panelCapacityWatts}}</span> 
+                            <span class="calc-label">W</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Investointihinta per kWp:</span> 
+                            <span class="calc-value">{{installationCostPerKwp}}</span> 
+                            <span class="calc-label">€/kWp</span>
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <div class="calc-item">
+                            <span class="calc-label">Kalistuskulma:</span> 
+                            <span class="calc-value">{{pitchDegrees}}</span> 
+                            <span class="calc-label">°</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Suuntaus:</span> 
+                            <span class="calc-value">{{azimuthDegrees}}</span> 
+                            <span class="calc-label">°</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Diskonttokorkо:</span> 
+                            <span class="calc-value">{{discountRate}}</span> 
+                            <span class="calc-label">%</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Sähkön hinnan nousu:</span> 
+                            <span class="calc-value">{{costIncreaseFactor}}</span> 
+                            <span class="calc-label">%</span>
+                        </div>
+                        
+                        <div class="calc-item">
+                            <span class="calc-label">Ostos sähkön päästökerroin:</span> 
+                            <span class="calc-value">{{emissionsFactor}}</span> 
+                            <span class="calc-label">gCO2/kWh</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
