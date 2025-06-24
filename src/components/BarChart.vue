@@ -1,6 +1,5 @@
 <template>
   <Bar ref="chartRef" :options="options" :data="data" />
-  <button @click="downloadChartImage">Download Chart as Image</button>
 </template>
 
 <script setup lang="ts">
@@ -15,7 +14,6 @@ import {
   CategoryScale,
   LinearScale,
 } from 'chart.js'
-import { downloadChartImage } from '@/services/chartUtils'
 const options = {
   responsive: true,
 }

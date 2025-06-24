@@ -100,7 +100,7 @@
             />
           </n-space>
         </n-form-item>
-        <n-button type="primary" @click="requestPdf">Tulosta raportti</n-button>
+        <n-button type="primary" :disabled="loading" @click="requestPdf">Tulosta raportti</n-button>
       </div>
     </n-form>
   </div>
