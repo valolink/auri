@@ -1,6 +1,6 @@
 import { useAppState } from '@/useAppState'
-import { chartImage } from '@/services/chartUtils'
-
+import { useCharts } from '@/services/useCharts'
+const { getChartImage } = useCharts()
 const { ajaxUrl, settings, input, output, buildingData } = useAppState()
 
 export const requestPdf = async function () {
@@ -77,7 +77,7 @@ export const requestPdf = async function () {
   // Handle images
   try {
     // Solar chart image
-    const solarChartUrl = chartImage()
+    const solarChartUrl = getChartImage('energy')
     if (solarChartUrl) {
       const solarRes = await fetch(solarChartUrl)
       const solarBlob = await solarRes.blob()
@@ -92,13 +92,12 @@ export const requestPdf = async function () {
     //   formData.append('heatMapImage', heatBlob, 'heatMap.png')
     // }
 
-    // Lifecycle chart image (if you have a function to generate it)
-    // const lifecycleChartUrl = lifecycleChartImage() // You'll need to implement this
-    // if (lifecycleChartUrl) {
-    //   const lifecycleRes = await fetch(lifecycleChartUrl)
-    //   const lifecycleBlob = await lifecycleRes.blob()
-    //   formData.append('lifecycleChartImage', lifecycleBlob, 'lifecycleChart.png')
-    // }
+    const savingsChartUrl = getChartImage('savings')
+    if (savingsChartUrl) {
+      const savingsRes = await fetch(savingsChartUrl)
+      const lifecycleBlob = await savingsRes.blob()
+      formData.append('lifecycleChartImage', lifecycleBlob, 'lifecycleChart.png')
+    }
   } catch (imageError) {
     console.warn('Image processing error:', imageError)
   }

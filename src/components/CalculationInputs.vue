@@ -120,7 +120,7 @@ import {
   NTag,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
-import { updateChartData } from '@/services/chartUtils'
+import { updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
 import { requestPdf } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import { loadGoogleMaps } from '@/services/mapService'
@@ -282,7 +282,8 @@ const updateCalculationBasis = (
     }
   }
   renderPanels()
-  if (output.monthlyDistribution.length > 0) updateChartData()
+  if (output.monthlyDistribution.length > 0) updateEnergyChart()
+  updateSavingsChart()
   // console.log('chartRef.value: ', chartRef.value.chart)
 }
 </script>

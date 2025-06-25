@@ -1,9 +1,11 @@
 <template>
-  <Bar :ref="setChartRef" :options="chartOptions" :data="chartData" />
+  <div class="chart-container">
+    <Chart :ref="setChartRef" :type="chartType" :options="chartOptions" :data="chartData" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Bar } from 'vue-chartjs'
+import { Chart as ChartComponent } from 'vue-chartjs'
 import { computed } from 'vue'
 import type { ChartOptions, ChartData } from 'chart.js'
 import {
@@ -47,31 +49,10 @@ const setChartRef = (el: any) => {
   }
 }
 </script>
-<!-- <template> -->
-<!--   <Bar ref="chartRef" :options="options" :data="data" /> -->
-<!-- </template> -->
-<!---->
-<!-- <script setup lang="ts"> -->
-<!-- import { useAppState } from '@/useAppState' -->
-<!-- import { Bar } from 'vue-chartjs' -->
-<!-- import { -->
-<!--   Chart as ChartJS, -->
-<!--   Title, -->
-<!--   Tooltip, -->
-<!--   Legend, -->
-<!--   BarElement, -->
-<!--   CategoryScale, -->
-<!--   LinearScale, -->
-<!-- } from 'chart.js' -->
-<!-- const options = { -->
-<!--   responsive: true, -->
-<!-- } -->
-<!---->
-<!-- const data = { -->
-<!--   labels: [], -->
-<!--   datasets: [], -->
-<!-- } -->
-<!---->
-<!-- ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale) -->
-<!-- const { chartRef } = useAppState() -->
-<!-- </script> -->
+
+<style scoped>
+.chart-container {
+  max-width: 600px;
+  margin: 0 auto; /* Center the chart */
+}
+</style>
