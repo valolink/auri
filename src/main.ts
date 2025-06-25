@@ -5,7 +5,7 @@ import { useAppState } from './useAppState'
 import DataView from './components/DataView.vue'
 import MapView from './components/MapView.vue'
 import CalculationInputs from './components/CalculationInputs.vue'
-import BarChart from '@/components/BarChart.vue'
+import SolarChart from@/components/SolarChart.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
 
 const app = createApp({
@@ -18,7 +18,7 @@ const app = createApp({
     'data-view': DataView,
     'calculation-inputs': CalculationInputs,
     'map-view': MapView,
-    'bar-chart': BarChart,
+    'bar-chart': SolarChart,
     'loading-indicator': LoadingIndicator,
   },
 })
