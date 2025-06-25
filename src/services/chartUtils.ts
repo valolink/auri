@@ -1,3 +1,4 @@
+// chartUtils.ts
 import { useAppState } from '@/useAppState'
 import { useCharts } from '@/services/useCharts'
 
@@ -45,44 +46,44 @@ function calculateLifecycleSavings(config: SolarPanelConfig): number[] {
   const costIncrease = Number(settings.costIncreaseFactor.value) / 100
   const lifeSpan = Number(settings.installationLifeSpan.value)
 
-  const cumulativeSavings: number[] = []
-  let runningTotal = -installationCostEuros // Start negative with installation cost
+  const netCashFlowCumulative: number[] = []
 
-  for (let year = 1; year <= Math.min(30, lifeSpan); year++) {
-    // Calculate efficiency for this year (panels degrade over time)
-    const efficiencyFactor = (1 - efficiencyDepreciation) ** (year - 1)
+  // Year 0: Initial investment (negative)
+  let netCashFlowPerLifeSpan = -installationCostEuros
+  netCashFlowCumulative.push(Math.round(netCashFlowPerLifeSpan))
 
-    // Calculate energy price for this year (prices increase over time)
-    const energyPriceFactor = (1 + costIncrease) ** (year - 1)
-
-    // Yearly energy production (decreasing due to panel degradation)
-    const yearlyEnergy = yearlyEnergyDcKwh * efficiencyFactor
-
-    // Yearly savings (increasing due to energy price inflation, decreasing due to efficiency loss)
-    const yearlySavings =
-      (yearlyEnergy * output.static.totalEnergyPriceSntPerKwh * energyPriceFactor) / 100
-
-    // Subtract yearly maintenance costs
-    const netYearlySavings = yearlySavings - maintenanceYearlyCost
-
-    // Add inverter replacement cost (typically around year 15)
-    let inverterCost = 0
-    if (year === 15) {
-      inverterCost =
+  // Years 1 to lifeSpan
+  for (let i = 0; i < Math.min(29, lifeSpan - 1); i++) {
+    // -1 because we already did year 0
+    if (i === 0) {
+      // First year: basic savings minus maintenance
+      netCashFlowPerLifeSpan = netCashFlowPerLifeSpan + savingsYear1 - maintenanceYearlyCost
+    } else if (i === 14) {
+      // Year 15 (i=14 because we start from i=0 for year 1)
+      // Year 15: Include inverter replacement cost
+      const yearlyAdjustedSavings =
+        savingsYear1 * (1 + costIncrease - efficiencyDepreciation) ** (i + 1)
+      const inverterCost =
         installationCostEuros * (Number(settings.inverterReplacementCostFactor.value) / 100)
+      netCashFlowPerLifeSpan =
+        netCashFlowPerLifeSpan + yearlyAdjustedSavings - maintenanceYearlyCost - inverterCost
+    } else {
+      // Other years: adjusted savings minus maintenance
+      const yearlyAdjustedSavings =
+        savingsYear1 * (1 + costIncrease - efficiencyDepreciation) ** (i + 1)
+      netCashFlowPerLifeSpan =
+        netCashFlowPerLifeSpan + yearlyAdjustedSavings - maintenanceYearlyCost
     }
 
-    // Update running total
-    runningTotal += netYearlySavings - inverterCost
-    cumulativeSavings.push(Math.round(runningTotal))
+    netCashFlowCumulative.push(Math.round(netCashFlowPerLifeSpan))
   }
 
-  // Fill remaining years if less than 30
-  while (cumulativeSavings.length < 30) {
-    cumulativeSavings.push(cumulativeSavings[cumulativeSavings.length - 1] || 0)
+  // Fill remaining years up to 30 if needed (keep the last value)
+  while (netCashFlowCumulative.length < 30) {
+    netCashFlowCumulative.push(netCashFlowCumulative[netCashFlowCumulative.length - 1] || 0)
   }
 
-  return cumulativeSavings
+  return netCashFlowCumulative
 }
 
 export function updateSavingsChart() {
@@ -90,17 +91,57 @@ export function updateSavingsChart() {
   const currentYear = new Date().getFullYear()
   const labels = Array.from({ length: 30 }, (_, i) => (currentYear + i + 1).toString())
 
+  // Create datasets that overlap at crossover points
+  const negativeData = cumulativeSavings.map((value, index) => {
+    if (value < 0) return value
+    // Include the first positive value to connect the line
+    if (index > 0 && cumulativeSavings[index - 1] < 0) return value
+    return null
+  })
+
+  const positiveData = cumulativeSavings.map((value, index) => {
+    if (value >= 0) return value
+    // Include the last negative value to connect the line
+    if (index < cumulativeSavings.length - 1 && cumulativeSavings[index + 1] >= 0) return value
+    return null
+  })
+
   const datasets = [
     {
-      label: 'Kumulatiiviset säästöt',
-      backgroundColor: (ctx: any) => {
-        return ctx.parsed.y < 0 ? '#ef4444' : '#10b981'
-      },
-      borderColor: (ctx: any) => {
-        return ctx.parsed.y < 0 ? '#dc2626' : '#059669'
-      },
-      data: cumulativeSavings,
-      type: 'line',
+      label: 'Elinkaarisäästöt',
+      data: positiveData,
+      type: 'line' as const,
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+      borderWidth: 2,
+      fill: false,
+      tension: 0.1,
+      pointBackgroundColor: positiveData.map((val) =>
+        val !== null && val >= 0 ? '#10b981' : 'transparent',
+      ),
+      pointBorderColor: positiveData.map((val) =>
+        val !== null && val >= 0 ? '#059669' : 'transparent',
+      ),
+      pointRadius: positiveData.map((val) => (val !== null && val >= 0 ? 4 : 0)),
+      order: 3,
+    },
+    {
+      label: '',
+      data: negativeData,
+      type: 'line' as const,
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      borderWidth: 2,
+      fill: false,
+      tension: 0.1,
+      pointBackgroundColor: negativeData.map((val) =>
+        val !== null && val < 0 ? '#ef4444' : 'transparent',
+      ),
+      pointBorderColor: negativeData.map((val) =>
+        val !== null && val < 0 ? '#dc2626' : 'transparent',
+      ),
+      pointRadius: negativeData.map((val) => (val !== null && val < 0 ? 4 : 0)),
+      order: 2,
     },
   ]
 

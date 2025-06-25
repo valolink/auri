@@ -1,4 +1,4 @@
-import { ref, reactive, toRaw } from 'vue'
+import { ref, reactive, toRaw, markRaw } from 'vue'
 import type { SolarCalculationResult, AppSettings } from '@/types'
 import type { BuildingInsightsResponse, SolarPanelConfig } from '@/services/solar'
 const settings = reactive({
@@ -67,11 +67,13 @@ interface ChartRefs {
   [key: string]: Ref<any>
 }
 
-const registerChart = (chartId: string, chartRef: any) => {
+const registerChart = (chartId: string, chart: Chart) => {
+  console.log('Registering chart:', chartId, chart) // Add this debug line
   if (!chartRefs[chartId]) {
     chartRefs[chartId] = ref()
   }
-  chartRefs[chartId].value = chartRef
+  chartRefs[chartId].value = markRaw(chart)
+  console.log('Chart stored:', chartRefs[chartId].value) // Add this debug line
 }
 
 const chartRefs: ChartRefs = {}
