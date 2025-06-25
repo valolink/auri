@@ -5,6 +5,8 @@ const settings = reactive({
   ...(window.vueAppData!.settings as AppSettings),
 })
 
+import type { Chart } from 'chart.js'
+
 const jsonData = reactive({
   geoResult: null as string | null,
   buildingResult: null as string | null,
@@ -61,7 +63,18 @@ declare global {
   }
 }
 
-const chartRef = ref()
+interface ChartRefs {
+  [key: string]: Ref<any>
+}
+
+const registerChart = (chartId: string, chartRef: any) => {
+  if (!chartRefs[chartId]) {
+    chartRefs[chartId] = ref()
+  }
+  chartRefs[chartId].value = chartRef
+}
+
+const chartRefs: ChartRefs = {}
 const mapRef = ref<HTMLElement | null>(null)
 const mapInstance = ref<google.maps.Map | null>(null) // Google Map object
 const loading = ref(false)
@@ -75,7 +88,8 @@ export function useAppState() {
     output,
     initialOutput,
     buildingData,
-    chartRef,
+    chartRefs,
+    registerChart,
     mapRef,
     mapInstance,
     loading,

@@ -133,8 +133,7 @@ import {
   findTechnicalMax,
 } from '@/services/configUtils'
 
-const { chartRef, mapRef, mapInstance, loading, settings, input, output, buildingData } =
-  useAppState()
+const { mapRef, mapInstance, loading, settings, input, output, buildingData } = useAppState()
 const panelCapacity = 400 // watts per panel
 
 let sessionToken: google.maps.places.AutocompleteSessionToken
@@ -284,7 +283,7 @@ const updateCalculationBasis = (
   }
   renderPanels()
   if (output.monthlyDistribution.length > 0) updateChartData()
-  console.log('chartRef.value: ', chartRef.value.chart)
+  // console.log('chartRef.value: ', chartRef.value.chart)
 }
 </script>
 
