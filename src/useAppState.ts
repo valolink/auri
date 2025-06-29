@@ -45,6 +45,8 @@ const initialOutput = {
   },
   monthlyDistribution: [] as number[],
   calculationMonth: null as number | null,
+  addressFromApi: '' as string,
+  roofSize: 0,
 }
 
 const output = reactive(initialOutput)

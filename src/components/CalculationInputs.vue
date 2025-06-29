@@ -123,6 +123,8 @@ import { useAppState } from '@/useAppState'
 import { updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
 import { requestPdf } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
+import type { GeocodeLatLng } from '@/services/geocodingApi'
+import { formatFinnishAddress, reverseGeocode } from '@/services/geocodingApi'
 import { loadGoogleMaps } from '@/services/mapService'
 import { ref, onMounted, computed } from 'vue'
 import {
@@ -164,8 +166,11 @@ const runSearch = async () => {
   getSolarData(coordinates)
 }
 
-const getSolarData = async (coordinates: { lat: number; lng: number }) => {
+const getSolarData = async (coordinates: GeocodeLatLng) => {
   //TODO clear data
+  // Set the formatted Finnish address from the geocoding API
+  output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
+  
   await getBuildingData(coordinates)
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
@@ -194,8 +199,12 @@ const enableManualBuildingSelect = async () => {
 
         loading.value = true
         console.log({ lat: lat, lng: lng })
-        // Re-run the solar analysis at the selected location
-        await getSolarData({ lat: lat, lng: lng })
+        
+        // Perform reverse geocoding to get address information
+        const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4' // TODO: Move to config
+        const coordinates = await reverseGeocode(lat, lng, apiKey)
+        
+        await getSolarData(coordinates)
       },
     )
   }
