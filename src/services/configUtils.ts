@@ -1,18 +1,19 @@
 import { useAppState } from '@/useAppState'
 import type { SolarPanelConfig } from './solar'
+import type { ExtendedSolarPanelConfig } from '@/types'
 const { settings, output, buildingData } = useAppState()
 
 export function findTechnicalMax() {
   return buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1]
 }
 
-export function findSmartMax(): SolarPanelConfig {
+export function findSmartMax(): ExtendedSolarPanelConfig {
   const rangeStart = settings.smartMaxRangeStart.value
   const rangeEnd = settings.smartMaxRangeEnd.value
   const relativeThreshold = settings.smartMaxTreshold.value / 100
   const fallbackAbsoluteThreshold = settings.smartMaxFallbackTreshold.value
 
-  const configs = buildingData.sortedConfigs
+  const configs = buildingData.sortedConfigs as ExtendedSolarPanelConfig[]
   const smartMax = configs[0]
 
   // Step 1: Check for relative drop in gainPerPanel within inspection range
@@ -131,11 +132,14 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
       2) *
     Number(settings.loanDurationYears?.value)
 
+  const inverterReplacementCosts =
+    installationCostEuros * (Number(settings.inverterReplacementCostFactor.value) / 100)
+
   const lcoeSntPerKwh =
     (installationCostEuros +
       maintenanceCostsPerLifeSpan +
       totalFinanceCostsPerLifeSpan +
-      Number(settings.inverterReplacementCostFactor.value) / 100) /
+      inverterReplacementCosts) /
     totalEnergyDcKwhPerLifeSpan
 
   const paybackYears =
@@ -144,6 +148,20 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
       Number(settings.installationCostPerKwp.value) *
         capacityKwp *
         (Number(settings.maintenanceCostFactor.value) / 100))
+
+  const totalCostsPerLifeSpanEuros =
+    installationCostEuros +
+    maintenanceCostsPerLifeSpan +
+    totalFinanceCostsPerLifeSpan +
+    inverterReplacementCosts
+
+  // Calculate scoreProduction
+  const smartMax = findSmartMax()
+  const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
+  const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
+  const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
+  
+  const scoreProduction = (smartMax.panelsCount * panelHeightMeters * panelWidthMeters / (areaMeters2 / 2)) * 100
 
   return {
     yearlyEnergyDcKwh,
@@ -159,5 +177,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     totalFinanceCostsPerLifeSpan,
     lcoeSntPerKwh,
     paybackYears,
+    totalCostsPerLifeSpanEuros,
+    scoreProduction,
   }
 }

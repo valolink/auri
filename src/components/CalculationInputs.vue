@@ -162,8 +162,7 @@ onMounted(async () => {
 
 const runSearch = async () => {
   loading.value = true
-  const coordinates = await getGeo()
-  getSolarData(coordinates)
+  getSolarData(await getGeo())
 }
 
 const enableManualBuildingSelect = async () => {
@@ -206,7 +205,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  const layerRadius = Math.ceil(output.buildingRadius * 1.2)
+  const layerRadius = Math.ceil(output.buildingRadius * 1.05)
   await getLayerData(output.buildingCenter, layerRadius)
   // await getLayerData(output.buildingCenter, layerRadius)
   updateCalculationBasis(

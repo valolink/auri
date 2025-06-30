@@ -88,5 +88,21 @@ export interface SolarCalculationResult {
   totalFinanceCostsPerLifeSpan: number
   lcoeSntPerKwh: number
   paybackYears: number
+  totalCostsPerLifeSpanEuros: number
+  scoreProduction: number
   calculationMonth?: number
+}
+
+// Extended SolarPanelConfig with calculated properties
+export interface ExtendedSolarPanelConfig {
+  panelsCount: number
+  yearlyEnergyDcKwh: number
+  roofSegmentSummaries: {
+    pitchDegrees: number
+    azimuthDegrees: number
+    panelsCount: number
+    yearlyEnergyDcKwh: number
+    segmentIndex: number
+  }[]
+  gainPerPanel: number | null
 }

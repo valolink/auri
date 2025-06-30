@@ -246,7 +246,7 @@ export async function getDataLayerUrls(
   const args = {
     'location.latitude': location.lat.toFixed(5),
     'location.longitude': location.lng.toFixed(5),
-    radius_meters: Math.max(radiusMeters, 175),
+    radius_meters: Math.min(radiusMeters, 175),
     requiredQuality: 'MEDIUM',
     exactQualityRequired: true,
     pixelSizeMeters: radiusMeters > 100 ? 0.5 : 0.25,
