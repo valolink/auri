@@ -60,16 +60,9 @@ export const calculateBoundingBoxDiagonal = (boundingBox: BoundingBox): number =
   return R * c // Distance in meters
 }
 
-export const calculateSolarAPIRadius = (
-  buildingInfo: BuildingInfo,
-  paddingFactor: number = 1.5, // How much extra coverage beyond building
-): number => {
+export const calculateSolarAPIRadius = (buildingInfo: BuildingInfo): number => {
   const { boundingBox } = buildingInfo.building
 
-  // Calculate the diagonal distance (maximum building extent)
-  const diagonal = calculateBoundingBoxDiagonal(boundingBox)
-
-  // Calculate width and height separately for better understanding
   const width = calculateDistance(
     { lat: boundingBox.sw.latitude, lng: boundingBox.sw.longitude },
     { lat: boundingBox.sw.latitude, lng: boundingBox.ne.longitude },
@@ -80,15 +73,11 @@ export const calculateSolarAPIRadius = (
     { lat: boundingBox.ne.latitude, lng: boundingBox.sw.longitude },
   )
 
-  // Use the larger dimension as base radius
   const baseRadius = Math.max(width, height) / 2
-
-  // Apply padding factor and ensure minimum radius
-  const paddedRadius = baseRadius * paddingFactor
   const minRadius = 50 // Minimum 50 meters
   const maxRadius = 1000 // Maximum 1000 meters (API limit consideration)
 
-  return Math.min(Math.max(paddedRadius, minRadius), maxRadius)
+  return Math.min(Math.max(baseRadius, minRadius), maxRadius)
 }
 
 const calculateDistance = (
@@ -249,7 +238,8 @@ export async function getDataLayerUrls(
     radius_meters: Math.min(radiusMeters, 175),
     requiredQuality: 'MEDIUM',
     exactQualityRequired: true,
-    pixelSizeMeters: radiusMeters > 100 ? 0.5 : 0.25,
+    // pixelSizeMeters: radiusMeters > 100 ? 0.5 : 0.25,
+    pixelSizeMeters: 1,
   }
   console.log('GET dataLayers\n', args)
   const params = new URLSearchParams({ ...args, key: apiKey })
