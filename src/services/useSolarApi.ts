@@ -4,20 +4,110 @@ import {
   type SolarPanel,
   type Bounds,
   type GeoTiff,
+  type DataLayersResponse,
   downloadGeoTIFF,
   findClosestBuilding,
-  getDataLayerUrls,
   type SolarPanelConfig,
 } from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
 import { drawSolarPanels } from '@/services/drawSolarPanels'
-import { initMap, getGeometry, updateOverlay } from '@/services/mapService'
+import { getGeometry, updateOverlay } from '@/services/mapService'
 
 const { mapRef, mapInstance, output, input, settings, jsonData, buildingData } = useAppState()
 
 const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
 // Reactive reference for mounting the map container
+
+interface BoundingBox {
+  sw: {
+    latitude: number
+    longitude: number
+  }
+  ne: {
+    latitude: number
+    longitude: number
+  }
+}
+
+interface BuildingInfo {
+  building: {
+    name: string
+    center: {
+      latitude: number
+      longitude: number
+    }
+    boundingBox: BoundingBox
+    // ... other properties
+  }
+}
+
+export const calculateBoundingBoxDiagonal = (boundingBox: BoundingBox): number => {
+  const { sw, ne } = boundingBox
+
+  // Use Haversine formula to calculate distance between SW and NE corners
+  const R = 6371000 // Earth's radius in meters
+  const lat1 = (sw.latitude * Math.PI) / 180
+  const lat2 = (ne.latitude * Math.PI) / 180
+  const deltaLat = ((ne.latitude - sw.latitude) * Math.PI) / 180
+  const deltaLng = ((ne.longitude - sw.longitude) * Math.PI) / 180
+
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c // Distance in meters
+}
+
+export const calculateSolarAPIRadius = (
+  buildingInfo: BuildingInfo,
+  paddingFactor: number = 1.5, // How much extra coverage beyond building
+): number => {
+  const { boundingBox } = buildingInfo.building
+
+  // Calculate the diagonal distance (maximum building extent)
+  const diagonal = calculateBoundingBoxDiagonal(boundingBox)
+
+  // Calculate width and height separately for better understanding
+  const width = calculateDistance(
+    { lat: boundingBox.sw.latitude, lng: boundingBox.sw.longitude },
+    { lat: boundingBox.sw.latitude, lng: boundingBox.ne.longitude },
+  )
+
+  const height = calculateDistance(
+    { lat: boundingBox.sw.latitude, lng: boundingBox.sw.longitude },
+    { lat: boundingBox.ne.latitude, lng: boundingBox.sw.longitude },
+  )
+
+  // Use the larger dimension as base radius
+  const baseRadius = Math.max(width, height) / 2
+
+  // Apply padding factor and ensure minimum radius
+  const paddedRadius = baseRadius * paddingFactor
+  const minRadius = 50 // Minimum 50 meters
+  const maxRadius = 1000 // Maximum 1000 meters (API limit consideration)
+
+  return Math.min(Math.max(paddedRadius, minRadius), maxRadius)
+}
+
+const calculateDistance = (
+  point1: { lat: number; lng: number },
+  point2: { lat: number; lng: number },
+): number => {
+  const R = 6371000 // Earth's radius in meters
+  const lat1 = (point1.lat * Math.PI) / 180
+  const lat2 = (point2.lat * Math.PI) / 180
+  const deltaLat = ((point2.lat - point1.lat) * Math.PI) / 180
+  const deltaLng = ((point2.lng - point1.lng) * Math.PI) / 180
+
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
 
 function isPointInPolygon(
   point: google.maps.LatLngLiteral,
@@ -104,8 +194,6 @@ export const getGeo = async (address = input.address): Promise<GeocodeLatLng> =>
 export const getBuildingData = async (geo: GeocodeLatLng) => {
   jsonData.geoResult = jsonData.buildingResult = jsonData.layerResult = jsonData.error = null
 
-  await initMap(geo.lat, geo.lng)
-
   jsonData.geoResult = JSON.stringify(geo, null, 2)
 
   buildingData.building = await findClosestBuilding(
@@ -142,10 +230,45 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
     })
 
   buildingData.sortedConfigs = sorted
+  output.buildingCenter = {
+    lat: buildingData.building.center.latitude,
+    lng: buildingData.building.center.longitude,
+  }
+  console.log('buildingData', buildingData.building)
+  output.buildingRadius = calculateSolarAPIRadius({ building: buildingData.building }, 1)
 }
 
-export const getLayerData = async (geo: GeocodeLatLng) => {
-  const data = await getDataLayerUrls({ latitude: geo.lat, longitude: geo.lng }, 50, apiKey)
+export async function getDataLayerUrls(
+  location: { lat: number; lng: number },
+  radiusMeters: number,
+  apiKey: string,
+): Promise<DataLayersResponse> {
+  const args = {
+    'location.latitude': location.lat.toFixed(5),
+    'location.longitude': location.lng.toFixed(5),
+    radius_meters: Math.max(radiusMeters, 175),
+    requiredQuality: 'MEDIUM',
+    exactQualityRequired: true,
+    pixelSizeMeters: radiusMeters > 100 ? 0.5 : 0.25,
+  }
+  console.log('GET dataLayers\n', args)
+  const params = new URLSearchParams({ ...args, key: apiKey })
+  // https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers/get
+  return fetch(`https://solar.googleapis.com/v1/dataLayers:get?${params}`).then(
+    async (response) => {
+      const content = await response.json()
+      if (response.status != 200) {
+        console.error('getDataLayerUrls\n', content)
+        throw content
+      }
+      console.log('dataLayersResponse', content)
+      return content
+    },
+  )
+}
+
+export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
+  const data = await getDataLayerUrls(geo, radius, apiKey)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 
   const layer = await getLayer('annualFlux', data, apiKey)

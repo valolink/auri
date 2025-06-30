@@ -1,11 +1,11 @@
-import { ref, reactive, toRaw, markRaw } from 'vue'
+import { ref, reactive, toRaw, markRaw, type Ref } from 'vue'
+import type { Chart } from 'chart.js'
 import type { SolarCalculationResult, AppSettings } from '@/types'
 import type { BuildingInsightsResponse, SolarPanelConfig } from '@/services/solar'
+
 const settings = reactive({
   ...(window.vueAppData!.settings as AppSettings),
 })
-
-import type { Chart } from 'chart.js'
 
 const jsonData = reactive({
   geoResult: null as string | null,
@@ -46,7 +46,11 @@ const initialOutput = {
   monthlyDistribution: [] as number[],
   calculationMonth: null as number | null,
   addressFromApi: '' as string,
-  roofSize: 0,
+  buildingRadius: 0,
+  buildingCenter: {
+    lat: null as number | null,
+    lng: null as number | null,
+  },
 }
 
 const output = reactive(initialOutput)

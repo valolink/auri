@@ -125,7 +125,7 @@ import { requestPdf } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import type { GeocodeLatLng } from '@/services/geocodingApi'
 import { formatFinnishAddress, reverseGeocode } from '@/services/geocodingApi'
-import { loadGoogleMaps } from '@/services/mapService'
+import { initMap, loadGoogleMaps } from '@/services/mapService'
 import { ref, onMounted, computed } from 'vue'
 import {
   calculateConfig,
@@ -166,24 +166,6 @@ const runSearch = async () => {
   getSolarData(coordinates)
 }
 
-const getSolarData = async (coordinates: GeocodeLatLng) => {
-  //TODO clear data
-  // Set the formatted Finnish address from the geocoding API
-  output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
-  
-  await getBuildingData(coordinates)
-  output.technicalMax = calculateConfig(findTechnicalMax())
-  output.smartMax = calculateConfig(findSmartMax())
-  updateCalculationBasis(
-    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
-  )
-  await getLayerData(coordinates)
-  updateCalculationBasis(
-    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
-  )
-  loading.value = false
-}
-
 const enableManualBuildingSelect = async () => {
   console.log(mapRef.value)
   if (mapInstance.value) {
@@ -199,15 +181,38 @@ const enableManualBuildingSelect = async () => {
 
         loading.value = true
         console.log({ lat: lat, lng: lng })
-        
+
         // Perform reverse geocoding to get address information
         const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4' // TODO: Move to config
         const coordinates = await reverseGeocode(lat, lng, apiKey)
-        
+
         await getSolarData(coordinates)
       },
     )
   }
+}
+
+const getSolarData = async (coordinates: GeocodeLatLng) => {
+  //TODO clear data
+  // Set the formatted Finnish address from the geocoding API
+  output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
+
+  await getBuildingData(coordinates)
+
+  await initMap(output.buildingCenter.lat, output.buildingCenter.lng)
+
+  output.technicalMax = calculateConfig(findTechnicalMax())
+  output.smartMax = calculateConfig(findSmartMax())
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
+  )
+  const layerRadius = Math.ceil(output.buildingRadius * 1.2)
+  await getLayerData(output.buildingCenter, layerRadius)
+  // await getLayerData(output.buildingCenter, layerRadius)
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
+  )
+  loading.value = false
 }
 
 const validPanelCounts = computed(
