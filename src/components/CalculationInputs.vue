@@ -198,7 +198,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   await getBuildingData(coordinates)
 
-  await initMap(output.buildingCenter.lat, output.buildingCenter.lng)
+  await initMap(output.buildingCenter.lat, output.buildingCenter.lng, output.buildingRadius)
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
