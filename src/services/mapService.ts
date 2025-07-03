@@ -28,7 +28,7 @@ export const loadGoogleMaps = async (): Promise<void> => {
  */
 export const calculateZoomFromRadius = (
   radiusMeters: number,
-  paddingFactor: number = 1.9,
+  paddingFactor: number = 1,
   targetSize?: { width: number; height: number }, // NEW: Optional target size
   buildingCenter = output.buildingCenter,
 ): number => {
@@ -89,7 +89,7 @@ export const initMap = async (
   let zoom = 18 // Default zoom
 
   if (radiusMeters) {
-    zoom = calculateZoomFromRadius(radiusMeters, 1.5)
+    zoom = calculateZoomFromRadius(radiusMeters, 1.0)
     console.log(`🔍 Auto-calculated zoom ${zoom} for ${radiusMeters}m radius`)
   }
 

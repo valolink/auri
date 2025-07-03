@@ -73,7 +73,9 @@ export const calculateSolarAPIRadius = (buildingInfo: BuildingInfo): number => {
     { lat: boundingBox.ne.latitude, lng: boundingBox.sw.longitude },
   )
 
-  const baseRadius = Math.max(width, height) / 2
+  let baseRadius = Math.max(width, height) / 2
+  baseRadius = baseRadius * 1.1
+
   const minRadius = 10 // Minimum 50 meters
   const maxRadius = 1000 // Maximum 1000 meters (API limit consideration)
 
