@@ -1,7 +1,9 @@
+// pdfService.ts
 import { useAppState } from '@/useAppState'
 import { useCharts } from '@/services/useCharts'
+import { calculateZoomFromRadius, captureMapWithProperSizing } from './mapService'
 const { getChartImage } = useCharts()
-const { ajaxUrl, settings, input, output, buildingData } = useAppState()
+const { ajaxUrl, settings, input, output, buildingData, mapInstance } = useAppState()
 
 export const requestPdf = async function () {
   const formData = new FormData()
@@ -74,6 +76,33 @@ export const requestPdf = async function () {
   formData.append('costIncreaseFactor', settings?.costIncreaseFactor?.value?.toString() || '0')
   formData.append('emissionsFactor', settings?.emissionsFactor?.value?.toString() || '0')
 
+  function compressImage(dataUrl, quality = 0.8) {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+
+      img.onload = () => {
+        canvas.width = img.width
+        canvas.height = img.height
+        ctx.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/jpeg', quality)) // JPEG instead of PNG
+      }
+      img.src = dataUrl
+    })
+  }
+
+  function dataURLtoBlob(dataURL) {
+    const arr = dataURL.split(',')
+    const mime = arr[0].match(/:(.*?);/)[1]
+    const bstr = atob(arr[1])
+    let n = bstr.length
+    const u8arr = new Uint8Array(n)
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n)
+    }
+    return new Blob([u8arr], { type: mime })
+  }
   // Handle images
   try {
     // Solar chart image
@@ -81,17 +110,32 @@ export const requestPdf = async function () {
     if (solarChartUrl) {
       const solarRes = await fetch(solarChartUrl)
       const solarBlob = await solarRes.blob()
+      console.log('📦 Blob comparison:')
+      console.log('Chart blob:', solarBlob.size, solarBlob.type)
       formData.append('solarChartImage', solarBlob, 'solarChart.png')
     }
 
-    // Heat map image (if you have a function to generate it)
-    // const heatMapUrl = heatMapImage() // You'll need to implement this
-    // if (heatMapUrl) {
-    //   const heatRes = await fetch(heatMapUrl)
-    //   const heatBlob = await heatRes.blob()
-    //   formData.append('heatMapImage', heatBlob, 'heatMap.png')
-    // }
+    mapInstance.value.setCenter(output.buildingCenter)
+    mapInstance.value.setZoom(calculateZoomFromRadius(output.buildingRadius))
 
+    const mapDataUrl = await captureMapWithProperSizing({
+      center: output.buildingCenter,
+      radiusMeters: output.buildingRadius, // This is the key missing parameter!
+      size: { width: 800, height: 800 },
+    })
+
+    const response = await fetch(mapDataUrl)
+    // const mapBlob = await response.blob()
+    // console.log('Map blob:', mapBlob.size, mapBlob.type)
+    const compressedDataUrl = await compressImage(mapDataUrl, 0.8)
+    const mapBlob = dataURLtoBlob(compressedDataUrl)
+    formData.append('heatMapImage', mapBlob, 'solarMap.png')
+
+    // Check the data URL format
+    console.log('🔍 Map data URL details:')
+    console.log('- Length:', mapDataUrl.length)
+    console.log('- Starts with:', mapDataUrl.substring(0, 50))
+    console.log('- Format valid:', mapDataUrl.startsWith('data:image/'))
     const savingsChartUrl = getChartImage('savings')
     if (savingsChartUrl) {
       const savingsRes = await fetch(savingsChartUrl)

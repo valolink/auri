@@ -205,7 +205,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  const layerRadius = Math.ceil(output.buildingRadius * 1.05)
+  const layerRadius = Math.ceil(output.buildingRadius * 1.0)
   await getLayerData(output.buildingCenter, layerRadius)
   // await getLayerData(output.buildingCenter, layerRadius)
   updateCalculationBasis(

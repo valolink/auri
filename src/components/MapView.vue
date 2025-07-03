@@ -4,10 +4,6 @@
       ref="mapRef"
       style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
     ></div>
-    <button @click="capturePreset('solar_analysis_complete')" :disabled="isCapturing">
-      Generate image
-    </button>
-    <div v-if="isCapturing" class="status">🔄 {{ capturingStatus }}</div>
   </div>
 </template>
 

@@ -51,6 +51,7 @@ const initialOutput = {
     lat: null as number | null,
     lng: null as number | null,
   },
+  fluxBounds: null,
 }
 
 const output = reactive(initialOutput)
