@@ -9,14 +9,12 @@ export const requestPdf = async function () {
   const formData = new FormData()
   formData.append('action', 'pdf_report')
 
-  // Basic info
   formData.append('versionNumber', '1.0') // Not in your data, using default
   formData.append('currentDate', new Date().toLocaleDateString('fi-FI'))
-  formData.append('address', input?.address || '')
+  formData.append('address', output.addressFromApi || '')
 
-  // Location data - these don't seem to be in your current state structure
-  formData.append('lat', '') // Not found in your data
-  formData.append('lng', '') // Not found in your data
+  formData.append('lat', output.buildingCenter.lat)
+  formData.append('lng', output.buildingCenter.lng)
 
   // Scores - these don't seem to exist in your output structure
   formData.append('scoreProfitability', '0') // Not found in your output

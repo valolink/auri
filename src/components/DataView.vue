@@ -1,7 +1,7 @@
 <template>
   <div>
     <p>output:</p>
-    <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed />
+    <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed sort />
 
     <p>chart:</p>
     <json-viewer v-if="chartRef" :value="chartRef.chart" :expand-depth="1" copyable boxed sort />

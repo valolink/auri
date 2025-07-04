@@ -89,8 +89,14 @@ export interface SolarCalculationResult {
   lcoeSntPerKwh: number
   paybackYears: number
   totalCostsPerLifeSpanEuros: number
-  scoreProduction: number
   calculationMonth?: number
+  dcToAcDerate: number
+  yearlyEnergyAcKwh: number
+  maintenanceCostsPerYear: number
+  internalRateOfReturn: number
+  netPresentValueEuros: number
+  yearlySavingsRate: number
+  netCashFlowCumulative: number[]
 }
 
 // Extended SolarPanelConfig with calculated properties

@@ -52,6 +52,9 @@ const initialOutput = {
     lng: null as number | null,
   },
   fluxBounds: null,
+  scoreProduction: null as number | null,
+  scoreProfitability: null as number | null,
+  dcToAcDerate: null as number | null,
 }
 
 const output = reactive(initialOutput)

@@ -93,6 +93,9 @@ export function findOptimized(annualPowerUsage: number, buildingProfile: string)
 
 import type { SolarCalculationResult } from '@/types'
 
+// Updated calculateConfig function with TODO implementations
+// Some values go in each config, others go in output level
+
 export function calculateConfig(config: SolarPanelConfig): SolarCalculationResult {
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
   const panelsCount = config.panelsCount
@@ -155,13 +158,56 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     totalFinanceCostsPerLifeSpan +
     inverterReplacementCosts
 
-  // Calculate scoreProduction
-  const smartMax = findSmartMax()
-  const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
-  const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
-  const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
-  
-  const scoreProduction = (smartMax.panelsCount * panelHeightMeters * panelWidthMeters / (areaMeters2 / 2)) * 100
+  // Calculate scoreProduction (will be null for smartMax and technicalMax, calculated later for active)
+  const scoreProduction = calculateScoreProduction(panelsCount)
+
+  // DC-AC conversion efficiency (default: 0.85 = 85%)
+  const dcToAcDerate = Number(settings.dcToAcDerate?.value) || 0.85
+
+  // Available AC energy from solar production
+  const yearlyEnergyAcKwh = yearlyEnergyDcKwh * dcToAcDerate
+
+  // Annual maintenance costs
+  const maintenanceCostsPerYear =
+    installationCostEuros * (Number(settings.maintenanceCostFactor.value) / 100)
+
+  // Calculate cash flows and IRR
+  const cashFlowData = calculateCashFlows(
+    installationCostEuros,
+    savingsYear1,
+    maintenanceCostsPerYear,
+    Number(settings.installationLifeSpan.value),
+    Number(settings.efficiencyDepreciationFactor.value) / 100,
+    Number(settings.costIncreaseFactor.value) / 100,
+    Number(settings.inverterReplacementCostFactor.value) / 100,
+  )
+
+  const internalRateOfReturn = calculateIRR(cashFlowData.netCashFlowPerYear)
+  const netCashFlowCumulative = cashFlowData.netCashFlowCumulative
+
+  // Score Profitability based on IRR
+  let scoreProfitability: number
+  if (internalRateOfReturn > 14) {
+    scoreProfitability = 100
+  } else if (internalRateOfReturn < 0) {
+    scoreProfitability = 0
+  } else {
+    scoreProfitability = (internalRateOfReturn / 14) * 100
+  }
+
+  // Net Present Value (assuming discount rate equals interest rate)
+  const discountRate = Number(settings.interestRate.value) / 100
+  const netPresentValueEuros =
+    (totalSavingsPerLifeSpan - totalCostsPerLifeSpanEuros) /
+    Math.pow(1 + discountRate, Number(settings.installationLifeSpan.value))
+
+  // Yearly savings rate (%) - requires yearlyEnergyUsageKwh
+  const yearlyEnergyUsageKwh = output.yearlyEnergyUsageKwh || yearlyEnergyDcKwh // Fallback to production if usage not available
+  const yearlySavingsRate =
+    yearlyEnergyUsageKwh > 0
+      ? (savingsYear1 / ((yearlyEnergyUsageKwh * output.static.totalEnergyPriceSntPerKwh) / 100)) *
+        100
+      : 0
 
   return {
     yearlyEnergyDcKwh,
@@ -178,6 +224,136 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     lcoeSntPerKwh,
     paybackYears,
     totalCostsPerLifeSpanEuros,
-    scoreProduction,
+    dcToAcDerate,
+    yearlyEnergyAcKwh,
+    maintenanceCostsPerYear,
+    internalRateOfReturn,
+    netPresentValueEuros,
+    yearlySavingsRate,
+    netCashFlowCumulative,
   }
+}
+
+// Function to calculate scoreProduction - only for active config
+// Returns null if smartMax hasn't been calculated yet
+export function calculateScoreProduction(panelsCount: number): number | null {
+  if (!output.smartMax) {
+    return null // Will be calculated later when smartMax is available
+  }
+
+  const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
+  const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
+  const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
+
+  return (
+    ((output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100
+  )
+}
+
+// Function to update scoreProduction for active config after smartMax is calculated
+export function updateActiveScoreProduction() {
+  if (output.active && output.smartMax) {
+    output.active.scoreProduction = calculateScoreProduction(output.active.panelsCount)
+  }
+}
+
+// OUTPUT-LEVEL CALCULATIONS (these should be called separately and assigned to output):
+
+// Function to calculate output-level values (call these after all configs are calculated)
+export function calculateOutputLevelValues() {
+  // These values should be calculated from the active config and assigned to output level
+  if (output.active) {
+    output.netPresentValueEuros = output.active.netPresentValueEuros
+    output.totalCostsPerLifeSpanEuros = output.active.totalCostsPerLifeSpanEuros
+    output.internalRateOfReturn = output.active.internalRateOfReturn
+    output.yearlySavingsRate = output.active.yearlySavingsRate
+    output.scoreProduction = output.active.scoreProduction
+    output.scoreProfitability = output.active.scoreProfitability
+    output.yearlyEnergyAcKwh = output.active.yearlyEnergyAcKwh
+    output.dcToAcDerate = output.active.dcToAcDerate
+    output.maintenanceCostsPerYear = output.active.maintenanceCostsPerYear
+  }
+}
+
+// Helper function to calculate cash flows
+function calculateCashFlows(
+  installationCostEuros: number,
+  savingsYear1: number,
+  maintenanceCostsPerYear: number,
+  installationLifeSpan: number,
+  efficiencyDepreciationFactor: number,
+  costIncreaseFactor: number,
+  inverterReplacementCostFactor: number,
+): { netCashFlowPerYear: number[]; netCashFlowCumulative: number[] } {
+  const netCashFlowPerYear: number[] = []
+  const netCashFlowCumulative: number[] = []
+
+  // Year 0: Initial investment (negative)
+  const initialInvestment = -installationCostEuros
+  netCashFlowPerYear.push(initialInvestment)
+
+  // Initialize cumulative cash flow
+  let netCashFlowPerLifeSpan = initialInvestment
+  netCashFlowCumulative.push(netCashFlowPerLifeSpan)
+
+  // Calculate cash flows for each year
+  for (let i = 0; i < installationLifeSpan; i++) {
+    let yearlyNetCashFlow: number
+
+    if (i === 0) {
+      // First year: savings - maintenance
+      yearlyNetCashFlow = savingsYear1 - maintenanceCostsPerYear
+    } else if (i === 14) {
+      // Year 15 (index 14): includes inverter replacement cost
+      const adjustedSavings =
+        savingsYear1 * Math.pow(1 + costIncreaseFactor - efficiencyDepreciationFactor, i + 1)
+      const inverterCost = installationCostEuros * inverterReplacementCostFactor
+      yearlyNetCashFlow = adjustedSavings - maintenanceCostsPerYear - inverterCost
+    } else {
+      // Other years: adjusted savings - maintenance
+      const adjustedSavings =
+        savingsYear1 * Math.pow(1 + costIncreaseFactor - efficiencyDepreciationFactor, i + 1)
+      yearlyNetCashFlow = adjustedSavings - maintenanceCostsPerYear
+    }
+
+    netCashFlowPerYear.push(yearlyNetCashFlow)
+
+    // Update cumulative cash flow
+    netCashFlowPerLifeSpan += yearlyNetCashFlow
+    netCashFlowCumulative.push(netCashFlowPerLifeSpan)
+  }
+
+  return { netCashFlowPerYear, netCashFlowCumulative }
+}
+
+// Helper function to calculate Internal Rate of Return (IRR)
+function calculateIRR(cashFlows: number[]): number {
+  // Newton-Raphson method to find IRR
+  let rate = 0.1 // Initial guess: 10%
+  const tolerance = 1e-6
+  const maxIterations = 100
+
+  for (let i = 0; i < maxIterations; i++) {
+    let npv = 0
+    let dnpv = 0
+
+    for (let j = 0; j < cashFlows.length; j++) {
+      const power = Math.pow(1 + rate, j)
+      npv += cashFlows[j] / power
+      dnpv -= (j * cashFlows[j]) / (power * (1 + rate))
+    }
+
+    if (Math.abs(npv) < tolerance) {
+      return rate * 100 // Return as percentage
+    }
+
+    if (Math.abs(dnpv) < tolerance) {
+      break // Avoid division by zero
+    }
+
+    rate = rate - npv / dnpv
+  }
+
+  // If convergence fails, return 0
+  return 0
 }
