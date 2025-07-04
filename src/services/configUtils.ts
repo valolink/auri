@@ -93,9 +93,6 @@ export function findOptimized(annualPowerUsage: number, buildingProfile: string)
 
 import type { SolarCalculationResult } from '@/types'
 
-// Updated calculateConfig function with TODO implementations
-// Some values go in each config, others go in output level
-
 export function calculateConfig(config: SolarPanelConfig): SolarCalculationResult {
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
   const panelsCount = config.panelsCount
@@ -158,9 +155,6 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     totalFinanceCostsPerLifeSpan +
     inverterReplacementCosts
 
-  // Calculate scoreProduction (will be null for smartMax and technicalMax, calculated later for active)
-  const scoreProduction = calculateScoreProduction(panelsCount)
-
   // DC-AC conversion efficiency (default: 0.85 = 85%)
   const dcToAcDerate = Number(settings.dcToAcDerate?.value) || 0.85
 
@@ -184,15 +178,13 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 
   const internalRateOfReturn = calculateIRR(cashFlowData.netCashFlowPerYear)
   const netCashFlowCumulative = cashFlowData.netCashFlowCumulative
-
-  // Score Profitability based on IRR
-  let scoreProfitability: number
-  if (internalRateOfReturn > 14) {
+  let scoreProfitability
+  if (internalRateOfReturn > 0.14) {
     scoreProfitability = 100
   } else if (internalRateOfReturn < 0) {
     scoreProfitability = 0
   } else {
-    scoreProfitability = (internalRateOfReturn / 14) * 100
+    scoreProfitability = internalRateOfReturn / 0.14
   }
 
   // Net Present Value (assuming discount rate equals interest rate)
@@ -224,58 +216,25 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     lcoeSntPerKwh,
     paybackYears,
     totalCostsPerLifeSpanEuros,
-    dcToAcDerate,
     yearlyEnergyAcKwh,
     maintenanceCostsPerYear,
     internalRateOfReturn,
     netPresentValueEuros,
     yearlySavingsRate,
     netCashFlowCumulative,
+    scoreProfitability,
   }
 }
 
-// Function to calculate scoreProduction - only for active config
-// Returns null if smartMax hasn't been calculated yet
+// pass smartMax panelsCount
 export function calculateScoreProduction(panelsCount: number): number | null {
-  if (!output.smartMax) {
-    return null // Will be calculated later when smartMax is available
-  }
-
   const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
   const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
   const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
 
-  return (
-    ((output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100
-  )
+  return ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100
 }
 
-// Function to update scoreProduction for active config after smartMax is calculated
-export function updateActiveScoreProduction() {
-  if (output.active && output.smartMax) {
-    output.active.scoreProduction = calculateScoreProduction(output.active.panelsCount)
-  }
-}
-
-// OUTPUT-LEVEL CALCULATIONS (these should be called separately and assigned to output):
-
-// Function to calculate output-level values (call these after all configs are calculated)
-export function calculateOutputLevelValues() {
-  // These values should be calculated from the active config and assigned to output level
-  if (output.active) {
-    output.netPresentValueEuros = output.active.netPresentValueEuros
-    output.totalCostsPerLifeSpanEuros = output.active.totalCostsPerLifeSpanEuros
-    output.internalRateOfReturn = output.active.internalRateOfReturn
-    output.yearlySavingsRate = output.active.yearlySavingsRate
-    output.scoreProduction = output.active.scoreProduction
-    output.scoreProfitability = output.active.scoreProfitability
-    output.yearlyEnergyAcKwh = output.active.yearlyEnergyAcKwh
-    output.dcToAcDerate = output.active.dcToAcDerate
-    output.maintenanceCostsPerYear = output.active.maintenanceCostsPerYear
-  }
-}
-
-// Helper function to calculate cash flows
 function calculateCashFlows(
   installationCostEuros: number,
   savingsYear1: number,

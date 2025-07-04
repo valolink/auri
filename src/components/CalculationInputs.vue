@@ -133,6 +133,7 @@ import {
   findSmartMax,
   findConfigWithPanelCount,
   findTechnicalMax,
+  calculateScoreProduction,
 } from '@/services/configUtils'
 
 const { mapRef, mapInstance, loading, settings, input, output, buildingData } = useAppState()
@@ -193,7 +194,6 @@ const enableManualBuildingSelect = async () => {
 
 const getSolarData = async (coordinates: GeocodeLatLng) => {
   //TODO clear data
-  // Set the formatted Finnish address from the geocoding API
   output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
 
   await getBuildingData(coordinates)
@@ -208,9 +208,10 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   const layerRadius = Math.ceil(output.buildingRadius * 1.0)
   await getLayerData(output.buildingCenter, layerRadius)
   // await getLayerData(output.buildingCenter, layerRadius)
-  updateCalculationBasis(
-    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
-  )
+  // updateCalculationBasis(
+  //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
+  // )
+  output.scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
   loading.value = false
 }
 
