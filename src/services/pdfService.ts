@@ -9,47 +9,36 @@ export const requestPdf = async function () {
   const formData = new FormData()
   formData.append('action', 'pdf_report')
 
-  formData.append('versionNumber', '1.0') // Not in your data, using default
+  // TODO:
+  formData.append('versionNumber', '1.0')
   formData.append('currentDate', new Date().toLocaleDateString('fi-FI'))
   formData.append('address', output.addressFromApi || '')
 
   formData.append('lat', output.buildingCenter.lat)
   formData.append('lng', output.buildingCenter.lng)
 
-  // Scores - these don't seem to exist in your output structure
-  formData.append('scoreProfitability', '0') // Not found in your output
-  formData.append('scoreProduction', '0') // Not found in your output
+  formData.append('scoreProfitability', output.active.scoreProfitability)
+  formData.append('scoreProduction', output.scoreProduction)
 
-  // System specifications - mapping to your actual output structure
-  formData.append('capacityKwp', output?.active?.capacityKwp?.toString() || '0')
-  formData.append('panelsCount', output?.active?.panelsCount?.toString() || '0')
-  formData.append('yearlyEnergyDcKwh', output?.active?.yearlyEnergyDcKwh?.toString() || '0')
-  formData.append('installationCostEuros', output?.active?.installationCostEuros?.toString() || '0')
-  formData.append('yearlyCarbonOffset', output?.active?.yearlyCarbonOffset?.toString() || '0')
+  formData.append('capacityKwp', output.active.capacityKwp?.toString() || '0')
+  formData.append('panelsCount', output.active.panelsCount?.toString() || '0')
+  formData.append('installationCostEuros', output.active.installationCostEuros?.toString() || '0')
+  formData.append('yearlyEnergyDcKwh', output.active.yearlyEnergyDcKwh?.toString() || '0')
+  formData.append('yearlyCarbonOffset', output.active.yearlyCarbonOffset?.toString() || '0')
 
-  // Calculate maintenance costs per year from your data
-  const maintenanceCostPerYear =
-    output?.active?.maintenanceCostsPerLifeSpan && settings?.installationLifeSpan?.value
-      ? (output.active.maintenanceCostsPerLifeSpan / settings.installationLifeSpan.value).toString()
-      : '0'
-  formData.append('maintenanceCostsPerYear', maintenanceCostPerYear)
+  formData.append('maintenanceCostsPerYear', output.active.maintenanceCostPerYear)
 
-  // Profitability data - mapping to your actual output structure
-  formData.append('paybackYears', output?.active?.paybackYears?.toString() || '0')
+  formData.append('paybackYears', output.active.paybackYears?.toString() || '0')
   formData.append(
     'averageYearlySavingsEuros',
-    output?.active?.averageYearlySavingsEuros?.toString() || '0',
+    output.active.averageYearlySavingsEuros?.toString() || '0',
   )
-  formData.append('lcoeSntkPerKwh', output?.active?.lcoeSntPerKwh?.toString() || '0') // Note: your field is lcoeSntPerKwh, not lcoeSntkPerKwh
-
-  // These need to be calculated or aren't in your current output
-  formData.append('netPresentValueEuros', '0') // Not found in your output
-  formData.append('internalRateOfReturn', '0') // Not found in your output
-
-  // Calculation parameters - mapping to your settings structure
+  formData.append('lcoeSntkPerKwh', output.active.lcoeSntPerKwh?.toString() || '0')
+  formData.append('netPresentValueEuros', output.active.netPresentValueEuros)
+  formData.append('internalRateOfReturn', output.active.netPresentValueEuros)
   formData.append('energyPriceSnt', settings?.energyPriceSnt?.value?.toString() || '0')
   formData.append('transmissionPriceSnt', settings?.transmissionPriceSnt?.value?.toString() || '0')
-  formData.append('electricityTaxSnt', settings?.electricityTax?.value?.toString() || '0') // Note: your field is electricityTax, not electricityTaxSnt
+  formData.append('electricityTaxSnt', settings?.electricityTax?.value?.toString() || '0')
   formData.append('vat', settings?.vat?.value?.toString() || '24')
   formData.append(
     'maintenanceCostFactor',

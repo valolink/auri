@@ -94,6 +94,7 @@ export interface SolarCalculationResult {
   yearlyEnergyAcKwh: number
   maintenanceCostsPerYear: number
   internalRateOfReturn: number
+  scoreProfitability: number
   netPresentValueEuros: number
   yearlySavingsRate: number
   netCashFlowCumulative: number[]
