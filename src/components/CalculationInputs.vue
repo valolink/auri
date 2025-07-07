@@ -202,15 +202,15 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
-  updateCalculationBasis(
-    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
-  )
-  const layerRadius = Math.ceil(output.buildingRadius * 1.0)
-  await getLayerData(output.buildingCenter, layerRadius)
-  // await getLayerData(output.buildingCenter, layerRadius)
   // updateCalculationBasis(
   //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   // )
+  const layerRadius = Math.ceil(output.buildingRadius * 1.0)
+  await getLayerData(output.buildingCenter, layerRadius)
+  // await getLayerData(output.buildingCenter, layerRadius)
+  updateCalculationBasis(
+    settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
+  )
   output.scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
   loading.value = false
 }
