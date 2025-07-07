@@ -23,7 +23,7 @@ export const requestPdf = async function () {
   formData.append('lng', output.buildingCenter.lng)
 
   formData.append('scoreProfitability', output.active.scoreProfitability)
-  formData.append('scoreProduction', output.scoreProduction)
+  formData.append('scoreProduction', output.active.scoreProduction)
 
   formData.append('capacityKwp', roundToSignificantFigures(output.active.capacityKwp))
   formData.append('panelsCount', output.active.panelsCount?.toString() || '0')
@@ -58,7 +58,10 @@ export const requestPdf = async function () {
     'transmissionPriceSnt',
     roundToSignificantFigures(settings?.transmissionPriceSnt?.value),
   )
-  formData.append('electricityTaxSnt', roundToSignificantFigures(settings?.electricityTax?.value))
+  formData.append(
+    'lcoeSntkPerKwhelectricityTaxSnt',
+    roundToSignificantFigures(settings?.electricityTax?.value),
+  )
   formData.append('vat', settings?.vat?.value?.toString() || '24')
   formData.append(
     'maintenanceCostFactor',

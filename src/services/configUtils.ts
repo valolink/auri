@@ -202,6 +202,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
         100
       : 0
 
+  const scoreProduction = calculateScoreProduction(panelsCount)
   return {
     yearlyEnergyDcKwh,
     panelsCount,
@@ -224,6 +225,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     yearlySavingsRate,
     netCashFlowCumulative,
     scoreProfitability,
+    scoreProduction,
   }
 }
 
@@ -233,7 +235,10 @@ export function calculateScoreProduction(panelsCount: number): number | null {
   const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
   const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
 
-  return ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100
+  return Math.min(
+    ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100,
+    100,
+  )
 }
 
 function calculateCashFlows(
