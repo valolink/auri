@@ -6,6 +6,11 @@ const { getChartImage } = useCharts()
 const { ajaxUrl, settings, input, output, buildingData, mapInstance } = useAppState()
 
 export const requestPdf = async function () {
+  const roundToSignificantFigures = (num, figures = 3) => {
+    if (num === 0) return 0
+    const magnitude = Math.pow(10, figures - Math.floor(Math.log10(Math.abs(num))) - 1)
+    return Math.round(num * magnitude) / magnitude
+  }
   const formData = new FormData()
   formData.append('action', 'pdf_report')
 
@@ -20,25 +25,40 @@ export const requestPdf = async function () {
   formData.append('scoreProfitability', output.active.scoreProfitability)
   formData.append('scoreProduction', output.scoreProduction)
 
-  formData.append('capacityKwp', output.active.capacityKwp?.toString() || '0')
+  formData.append('capacityKwp', roundToSignificantFigures(output.active.capacityKwp))
   formData.append('panelsCount', output.active.panelsCount?.toString() || '0')
-  formData.append('installationCostEuros', output.active.installationCostEuros?.toString() || '0')
-  formData.append('yearlyEnergyDcKwh', output.active.yearlyEnergyDcKwh?.toString() || '0')
-  formData.append('yearlyCarbonOffset', output.active.yearlyCarbonOffset?.toString() || '0')
+  formData.append(
+    'installationCostEuros',
+    roundToSignificantFigures(output.active.installationCostEuros),
+  )
+  formData.append('yearlyEnergyDcKwh', roundToSignificantFigures(output.active.yearlyEnergyDcKwh))
+  formData.append('yearlyCarbonOffset', roundToSignificantFigures(output.active.yearlyCarbonOffset))
 
-  formData.append('maintenanceCostsPerYear', output.active.maintenanceCostPerYear)
+  formData.append(
+    'maintenanceCostsPerYear',
+    roundToSignificantFigures(output.active.maintenanceCostsPerYear),
+  )
 
-  formData.append('paybackYears', output.active.paybackYears?.toString() || '0')
+  formData.append('paybackYears', output.active.paybackYears?.toFixed(1) || '0')
   formData.append(
     'averageYearlySavingsEuros',
-    output.active.averageYearlySavingsEuros?.toString() || '0',
+    roundToSignificantFigures(output.active.averageYearlySavingsEuros)?.toString() || '0',
   )
-  formData.append('lcoeSntkPerKwh', output.active.lcoeSntPerKwh?.toString() || '0')
-  formData.append('netPresentValueEuros', output.active.netPresentValueEuros)
-  formData.append('internalRateOfReturn', output.active.netPresentValueEuros)
-  formData.append('energyPriceSnt', settings?.energyPriceSnt?.value?.toString() || '0')
-  formData.append('transmissionPriceSnt', settings?.transmissionPriceSnt?.value?.toString() || '0')
-  formData.append('electricityTaxSnt', settings?.electricityTax?.value?.toString() || '0')
+  formData.append('lcoeSntkPerKwh', roundToSignificantFigures(output.active.lcoeSntPerKwh) || '0')
+  formData.append(
+    'netPresentValueEuros',
+    roundToSignificantFigures(output.active.netPresentValueEuros, 5),
+  )
+  formData.append(
+    'internalRateOfReturn',
+    roundToSignificantFigures(output.active.netPresentValueEuros),
+  )
+  formData.append('energyPriceSnt', roundToSignificantFigures(settings?.energyPriceSnt?.value))
+  formData.append(
+    'transmissionPriceSnt',
+    roundToSignificantFigures(settings?.transmissionPriceSnt?.value),
+  )
+  formData.append('electricityTaxSnt', roundToSignificantFigures(settings?.electricityTax?.value))
   formData.append('vat', settings?.vat?.value?.toString() || '24')
   formData.append(
     'maintenanceCostFactor',
