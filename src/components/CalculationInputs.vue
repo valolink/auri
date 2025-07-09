@@ -216,22 +216,28 @@ async function getSuggestions() {
   const autos = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
     input: input.address,
     includedRegionCodes: ['fi'],
+    language: 'fi', // or 'fi-FI'
     sessionToken,
   })
   console.log(autos)
-  suggestions.value = autos.suggestions.map((s) => ({
-    label: s.placePrediction?.text.text ?? '',
-    value: s.placePrediction?.text.text ?? '',
-  }))
+  suggestions.value = autos.suggestions.map((s) => {
+    const fullText = s.placePrediction?.text.text ?? ''
+    // Remove ", Suomi" from the end
+    const cleanText = fullText.replace(/, Suomi$/, '')
+    return {
+      label: cleanText,
+      value: cleanText,
+    }
+  })
 }
 onMounted(async () => {
   await loadGoogleMaps()
   console.log(mapRef.value)
 })
 
-const runSearch = async () => {
+const runSearch = async (address: string = input.address) => {
   loading.value = true
-  getSolarData(await getGeo())
+  getSolarData(await getGeo(address))
 }
 
 const enableManualBuildingSelect = async () => {
