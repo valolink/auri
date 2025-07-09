@@ -58,14 +58,15 @@ export function findConfigWithPanelCount(panelsCount: number) {
   return buildingData.sortedConfigs.find((panel) => panel.panelsCount === panelsCount)
 }
 
-export function findOptimized(annualPowerUsage: number, buildingProfile: string): SolarPanelConfig {
+export function findOptimized(
+  annualPowerUsage: number,
+  buildingProfile: number[],
+): SolarPanelConfig {
   console.log('annualPowerUsage', annualPowerUsage)
   let calculationMonth: number = -1
   let minPower: number = Infinity
-  const profile: number[] = JSON.parse(buildingProfile)
-  console.log('profile', profile)
   for (let i = 0; i < 12; i++) {
-    const monthUsage = profile[i] * annualPowerUsage
+    const monthUsage = buildingProfile[i] * annualPowerUsage
     const annualPower = monthUsage / (output.monthlyDistribution[i] / 100)
     console.log(i, 'annualPower', annualPower)
     if (annualPower < minPower) {

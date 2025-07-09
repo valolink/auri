@@ -7,6 +7,8 @@ const settings = reactive({
   ...(window.vueAppData!.settings as AppSettings),
 })
 
+const role = window.vueAppData!.role
+
 const jsonData = reactive({
   geoResult: null as string | null,
   buildingResult: null as string | null,
@@ -27,6 +29,11 @@ const inputRef = {
   panelCount: toRaw(settings.panelCount),
   yearlyEnergyUsageKwh: toRaw(settings.yearlyEnergyUsageKwh),
   dailyMaxUtilizationFactor: toRaw(settings.dailyMaxUtilizationFactor),
+  extraRadius: 0,
+  customProfile: { active: false, value: '' },
+  buildingTypeLabel: '',
+  normalizedDistribution: '',
+  energyProfile: [],
 }
 
 const input = reactive(structuredClone(inputRef))
@@ -102,5 +109,6 @@ export function useAppState() {
     mapInstance,
     loading,
     ajaxUrl,
+    role,
   }
 }

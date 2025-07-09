@@ -14,9 +14,13 @@
         </n-input-group>
       </n-form-item>
       <div v-if="output.technicalMax.panelsCount">
+        <n-form-item v-if="role == 'admin'" label="Extra radius">
+          <n-input-number v-model:value="input.extraRadius" :min="0" :step="10" size="small" />
+        </n-form-item>
         <n-form-item label="Vaihda rakennus kartalta:">
           <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
         </n-form-item>
+        <div style="height: 20px"></div>
         <n-form-item :label="settings.calculationBasis.label">
           <div style="display: flex; flex-wrap: wrap; gap: 8px">
             <n-button
@@ -31,7 +35,8 @@
           </div>
         </n-form-item>
 
-        <n-form-item :label="input.buildingType?.label">
+        <n-switch v-model:value="input.customProfile.active" />
+        <n-form-item v-if="!input.customProfile.active" :label="input.buildingType?.label">
           <n-select
             v-if="input.buildingType"
             v-model:value="input.buildingType.value"
@@ -39,7 +44,36 @@
             @update:value="updateCalculationBasis(input.calculationBasis)"
           />
         </n-form-item>
-        <n-tag style="margin-bottom: 20px" size="small">{{ input.buildingType?.value }}</n-tag>
+        <!-- Monthly Distribution Input -->
+        <n-form-item v-if="input.customProfile.active" label="Kuukausittainen jakauma">
+          <div>
+            <n-flex>
+              <template v-for="(month, index) in monthNames" :key="index">
+                <n-input-number
+                  style="width: 180px"
+                  v-model:value="monthlyValues[index]"
+                  :min="0"
+                  :step="1"
+                  :precision="1"
+                  size="small"
+                  @update:value="updateCalculationBasis(input.calculationBasis)"
+                >
+                  <template #prefix
+                    ><span style="opacity: 0.5; width: 30px"> {{ month }}</span></template
+                  >
+                  <template #suffix>
+                    <span style="opacity: 0.5"
+                      >{{ (input.normalizedDistribution[index] * 101).toFixed(1) }} %</span
+                    ></template
+                  >
+                </n-input-number>
+              </template>
+            </n-flex>
+          </div>
+        </n-form-item>
+        <n-tag style="margin-bottom: 20px" size="small">{{
+          input.customProfile.active ? input.normalizedDistribution : input.buildingType?.value
+        }}</n-tag>
         <n-form-item :label="input.yearlyEnergyUsageKwh?.label">
           <n-space vertical>
             <n-slider
@@ -73,6 +107,7 @@
               v-if="input.targetPower"
               v-model:value="input.targetPower.value"
               :min="0"
+              T
               :max="output.technicalMax?.capacityKwp"
               :step="0.1"
               @update:value="updateFromPower"
@@ -108,6 +143,7 @@
 
 <script setup lang="ts">
 import {
+  NCard,
   NForm,
   NAutoComplete,
   NFormItem,
@@ -118,6 +154,8 @@ import {
   NSlider,
   NSpace,
   NTag,
+  NSwitch,
+  NFlex,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
@@ -136,9 +174,38 @@ import {
   calculateScoreProduction,
 } from '@/services/configUtils'
 
-const { mapRef, mapInstance, loading, settings, input, output, buildingData } = useAppState()
+const { mapRef, mapInstance, loading, settings, input, output, buildingData, role } = useAppState()
 const panelCapacity = 400 // watts per panel
 
+input.buildingTypeLabel = computed(() => {
+  const selectedOption = settings.buildingTypes.value.find(
+    (option) => option.value === input.buildingType.value,
+  )
+  return selectedOption ? selectedOption.label : ''
+})
+
+const monthNames = [
+  'Tam',
+  'Hel',
+  'Maa',
+  'Huh',
+  'Tou',
+  'Kes',
+  'Hei',
+  'Elo',
+  'Syy',
+  'Lok',
+  'Mar',
+  'Jou',
+]
+
+const monthlyValues = ref([9.1, 8.4, 8.7, 8.1, 7.8, 7.4, 7.7, 7.9, 8.1, 8.6, 8.8, 9.3])
+
+input.normalizedDistribution = computed(() => {
+  const sum = monthlyValues.value.reduce((acc, val) => acc + (val || 0), 0)
+  if (sum === 0) return new Array(12).fill(0)
+  return monthlyValues.value.map((val) => Math.round(((val || 0) / sum) * 1000) / 1000)
+})
 let sessionToken: google.maps.places.AutocompleteSessionToken
 
 const suggestions = ref<{ label: string; value: string }[]>([])
@@ -206,7 +273,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   // )
   const layerRadius = Math.ceil(output.buildingRadius * 1.0)
-  await getLayerData(output.buildingCenter, layerRadius)
+  await getLayerData(output.buildingCenter, layerRadius + input.extraRadius)
   // await getLayerData(output.buildingCenter, layerRadius)
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
@@ -258,6 +325,10 @@ const updateFromPanels = () => {
   )
 }
 
+input.energyProfile = computed(() =>
+  input.customProfile.active ? input.normalizedDistribution : JSON.parse(input.buildingType.value),
+)
+
 const updateCalculationBasis = (
   option: { value: string; label: string },
   updatePanelInput: boolean = true,
@@ -279,7 +350,7 @@ const updateCalculationBasis = (
     )
   } else if (option.value == 'optimized') {
     const optimized = calculateConfig(
-      findOptimized(input.yearlyEnergyUsageKwh.value, input.buildingType.value),
+      findOptimized(input.yearlyEnergyUsageKwh.value, input.energyProfile),
     )
     output.active = optimized
     input.panelCount.value = optimized.panelsCount

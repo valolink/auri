@@ -10,7 +10,9 @@ export function updateEnergyChart(
   yearlyEnergy: number = output.active.yearlyEnergyDcKwh,
   distribution: number[] = output.monthlyDistribution,
   yearlyUsage: number = input.yearlyEnergyUsageKwh.value,
-  buildingProfile: number[] = JSON.parse(input.buildingType.value),
+  buildingProfile: number[] = input.customProfile.active
+    ? input.normalizedDistribution
+    : JSON.parse(input.buildingType?.value),
 ) {
   const labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 

@@ -21,37 +21,49 @@ export const requestPdf = async function () {
 
   formData.append('lat', output.buildingCenter.lat)
   formData.append('lng', output.buildingCenter.lng)
+  formData.append('calculationBasis', output.calculationBasis.label)
+  formData.append('buildingType', input.buildingTypeLabel)
+  formData.append('yearlyEnergyUsageKwh', input.yearlyEnergyUsageKwh.value.toLocaleString())
 
   formData.append('scoreProfitability', output.active.scoreProfitability)
   formData.append('scoreProduction', output.active.scoreProduction)
 
-  formData.append('capacityKwp', roundToSignificantFigures(output.active.capacityKwp))
-  formData.append('panelsCount', output.active.panelsCount?.toString() || '0')
+  formData.append(
+    'capacityKwp',
+    roundToSignificantFigures(output.active.capacityKwp).toLocaleString(),
+  )
+  formData.append('panelsCount', output.active.panelsCount.toLocaleString())
   formData.append(
     'installationCostEuros',
-    roundToSignificantFigures(output.active.installationCostEuros),
+    roundToSignificantFigures(output.active.installationCostEuros).toLocaleString(),
   )
-  formData.append('yearlyEnergyDcKwh', roundToSignificantFigures(output.active.yearlyEnergyDcKwh))
-  formData.append('yearlyCarbonOffset', roundToSignificantFigures(output.active.yearlyCarbonOffset))
+  formData.append(
+    'yearlyEnergyDcKwh',
+    roundToSignificantFigures(output.active.yearlyEnergyDcKwh).toLocaleString(),
+  )
+  formData.append(
+    'yearlyCarbonOffset',
+    roundToSignificantFigures(output.active.yearlyCarbonOffset).toLocaleString(),
+  )
 
   formData.append(
     'maintenanceCostsPerYear',
-    roundToSignificantFigures(output.active.maintenanceCostsPerYear),
+    roundToSignificantFigures(output.active.maintenanceCostsPerYear).toLocaleString(),
   )
 
   formData.append('paybackYears', output.active.paybackYears?.toFixed(1) || '0')
   formData.append(
     'averageYearlySavingsEuros',
-    roundToSignificantFigures(output.active.averageYearlySavingsEuros)?.toString() || '0',
+    roundToSignificantFigures(output.active.averageYearlySavingsEuros).toLocaleString(),
   )
   formData.append('lcoeSntkPerKwh', roundToSignificantFigures(output.active.lcoeSntPerKwh) || '0')
   formData.append(
     'netPresentValueEuros',
-    roundToSignificantFigures(output.active.netPresentValueEuros, 5),
+    roundToSignificantFigures(output.active.netPresentValueEuros, 3).toLocaleString(),
   )
   formData.append(
     'internalRateOfReturn',
-    roundToSignificantFigures(output.active.netPresentValueEuros),
+    roundToSignificantFigures(output.active.netPresentValueEuros).toLocaleString(),
   )
   formData.append('energyPriceSnt', roundToSignificantFigures(settings?.energyPriceSnt?.value))
   formData.append(
@@ -72,15 +84,25 @@ export const requestPdf = async function () {
     settings?.efficiencyDepreciationFactor?.value?.toString() || '0',
   )
   formData.append('installationLifeSpan', settings?.installationLifeSpan?.value?.toString() || '25')
-  formData.append('panelCapacityWatts', settings?.panelCapacityWatts?.value?.toString() || '0')
+  formData.append('panelCapacityWatts', settings?.panelCapacityWatts?.value?.toLocaleString())
   formData.append(
     'installationCostPerKwp',
     settings?.installationCostPerKwp?.value?.toString() || '0',
   )
 
   // Building data - these don't seem to be in your current structure
-  formData.append('pitchDegrees', '0') // Not found in your data
-  formData.append('azimuthDegrees', '0') // Not found in your data
+  formData.append(
+    'pitchDegrees',
+    Math.round(
+      buildingData.building.solarPotential.roofSegmentStats[0].pitchDegrees,
+    ).toLocaleString(),
+  )
+  formData.append(
+    'azimuthDegrees',
+    Math.round(
+      buildingData.building.solarPotential.roofSegmentStats[1].azimuthDegrees,
+    ).toLocaleString(),
+  )
 
   formData.append('discountRate', settings?.discountRate?.value?.toString() || '0')
   formData.append('costIncreaseFactor', settings?.costIncreaseFactor?.value?.toString() || '0')
