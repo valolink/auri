@@ -9,9 +9,9 @@
             placeholder="Syötä osoite"
             :input-props="{ autocomplete: 'off' }"
             @input="getSuggestions"
-            :on-select="runSearch"
+            :on-select="handleSelect"
           />
-          <n-button type="primary" @click="runSearch">Hae</n-button>
+          <n-button type="primary" @click="runSearch(input.address)">Hae</n-button>
         </n-input-group>
       </n-form-item>
       <div v-if="output.technicalMax.panelsCount">
@@ -222,11 +222,12 @@ async function getSuggestions() {
   console.log(autos)
   suggestions.value = autos.suggestions.map((s) => {
     const fullText = s.placePrediction?.text.text ?? ''
-    // Remove ", Suomi" from the end
     const cleanText = fullText.replace(/, Suomi$/, '')
+    const placeId = s.placePrediction?.placeId ?? ''
     return {
       label: cleanText,
       value: cleanText,
+      placeId: placeId,
     }
   })
 }
@@ -235,9 +236,56 @@ onMounted(async () => {
   console.log(mapRef.value)
 })
 
+// Function to get place details using place ID with the new REST API
+async function getPlaceDetails(placeId) {
+  try {
+    const response = await fetch(
+      `https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location,types&languageCode=fi&key=${settings.apiKey.value}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const place = await response.json()
+
+    return {
+      name: place.displayName?.text || '',
+      address: place.formattedAddress || '',
+      location: place.location || null,
+      types: place.types || [],
+    }
+  } catch (error) {
+    console.error('Error fetching place details:', error)
+    return null
+  }
+}
+
 const runSearch = async (address: string = input.address) => {
   loading.value = true
   getSolarData(await getGeo(address))
+}
+
+async function handleSelect(selectedValue) {
+  runSearch(selectedValue)
+  const selectedSuggestion = suggestions.value.find((s) => s.value === selectedValue)
+
+  if (selectedSuggestion && selectedSuggestion.placeId) {
+    const placeDetails = await getPlaceDetails(selectedSuggestion.placeId)
+    if (placeDetails) {
+      console.log('Place name:', placeDetails.name)
+      console.log('Full address:', placeDetails.address)
+      console.log('Location:', placeDetails.location)
+      console.log('Types:', placeDetails.types)
+    }
+    output.placeNameFromApi = placeDetails.name
+  }
 }
 
 const enableManualBuildingSelect = async () => {
@@ -257,8 +305,7 @@ const enableManualBuildingSelect = async () => {
         console.log({ lat: lat, lng: lng })
 
         // Perform reverse geocoding to get address information
-        const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4' // TODO: Move to config
-        const coordinates = await reverseGeocode(lat, lng, apiKey)
+        const coordinates = await reverseGeocode(lat, lng, settings.apiKey.value)
 
         await getSolarData(coordinates)
       },

@@ -16,9 +16,6 @@ import { getGeometry, updateOverlay } from '@/services/mapService'
 
 const { mapRef, mapInstance, output, input, settings, jsonData, buildingData } = useAppState()
 
-const apiKey = 'AIzaSyBf1PZHkSB3LPI4sdepIKnr9ItR_Gc_KT4'
-// Reactive reference for mounting the map container
-
 interface BoundingBox {
   sw: {
     latitude: number
@@ -183,15 +180,15 @@ export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
 }
 
 // export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
-//   const data = await getDataLayerUrls(geo, radius, apiKey)
+//   const data = await getDataLayerUrls(geo, radius, settings.apiKey.value)
 //   jsonData.layerResult = JSON.stringify(data, null, 2)
 //
-//   const layer = await getLayer('annualFlux', data, apiKey)
+//   const layer = await getLayer('annualFlux', data, settings.apiKey.value)
 //   const canvas = layer.render(true, 0, 14)[0]
 //
 //   updateOverlay(canvas, layer.bounds)
 //
-//   const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, apiKey)
+//   const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, settings.apiKey.value)
 //
 //   const bestPanel = buildingData.building.solarPotential.solarPanels.reduce((a, b) =>
 //     a.yearlyEnergyDcKwh > b.yearlyEnergyDcKwh ? a : b,
@@ -214,7 +211,7 @@ export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
 // }
 
 export const getGeo = async (address = input.address): Promise<GeocodeLatLng> => {
-  const geo = await geocodeAddress(address, apiKey)
+  const geo = await geocodeAddress(address, settings.apiKey.value)
   return geo
 }
 
@@ -225,7 +222,7 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
 
   buildingData.building = await findClosestBuilding(
     new google.maps.LatLng(geo.lat, geo.lng),
-    apiKey,
+    settings.apiKey.value,
   )
   jsonData.buildingResult = JSON.stringify(buildingData.building, null, 2)
   output.static.areaMeters2 = buildingData.building.solarPotential.buildingStats.areaMeters2
@@ -280,7 +277,7 @@ export async function getDataLayerUrls(
     pixelSizeMeters: 1,
   }
   console.log('GET dataLayers\n', args)
-  const params = new URLSearchParams({ ...args, key: apiKey })
+  const params = new URLSearchParams({ ...args, key: settings.apiKey.value })
   // https://developers.google.com/maps/documentation/solar/reference/rest/v1/dataLayers/get
   return fetch(`https://solar.googleapis.com/v1/dataLayers:get?${params}`).then(
     async (response) => {
@@ -297,10 +294,10 @@ export async function getDataLayerUrls(
 
 // Handle annual flux visualization for the map
 export const getAnnualFluxLayer = async (geo: GeocodeLatLng, radius: number) => {
-  const data = await getDataLayerUrls(geo, radius, apiKey)
+  const data = await getDataLayerUrls(geo, radius, settings.apiKey.value)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 
-  const layer = await getLayer('annualFlux', data, apiKey)
+  const layer = await getLayer('annualFlux', data, settings.apiKey.value)
   const canvas = layer.render(true, 0, 14)[0]
   updateOverlay(canvas, layer.bounds)
 }
@@ -318,8 +315,8 @@ export const getMonthlyDistribution = async () => {
   }
 
   // Get panel-specific data with small radius
-  const panelData = await getDataLayerUrls(panelLocation, 25, apiKey)
-  const monthlyFlux = await downloadGeoTIFF(panelData.monthlyFluxUrl, apiKey)
+  const panelData = await getDataLayerUrls(panelLocation, 25, settings.apiKey.value)
+  const monthlyFlux = await downloadGeoTIFF(panelData.monthlyFluxUrl, settings.apiKey.value)
 
   const azimuth =
     buildingData.building.solarPotential.roofSegmentStats[bestPanel.segmentIndex].azimuthDegrees
