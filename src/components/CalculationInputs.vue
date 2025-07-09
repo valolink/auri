@@ -9,6 +9,7 @@
             placeholder="Syötä osoite"
             :input-props="{ autocomplete: 'off' }"
             @input="getSuggestions"
+            :on-select="runSearch"
           />
           <n-button type="primary" @click="runSearch">Hae</n-button>
         </n-input-group>
