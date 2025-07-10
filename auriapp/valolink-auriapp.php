@@ -129,6 +129,7 @@ class VueAppShortcode {
 				'vueAppData',
 				array(
 					'ajax_url' => admin_url('admin-ajax.php'),
+					'role' => current_user_can('manage_options') ? 'admin' : 'guest',
 					'settings' => $keyed_settings,
 				)
 			);
@@ -209,6 +210,7 @@ class VueAppShortcode {
 					'vueAppData',
 					array(
 						'ajax_url' => admin_url('admin-ajax.php'),
+						'role' => current_user_can('manage_options') ? 'admin' : 'guest',
 						'settings' => $keyed_settings,
 					)
 				);

@@ -265,12 +265,19 @@
     "type": "repeater",
     "description": "Add dynamic name/value pairs."
   },
-	{
+  {
     "id": "buildingType",
     "label": "Rakennustyyppi",
     "type": "text",
     "sanitize": "sanitize_text_field",
     "description": "Default buildingType."
+  },  
+  {
+    "id": "apiKey",
+    "label": "Google API",
+    "type": "text",
+    "sanitize": "sanitize_text_field",
+    "description": "Google API"
   },
   {
     "id": "enable_feature",

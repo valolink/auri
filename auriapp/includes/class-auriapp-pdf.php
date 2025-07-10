@@ -88,44 +88,49 @@ class AuriappPDFGenerator {
             'currentDate' => sanitize_text_field($_POST['currentDate'] ?? date('d.m.Y')),
             'address' => sanitize_text_field($_POST['address'] ?? ''),
             
+            // Input
+            'calculationBasis' => sanitize_text_field($_POST['calculationBasis'] ?? ''),
+            'yearlyEnergyUsageKwh' => sanitize_text_field($_POST['yearlyEnergyUsageKwh'] ?? ''),
+            'BuildingType' => sanitize_text_field($_POST['buildingType'] ?? ''),
+            
             // Location
-            'lat' => floatval($_POST['lat'] ?? 0),
-            'lng' => floatval($_POST['lng'] ?? 0),
+            'lat' => sanitize_text_field($_POST['lat'] ?? 0),
+            'lng' => sanitize_text_field($_POST['lng'] ?? 0),
             
             // Scores
-            'scoreProfitability' => intval($_POST['scoreProfitability'] ?? 0),
-            'scoreProduction' => intval($_POST['scoreProduction'] ?? 0),
+            'scoreProfitability' => sanitize_text_field($_POST['scoreProfitability'] ?? 0),
+            'scoreProduction' => sanitize_text_field($_POST['scoreProduction'] ?? 0),
             
             // System specifications
-            'capacityKwp' => floatval($_POST['capacityKwp'] ?? 0),
-            'panelsCount' => intval($_POST['panelsCount'] ?? 0),
-            'yearlyEnergyDcKwh' => floatval($_POST['yearlyEnergyDcKwh'] ?? 0),
-            'installationCostEuros' => floatval($_POST['installationCostEuros'] ?? 0),
-            'yearlyCarbonOffset' => floatval($_POST['yearlyCarbonOffset'] ?? 0),
-            'maintenanceCostsPerYear' => floatval($_POST['maintenanceCostsPerYear'] ?? 0),
+            'capacityKwp' => sanitize_text_field($_POST['capacityKwp'] ?? 0),
+            'panelsCount' => sanitize_text_field($_POST['panelsCount'] ?? 0),
+            'yearlyEnergyDcKwh' => sanitize_text_field($_POST['yearlyEnergyDcKwh'] ?? 0),
+            'installationCostEuros' => sanitize_text_field($_POST['installationCostEuros'] ?? 0),
+            'yearlyCarbonOffset' => sanitize_text_field($_POST['yearlyCarbonOffset'] ?? 0),
+            'maintenanceCostsPerYear' => sanitize_text_field($_POST['maintenanceCostsPerYear'] ?? 0),
             
             // Profitability
-            'paybackYears' => floatval($_POST['paybackYears'] ?? 0),
-            'averageYearlySavingsEuros' => floatval($_POST['averageYearlySavingsEuros'] ?? 0),
-            'lcoeSntkPerKwh' => floatval($_POST['lcoeSntkPerKwh'] ?? 0),
-            'netPresentValueEuros' => floatval($_POST['netPresentValueEuros'] ?? 0),
-            'internalRateOfReturn' => floatval($_POST['internalRateOfReturn'] ?? 0),
+            'paybackYears' => sanitize_text_field($_POST['paybackYears'] ?? 0),
+            'averageYearlySavingsEuros' => sanitize_text_field($_POST['averageYearlySavingsEuros'] ?? 0),
+            'lcoeSntkPerKwh' => sanitize_text_field($_POST['lcoeSntkPerKwh'] ?? 0),
+            'netPresentValueEuros' => sanitize_text_field($_POST['netPresentValueEuros'] ?? 0),
+            'internalRateOfReturn' => sanitize_text_field($_POST['internalRateOfReturn'] ?? 0),
             
             // Calculation parameters
-            'energyPriceSnt' => floatval($_POST['energyPriceSnt'] ?? 0),
-            'transmissionPriceSnt' => floatval($_POST['transmissionPriceSnt'] ?? 0),
-            'electricityTaxSnt' => floatval($_POST['electricityTaxSnt'] ?? 0),
-            'vat' => floatval($_POST['vat'] ?? 24),
-            'maintenanceCostFactor' => floatval($_POST['maintenanceCostFactor'] ?? 0),
-            'efficiencyDepreciationFactor' => floatval($_POST['efficiencyDepreciationFactor'] ?? 0),
-            'installationLifeSpan' => intval($_POST['installationLifeSpan'] ?? 25),
-            'panelCapacityWatts' => floatval($_POST['panelCapacityWatts'] ?? 0),
-            'installationCostPerKwp' => floatval($_POST['installationCostPerKwp'] ?? 0),
-            'pitchDegrees' => floatval($_POST['pitchDegrees'] ?? 0),
-            'azimuthDegrees' => floatval($_POST['azimuthDegrees'] ?? 0),
-            'discountRate' => floatval($_POST['discountRate'] ?? 0),
-            'costIncreaseFactor' => floatval($_POST['costIncreaseFactor'] ?? 0),
-            'emissionsFactor' => floatval($_POST['emissionsFactor'] ?? 0),
+            'energyPriceSnt' => sanitize_text_field($_POST['energyPriceSnt'] ?? 0),
+            'transmissionPriceSnt' => sanitize_text_field($_POST['transmissionPriceSnt'] ?? 0),
+            'electricityTaxSnt' => sanitize_text_field($_POST['electricityTaxSnt'] ?? 0),
+            'vat' => sanitize_text_field($_POST['vat'] ?? 24),
+            'maintenanceCostFactor' => sanitize_text_field($_POST['maintenanceCostFactor'] ?? 0),
+            'efficiencyDepreciationFactor' => sanitize_text_field($_POST['efficiencyDepreciationFactor'] ?? 0),
+            'installationLifeSpan' => sanitize_text_field($_POST['installationLifeSpan'] ?? 25),
+            'panelCapacityWatts' => sanitize_text_field($_POST['panelCapacityWatts'] ?? 0),
+            'installationCostPerKwp' => sanitize_text_field($_POST['installationCostPerKwp'] ?? 0),
+            'pitchDegrees' => sanitize_text_field($_POST['pitchDegrees'] ?? 0),
+            'azimuthDegrees' => sanitize_text_field($_POST['azimuthDegrees'] ?? 0),
+            'discountRate' => sanitize_text_field($_POST['discountRate'] ?? 0),
+            'costIncreaseFactor' => sanitize_text_field($_POST['costIncreaseFactor'] ?? 0),
+            'emissionsFactor' => sanitize_text_field($_POST['emissionsFactor'] ?? 0),
         ];
     }
     

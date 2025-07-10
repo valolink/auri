@@ -20,12 +20,23 @@
 
       .container {
         width: 100%;
-        max-width: 575px; /* A4 width (595px) minus 20px total margins */
+        max-width: 675px; /* A4 width (595px) minus 20px total margins */
         margin: 0 auto;
         padding: 15px;
       }
 
-      /* Replace flexbox with table-based layout for PDF compatibility */
+      .legend-gradient {
+        height: 20px;
+        margin-bottom: 5px;
+        border: 1px solid #ddd;
+      }
+
+      .gradient-description span:nth-child(2) {
+		padding: 5px;
+        float: right;
+		font-size: 12px;
+      }
+
       .header {
         width: 100%;
         margin-bottom: 30px;
@@ -144,7 +155,7 @@
       .heat-map {
         width: 100%;
         min-height: 150px;
-        max-height: 200px;
+        max-height: 250px;
         border: 1px solid #ddd;
         margin-bottom: 10px;
         background: #f5f5f5;
@@ -330,16 +341,23 @@
             <td class="left-panel">
               <!-- Address Section -->
               <div class="address-section">
-                <div class="section-title">Kohde</div>
                 <div class="address-title">
                   <span class="variable">{{address}}</span>
                 </div>
-                <div class="address-details">
-                  Lat: <span class="variable">{{lat}}</span> (geocode), Lon:
-                  <span class="variable">{{lng}}</span> (geocode)
+                <!-- <div class="address-details"> -->
+                <!--   Lat: <span class="variable">{{lat}}</span> (geocode), Lon: -->
+                <!--   <span class="variable">{{lng}}</span> (geocode) -->
+                <!-- </div> -->
+                <div class="spec-item">
+                  <span class="spec-label">Sähkön vuosikulutus:</span>
+                  <span class="spec-value">{{yearlyEnergyUsageKwh}}</span>
+                  <span class="spec-unit">kWh</span>
+                </div>
+                <div class="spec-item">
+                  <span class="spec-label">Rakennustyyppi:</span>
+                  <span class="spec-value">{{BuildingType}}</span>
                 </div>
               </div>
-
               <!-- System Specifications -->
               <div class="system-specs">
                 <div class="section-title">Järjestelmätiedot</div>
@@ -390,6 +408,10 @@
                 <div class="image-placeholder">Heat Map Image Placeholder</div>
                 {{/heatMapImage}}
               </div>
+				
+              <!--div class="legend-gradient"></div-->
+<img class="legend-gradient" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAAUCAYAAACj6Wu2AAACtUlEQVR4Xu2d6W6DMBCEvfRn3/91k2LWx9r4oiVtKn2KUIAYH0RiNLszi4j7fIoTt+0f+906d24zPxNbnEc4/9Jv853ZxfWsrKRce3201lM5zsqo7fvunMhTN/fI+/JwzoXz+76Y/eL8cZ1vp9fqb6Efu397f34sM1+zX5wfzd2ubzD3Yk2391fed+fnIfqf+O+4ybGfz8lWHus1VRt/vJlrUn9xjNy/b6fXx60+1r513H6bNO/Q7t+vw98U+di3fUH+e39u5WO/SPPbcXNmx/b6ur/X9S/N+cfxzJym84/ra92P3nru63//OwAQD1wrj/8xKKz0MAfp41kAgAzBDwAxgAGAACAHGAEgDR5UM4/MWlbYij7SV7gAAPJzRgMDsYwEBhJA7m4mBQPJYFEwLAAEADnADgYyC7/BQGAghLBC6CqFuAAQAAQACeG7cf4GAAFAABAAJISXcjBqJSylwaYrYakrbcfpcnIgo6Q8ISxCWL8gBiCERQirTiXPlVqosHxYBxVWg5mgwkKFlVRZK6qrWpWFCiuxuaFqrR0iQ4UV2MyKhgoGAgNBxhvkyX8lR4aBwEBgIP1AHEn0uYeFHAg5EHIg5EDIgTQNnKiwUGGp4RAjoTVuRgMmRsJ2yAkVFiosVFiosKKrHACpnP8AiJYd6DnrARAABAABQAAQLdFSlHGxpWRgIDCQquoWKiwrZSaERQiLEBYAUuc4ZscwEBgIDAQGAgOBgcS6VkvFICmmmCoBYySklIkWksSJThLdVhkmhJUqDpMD6ZeAB0AAEADkRUUIKeeu/onTAxgjIUbCTmkTqvHyPpDrgMT7QN66JAtGQoyEGAkxEsYHe688y+hlWBgJMRJiJMRIiJEQI2G3vhcAgpGwfAMkPhB8IM1QE9V4y1cJI+MliY6MFxnvTLb7HgzkC2T214R1hcoFAAAAAElFTkSuQmCC" style="width: 100%; height: 20px;" />
+              <div class="gradient-description"><span><b>Varjoisa</b></span><span><b>Valoisa</b></span></div>
             </td>
           </tr>
         </table>
@@ -411,19 +433,6 @@
       <div class="bottom-section">
         <table class="bottom-table">
           <tr>
-            <td>
-              <!-- Lifecycle Chart -->
-              <div class="lifecycle-chart">
-                <div class="section-title">Elinkaarisäästöt</div>
-                <div class="chart-placeholder">
-                  {{#lifecycleChartImage}}
-                  <img src="data:image/png;base64,{{lifecycleChartImage}}" />
-                  {{/lifecycleChartImage}} {{^lifecycleChartImage}}
-                  <div class="image-placeholder">Lifecycle Chart Placeholder</div>
-                  {{/lifecycleChartImage}}
-                </div>
-              </div>
-            </td>
             <td>
               <!-- Profitability Section -->
               <div class="profitability-section">
@@ -460,6 +469,19 @@
                 </div>
               </div>
             </td>
+            <td>
+              <!-- Lifecycle Chart -->
+              <div class="lifecycle-chart">
+                <div class="section-title" style="opacity: 0">-</div>
+                <div class="chart-placeholder">
+                  {{#lifecycleChartImage}}
+                  <img src="data:image/png;base64,{{lifecycleChartImage}}" />
+                  {{/lifecycleChartImage}} {{^lifecycleChartImage}}
+                  <div class="image-placeholder">Lifecycle Chart Placeholder</div>
+                  {{/lifecycleChartImage}}
+                </div>
+              </div>
+            </td>
           </tr>
         </table>
       </div>
@@ -484,7 +506,7 @@
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Sähkövero ja huoltovarmmusmaksu:</span>
+                <span class="calc-label">Sähkövero ja huoltovarmuusmaksu:</span>
                 <span class="calc-value">{{electricityTaxSnt}}</span>
                 <span class="calc-label">snt/kWh</span>
               </div>
@@ -492,6 +514,12 @@
               <div class="calc-item">
                 <span class="calc-label">Arvonlisävero:</span>
                 <span class="calc-value">{{vat}}</span>
+                <span class="calc-label">%</span>
+              </div>
+
+              <div class="calc-item">
+                <span class="calc-label">Päivittäinen max. omavaraisuusaste:</span>
+                <span class="calc-value">{{TODO}}</span>
                 <span class="calc-label">%</span>
               </div>
             </td>
@@ -504,7 +532,7 @@
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Tehon alenema vuositain:</span>
+                <span class="calc-label">Tehonalenema vuosittain:</span>
                 <span class="calc-value">{{efficiencyDepreciationFactor}}</span>
                 <span class="calc-label">%</span>
               </div>
@@ -522,15 +550,14 @@
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Investointihinta per kWp:</span>
-                <span class="calc-value">{{installationCostPerKwp}}</span>
-                <span class="calc-label">€/kWp</span>
+                <span class="calc-label">Laskentatapa:</span>
+                <span class="calc-value">{{calculationBasis}}</span>
               </div>
             </td>
 
             <td>
               <div class="calc-item">
-                <span class="calc-label">Kalistuskulma:</span>
+                <span class="calc-label">Kallistuskulma:</span>
                 <span class="calc-value">{{pitchDegrees}}</span>
                 <span class="calc-label">°</span>
               </div>
@@ -542,19 +569,19 @@
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Diskonttokorkо:</span>
+                <span class="calc-label">Diskonttakorkо:</span>
                 <span class="calc-value">{{discountRate}}</span>
                 <span class="calc-label">%</span>
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Sähkön hinnan nousu:</span>
+                <span class="calc-label">Sähkön hinnannousu:</span>
                 <span class="calc-value">{{costIncreaseFactor}}</span>
                 <span class="calc-label">%</span>
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Ostos sähkön päästökerroin:</span>
+                <span class="calc-label">Ostosähkön päästökerroin:</span>
                 <span class="calc-value">{{emissionsFactor}}</span>
                 <span class="calc-label">gCO2/kWh</span>
               </div>
@@ -565,4 +592,3 @@
     </div>
   </body>
 </html>
-
