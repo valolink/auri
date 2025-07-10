@@ -4,8 +4,12 @@ import { useCharts } from '@/services/useCharts'
 import type { SolarCalculationResult } from '@/types'
 
 const { output, input, settings } = useAppState()
-const { updateChart } = useCharts()
+const { resetChart, updateChart } = useCharts()
 
+export const resetCharts = () => {
+  resetChart('energy')
+  resetChart('savings')
+}
 // Energy Chart Functions
 export function updateEnergyChart(
   yearlyEnergy: number = output.active.yearlyEnergyDcKwh,

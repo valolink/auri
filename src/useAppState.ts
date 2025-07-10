@@ -63,7 +63,11 @@ const initialOutput = {
   scoreProduction: 0,
 }
 
-const output = reactive(initialOutput)
+const output = reactive({ ...initialOutput, reset })
+
+function reset() {
+  Object.assign(output, initialOutput)
+}
 
 const buildingData = reactive({
   building: {} as BuildingInsightsResponse,

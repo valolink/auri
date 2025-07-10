@@ -157,7 +157,7 @@ import {
   NFlex,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
-import { updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
+import { resetCharts, updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
 import { requestPdf } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import type { GeocodeLatLng } from '@/services/geocodingApi'
@@ -274,6 +274,8 @@ async function getPlaceDetails(placeId: string) {
 }
 
 const runSearch = async (address: string = input.address) => {
+  output.reset()
+  resetCharts()
   loading.value = true
   getSolarData(await getGeo(address))
 }
@@ -308,6 +310,8 @@ const enableManualBuildingSelect = async () => {
         google.maps.event.removeListener(listener)
 
         loading.value = true
+        output.reset()
+        resetCharts()
         console.log({ lat: lat, lng: lng })
 
         // Perform reverse geocoding to get address information

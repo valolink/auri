@@ -67,7 +67,7 @@ export const requestPdf = async function () {
   )
   formData.append(
     'internalRateOfReturn',
-    roundToSignificantFigures(output.active.netPresentValueEuros).toLocaleString(),
+    roundToSignificantFigures(output.active.internalRateOfReturn).toLocaleString(),
   )
   formData.append(
     'energyPriceSnt',
