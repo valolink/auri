@@ -1,7 +1,7 @@
 import { ref, reactive, toRaw, markRaw, type Ref } from 'vue'
 import type { Chart } from 'chart.js'
 import type { SolarCalculationResult, AppSettings } from '@/types'
-import type { BuildingInsightsResponse, SolarPanelConfig } from '@/services/solar'
+import type { BuildingInsightsResponse, SortedSolarPanelConfig } from '@/services/solar'
 
 const settings = reactive({
   ...(window.vueAppData!.settings as AppSettings),
@@ -71,7 +71,7 @@ function reset() {
 
 const buildingData = reactive({
   building: {} as BuildingInsightsResponse,
-  sortedConfigs: [] as SolarPanelConfig[],
+  sortedConfigs: [] as SortedSolarPanelConfig[],
 })
 
 declare global {

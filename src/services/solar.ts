@@ -94,6 +94,11 @@ export interface SolarPanelConfig {
   roofSegmentSummaries: RoofSegmentSummary[]
 }
 
+export interface SortedSolarPanelConfig extends SolarPanelConfig {
+  gainPerPanel: number | null;
+  yearlyEnergyAcKwh: number;
+}
+
 export interface RoofSegmentSummary {
   pitchDegrees: number
   azimuthDegrees: number

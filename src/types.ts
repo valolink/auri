@@ -36,70 +36,70 @@ export interface RepeaterSetting extends BaseSetting {
 }
 
 export interface AppSettings {
-  yearlyEnergyUsageKwh: NumberSetting
-  totalCapacityKwp: TextSetting
-  targetPower: NumberSetting
-  panelCount: NumberSetting
+  apiKey: TextSetting
+  buildingType: TextSetting
+  buildingTypes: RepeaterSetting
   calculationBasis: SelectSetting
-  powerConsumptionProfile: SelectSetting
-  energyPriceSnt: NumberSetting
-  transmissionPriceSnt: NumberSetting
-  electricityTax: NumberSetting
-  vat: NumberSetting
   costIncreaseFactor: NumberSetting
+  dailyMaxUtilizationFactor: NumberSetting
+  dcToAcDerate: NumberSetting
+  discountRate: NumberSetting
   efficiencyDepreciationFactor: NumberSetting
+  electricityTax: NumberSetting
+  emissionsFactor: NumberSetting
+  enable_feature: CheckboxSetting
+  endOfLifeCost: NumberSetting
+  energyPriceSnt: NumberSetting
   excessRate: NumberSetting
   excessSalePriceSnt: NumberSetting
-  installationCostPerKwp: NumberSetting
   incentives: NumberSetting
-  loan: NumberSetting
-  loanDurationYears: NumberSetting
+  installationCostPerKwp: NumberSetting
+  installationLifeSpan: NumberSetting
   interestRate: NumberSetting
   inverterReplacementCostFactor: NumberSetting
+  loan: NumberSetting
+  loanDurationYears: NumberSetting
   maintenanceCostFactor: NumberSetting
-  installationLifeSpan: NumberSetting
-  endOfLifeCost: NumberSetting
-  emissionsFactor: NumberSetting
   minYearlyEnergyPerPanelAdded: NumberSetting
   panelCapacityWatts: NumberSetting
-  discountRate: NumberSetting
-  dailyMaxUtilizationFactor: NumberSetting
-  buildingTypes: RepeaterSetting
-  buildingType: TextSetting
-  enable_feature: CheckboxSetting
-  welcome_message: TextareaSetting
-  smartMaxRangeStart: NumberSetting
-  smartMaxRangeEnd: NumberSetting
-  smartMaxTreshold: NumberSetting
+  panelCount: NumberSetting
+  powerConsumptionProfile: SelectSetting
   smartMaxFallbackTreshold: NumberSetting
-  dcToAcDerate: NumberSetting
-  apiKey: TextSetting
+  smartMaxRangeEnd: NumberSetting
+  smartMaxRangeStart: NumberSetting
+  smartMaxTreshold: NumberSetting
+  targetPower: NumberSetting
+  totalCapacityKwp: TextSetting
+  transmissionPriceSnt: NumberSetting
+  vat: NumberSetting
+  welcome_message: TextareaSetting
+  yearlyEnergyUsageKwh: NumberSetting
 }
 
 export interface SolarCalculationResult {
-  yearlyEnergyDcKwh: number
-  panelsCount: number
-  capacityKwp: number
-  yearlyCarbonOffset: number
-  savingsYear1: number
-  installationCostEuros: number
-  maintenanceCostsPerLifeSpan: number
-  totalEnergyDcKwhPerLifeSpan: number
-  totalSavingsPerLifeSpan: number
   averageYearlySavingsEuros: number
-  totalFinanceCostsPerLifeSpan: number
-  lcoeSntPerKwh: number
-  paybackYears: number
-  totalCostsPerLifeSpanEuros: number
   calculationMonth?: number
-  yearlyEnergyAcKwh: number
-  maintenanceCostsPerYear: number
+  capacityKwp: number
+  installationCostEuros: number
   internalRateOfReturn: number
-  scoreProfitability: number
-  scoreProduction: number
-  netPresentValueEuros: number
-  yearlySavingsRate: number
+  lcoeSntPerKwh: number
+  maintenanceCostsPerLifeSpan: number
+  maintenanceCostsPerYear: number
   netCashFlowCumulative: number[]
+  netPresentValueEuros: number
+  panelsCount: number
+  paybackYears: number
+  savingsYear1: number
+  scoreProduction: number
+  scoreProfitability: number
+  totalCostsPerLifeSpanEuros: number
+  totalEnergyAcKwhPerLifeSpan: number
+  totalFinanceCostsPerLifeSpan: number
+  totalSavingsPerLifeSpan: number
+  yearlyCarbonOffset: number
+  yearlyEnergyAcKwh: number
+  yearlyEnergyDcKwh: number
+  yearlySavingsRate: number
 }
 
 // Extended SolarPanelConfig with calculated properties

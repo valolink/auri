@@ -8,6 +8,7 @@ import {
   downloadGeoTIFF,
   findClosestBuilding,
   type SolarPanelConfig,
+  type SortedSolarPanelConfig,
 } from '@/services/solar'
 import { getLayer } from '@/services/layer'
 import { useAppState } from '@/useAppState'
@@ -231,14 +232,15 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
     (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
       (1 + Number(settings.vat.value) / 100)
 
-  // Sort the data by panelsCount in ascending order and calculate gainPerPanel
-  const sorted: SolarPanelConfig[] = buildingData.building.solarPotential.solarPanelConfigs
+  const sorted: SortedSolarPanelConfig[] = buildingData.building.solarPotential.solarPanelConfigs
     .sort((a: SolarPanelConfig, b: SolarPanelConfig) => a.panelsCount - b.panelsCount)
     .map((config: SolarPanelConfig, index: number, array: SolarPanelConfig[]) => {
+      const yearlyEnergyAcKwh = config.yearlyEnergyDcKwh * settings.dcToAcDerate.value
       if (index === 0) {
         return {
           ...config,
           gainPerPanel: null, // First item has no previous to compare
+          yearlyEnergyAcKwh,
         }
       }
 
@@ -250,6 +252,7 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
       return {
         ...config,
         gainPerPanel,
+        yearlyEnergyAcKwh,
       }
     })
 

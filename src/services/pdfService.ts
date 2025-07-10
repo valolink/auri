@@ -39,8 +39,8 @@ export const requestPdf = async function () {
     roundToSignificantFigures(output.active.installationCostEuros).toLocaleString(),
   )
   formData.append(
-    'yearlyEnergyDcKwh',
-    roundToSignificantFigures(output.active.yearlyEnergyDcKwh).toLocaleString(),
+    'yearlyEnergyAcKwh',
+    roundToSignificantFigures(output.active.yearlyEnergyAcKwh).toLocaleString(),
   )
   formData.append(
     'yearlyCarbonOffset',

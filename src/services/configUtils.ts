@@ -82,14 +82,14 @@ export function findOptimized(
   minPower = minPower * Number(settings.dailyMaxUtilizationFactor.value)
   console.log('minPower * dailyMaxUtilizationFactor', minPower)
 
-  const optimized = buildingData.sortedConfigs.reduce((closest, curr): SolarPanelConfig => {
-    if (curr.yearlyEnergyDcKwh > minPower) return closest
-    if (closest.yearlyEnergyDcKwh > minPower) return curr
-    return curr.yearlyEnergyDcKwh - minPower > closest.yearlyEnergyDcKwh - minPower ? curr : closest
+  const optimized = buildingData.sortedConfigs.reduce((closest, curr) => {
+    if (curr.yearlyEnergyAcKwh > minPower) return closest
+    if (closest.yearlyEnergyAcKwh > minPower) return curr
+    return curr.yearlyEnergyAcKwh - minPower > closest.yearlyEnergyAcKwh - minPower ? curr : closest
   })
   console.log('findOptimized result:', optimized)
-  console.log(optimized.yearlyEnergyDcKwh > minPower)
-  console.log(optimized.yearlyEnergyDcKwh < minPower)
+  console.log(optimized.yearlyEnergyAcKwh > minPower)
+  console.log(optimized.yearlyEnergyAcKwh < minPower)
   return optimized
 }
 
@@ -97,25 +97,27 @@ import type { SolarCalculationResult } from '@/types'
 
 export function calculateConfig(config: SolarPanelConfig): SolarCalculationResult {
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
+  const dcToAcDerate = Number(settings.dcToAcDerate.value)
+  const yearlyEnergyAcKwh = yearlyEnergyDcKwh * dcToAcDerate
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000
-  const yearlyCarbonOffset = (Number(settings.emissionsFactor.value) * yearlyEnergyDcKwh) / 1000
-  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
+  const yearlyCarbonOffset = (Number(settings.emissionsFactor.value) * yearlyEnergyAcKwh) / 1000
+  const savingsYear1 = (yearlyEnergyAcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
   const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
   const maintenanceCostsPerLifeSpan =
     installationCostEuros *
     (Number(settings.maintenanceCostFactor.value) / 100) *
     Number(settings.installationLifeSpan.value)
 
-  const totalEnergyDcKwhPerLifeSpan =
-    (yearlyEnergyDcKwh *
+  const totalEnergyAcKwhPerLifeSpan =
+    (yearlyEnergyAcKwh *
       (1 -
         (1 - Number(settings.efficiencyDepreciationFactor.value) / 100) **
           Number(settings.installationLifeSpan.value))) /
     (Number(settings.efficiencyDepreciationFactor.value) / 100)
 
   const totalSavingsPerLifeSpan =
-    (((yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100) *
+    (((yearlyEnergyAcKwh * output.static.totalEnergyPriceSntPerKwh) / 100) *
       (1 -
         ((1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
           (1 + Number(settings.costIncreaseFactor.value) / 100)) **
@@ -142,7 +144,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
       maintenanceCostsPerLifeSpan +
       totalFinanceCostsPerLifeSpan +
       inverterReplacementCosts) /
-      totalEnergyDcKwhPerLifeSpan) *
+      totalEnergyAcKwhPerLifeSpan) *
     100
 
   const paybackYears =
@@ -157,11 +159,6 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     maintenanceCostsPerLifeSpan +
     totalFinanceCostsPerLifeSpan +
     inverterReplacementCosts
-
-  const dcToAcDerate = Number(settings.dcToAcDerate.value)
-
-  // Available AC energy from solar production
-  const yearlyEnergyAcKwh = yearlyEnergyDcKwh * dcToAcDerate
 
   // Annual maintenance costs
   const maintenanceCostsPerYear =
@@ -196,7 +193,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     Math.pow(1 + discountRate, Number(settings.installationLifeSpan.value))
 
   // Yearly savings rate (%) - requires yearlyEnergyUsageKwh
-  const yearlyEnergyUsageKwh = output.yearlyEnergyUsageKwh || yearlyEnergyDcKwh // Fallback to production if usage not available
+  const yearlyEnergyUsageKwh = output.yearlyEnergyUsageKwh || yearlyEnergyAcKwh // Fallback to production if usage not available
   const yearlySavingsRate =
     yearlyEnergyUsageKwh > 0
       ? (savingsYear1 / ((yearlyEnergyUsageKwh * output.static.totalEnergyPriceSntPerKwh) / 100)) *
@@ -220,7 +217,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     scoreProduction,
     scoreProfitability,
     totalCostsPerLifeSpanEuros,
-    totalEnergyDcKwhPerLifeSpan,
+    totalEnergyAcKwhPerLifeSpan,
     totalFinanceCostsPerLifeSpan,
     totalSavingsPerLifeSpan,
     yearlyCarbonOffset,
