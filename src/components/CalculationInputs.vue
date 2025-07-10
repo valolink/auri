@@ -244,7 +244,7 @@ onMounted(async () => {
 // Function to get place details using place ID with the new REST API
 async function getPlaceDetails(placeId: string) {
   try {
-    const apiKey = (settings as any).apiKey?.value || ''
+    const apiKey = settings.apiKey.value
     const response = await fetch(
       `https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location,types&languageCode=fi&key=${apiKey}`,
       {
@@ -289,7 +289,7 @@ async function handleSelect(selectedValue: string) {
       console.log('Full address:', placeDetails.address)
       console.log('Location:', placeDetails.location)
       console.log('Types:', placeDetails.types)
-      ;(output as any).placeNameFromApi = placeDetails.name
+      output.placeNameFromApi = placeDetails.name
     }
   }
 }
@@ -311,7 +311,7 @@ const enableManualBuildingSelect = async () => {
         console.log({ lat: lat, lng: lng })
 
         // Perform reverse geocoding to get address information
-        const coordinates = await reverseGeocode(lat, lng, (settings as any).apiKey?.value || '')
+        const coordinates = await reverseGeocode(lat, lng, settings.apiKey.value)
 
         await getSolarData(coordinates)
       },
@@ -325,7 +325,9 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   await getBuildingData(coordinates)
 
-  await initMap(output.buildingCenter.lat!, output.buildingCenter.lng!, output.buildingRadius)
+  if (output.buildingCenter.lat !== null && output.buildingCenter.lng !== null) {
+    await initMap(output.buildingCenter.lat, output.buildingCenter.lng, output.buildingRadius)
+  }
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
@@ -333,12 +335,19 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   // )
   const layerRadius = Math.ceil(output.buildingRadius * 1.0)
-  await getLayerData(output.buildingCenter, layerRadius + input.extraRadius)
+  // Create a proper GeocodeLatLng object from buildingCenter
+  const layerCoordinates: GeocodeLatLng = {
+    lat: output.buildingCenter.lat!,
+    lng: output.buildingCenter.lng!,
+    formattedAddress: output.addressFromApi,
+    addressComponents: coordinates.addressComponents,
+  }
+  await getLayerData(layerCoordinates, layerRadius + input.extraRadius)
   // await getLayerData(output.buildingCenter, layerRadius)
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  ;(output as any).scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
+  output.scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
   loading.value = false
 }
 
@@ -386,7 +395,9 @@ const updateFromPanels = () => {
 }
 
 const energyProfile = computed(() =>
-  input.customProfile.active ? normalizedDistribution.value : JSON.parse(input.buildingType?.value || '[]'),
+  input.customProfile.active
+    ? normalizedDistribution.value
+    : JSON.parse(input.buildingType?.value || '[]'),
 )
 
 const updateCalculationBasis = (
@@ -432,7 +443,7 @@ const updateCalculationBasis = (
       output.active.yearlyEnergyDcKwh,
       output.monthlyDistribution,
       input.yearlyEnergyUsageKwh.value,
-      energyProfile.value
+      energyProfile.value,
     )
   }
   updateSavingsChart()

@@ -57,7 +57,10 @@ export const requestPdf = async function () {
     'averageYearlySavingsEuros',
     roundToSignificantFigures(output.active.averageYearlySavingsEuros).toLocaleString(),
   )
-  formData.append('lcoeSntkPerKwh', (roundToSignificantFigures(output.active.lcoeSntPerKwh) || 0).toString())
+  formData.append(
+    'lcoeSntkPerKwh',
+    (roundToSignificantFigures(output.active.lcoeSntPerKwh) || 0).toString(),
+  )
   formData.append(
     'netPresentValueEuros',
     roundToSignificantFigures(output.active.netPresentValueEuros, 3).toLocaleString(),
@@ -66,7 +69,10 @@ export const requestPdf = async function () {
     'internalRateOfReturn',
     roundToSignificantFigures(output.active.netPresentValueEuros).toLocaleString(),
   )
-  formData.append('energyPriceSnt', (roundToSignificantFigures(settings?.energyPriceSnt?.value) || 0).toString())
+  formData.append(
+    'energyPriceSnt',
+    (roundToSignificantFigures(settings?.energyPriceSnt?.value) || 0).toString(),
+  )
   formData.append(
     'transmissionPriceSnt',
     (roundToSignificantFigures(settings?.transmissionPriceSnt?.value) || 0).toString(),
@@ -148,10 +154,14 @@ export const requestPdf = async function () {
       formData.append('solarChartImage', solarBlob, 'solarChart.png')
     }
 
-    if (mapInstance.value && output.buildingCenter.lat !== null && output.buildingCenter.lng !== null) {
+    if (
+      mapInstance.value &&
+      output.buildingCenter.lat !== null &&
+      output.buildingCenter.lng !== null
+    ) {
       mapInstance.value.setCenter({
         lat: output.buildingCenter.lat,
-        lng: output.buildingCenter.lng
+        lng: output.buildingCenter.lng,
       })
       mapInstance.value.setZoom(calculateZoomFromRadius(output.buildingRadius))
     }
@@ -159,10 +169,9 @@ export const requestPdf = async function () {
     const mapDataUrl = await captureMapWithProperSizing({
       center: {
         lat: output.buildingCenter.lat || 0,
-        lng: output.buildingCenter.lng || 0
+        lng: output.buildingCenter.lng || 0,
       },
       radiusMeters: output.buildingRadius, // This is the key missing parameter!
-      size: { width: 800, height: 800 },
     })
 
     // const response = await fetch(mapDataUrl)

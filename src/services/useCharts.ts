@@ -1,6 +1,6 @@
 // services/useCharts.ts
 import { useAppState } from '@/useAppState'
-import type { Chart } from 'chart.js'
+import type { Chart, ChartDataset } from 'chart.js'
 
 export function useCharts() {
   const { chartRefs } = useAppState()
@@ -10,12 +10,28 @@ export function useCharts() {
     return chartRefs[chartId]?.value as Chart | undefined
   }
 
-  const updateChart = (chartId: string, labels: string[], datasets: any[]) => {
+  const updateChart = (chartId: string, labels: string[], datasets: ChartDataset[]) => {
     const chartInstance = getChart(chartId)
     if (chartInstance) {
       console.log(chartInstance.data)
+
+      // Update labels
       chartInstance.data.labels = labels
-      chartInstance.data.datasets = datasets // Replace instead of push to avoid recursion
+
+      // Update datasets more carefully
+      datasets.forEach((newDataset, datasetIndex) => {
+        if (chartInstance.data.datasets[datasetIndex]) {
+          // Update existing dataset
+          Object.assign(chartInstance.data.datasets[datasetIndex], newDataset)
+        } else {
+          // Add new dataset
+          chartInstance.data.datasets.push(newDataset)
+        }
+      })
+
+      // Remove extra datasets if any
+      chartInstance.data.datasets.splice(datasets.length)
+
       chartInstance.update()
       console.log(`Chart ${chartId} updated with:`, chartInstance.data.datasets[0]?.data)
     } else {

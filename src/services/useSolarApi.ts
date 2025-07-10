@@ -259,22 +259,21 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
     lng: buildingData.building.center.longitude,
   }
   console.log('buildingData', buildingData.building)
-  output.buildingRadius = calculateSolarAPIRadius({ building: buildingData.building }, 1)
+  output.buildingRadius = calculateSolarAPIRadius({ building: buildingData.building })
 }
 
 export async function getDataLayerUrls(
   location: { lat: number; lng: number },
   radiusMeters: number,
-  apiKey: string,
 ): Promise<DataLayersResponse> {
   const args = {
     'location.latitude': location.lat.toFixed(5),
     'location.longitude': location.lng.toFixed(5),
-    radius_meters: Math.min(radiusMeters, 175),
+    radius_meters: Math.min(radiusMeters, 175).toString(),
     requiredQuality: 'MEDIUM',
-    exactQualityRequired: true,
+    exactQualityRequired: 'true',
     // pixelSizeMeters: radiusMeters > 100 ? 0.5 : 0.25,
-    pixelSizeMeters: 1,
+    pixelSizeMeters: '1',
   }
   console.log('GET dataLayers\n', args)
   const params = new URLSearchParams({ ...args, key: settings.apiKey.value })
@@ -294,7 +293,7 @@ export async function getDataLayerUrls(
 
 // Handle annual flux visualization for the map
 export const getAnnualFluxLayer = async (geo: GeocodeLatLng, radius: number) => {
-  const data = await getDataLayerUrls(geo, radius, settings.apiKey.value)
+  const data = await getDataLayerUrls(geo, radius)
   jsonData.layerResult = JSON.stringify(data, null, 2)
 
   const layer = await getLayer('annualFlux', data, settings.apiKey.value)
@@ -315,7 +314,7 @@ export const getMonthlyDistribution = async () => {
   }
 
   // Get panel-specific data with small radius
-  const panelData = await getDataLayerUrls(panelLocation, 25, settings.apiKey.value)
+  const panelData = await getDataLayerUrls(panelLocation, 25)
   const monthlyFlux = await downloadGeoTIFF(panelData.monthlyFluxUrl, settings.apiKey.value)
 
   const azimuth =
@@ -349,6 +348,9 @@ export const renderPanels = (panelCount: number = input.panelCount?.value) => {
   const solarPotential = building.solarPotential
   const panelConfig = sortedConfigs.find((c) => c.panelsCount === panelCount)
   if (!panelConfig) return
+  if (!mapInstance.value) {
+    throw new Error('Map container element not found')
+  }
   currentPolygons = drawSolarPanels({
     config: panelConfig,
     solarPanels: solarPotential.solarPanels,

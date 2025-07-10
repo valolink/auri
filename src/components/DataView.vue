@@ -4,7 +4,7 @@
     <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed sort />
 
     <p>chart:</p>
-    <json-viewer v-if="chartRef" :value="chartRef.chart" :expand-depth="1" copyable boxed sort />
+    <json-viewer v-if="chartRefs" :value="chartRefs" :expand-depth="1" copyable boxed sort />
 
     <p>input:</p>
     <json-viewer v-if="input" :value="input" :expand-depth="1" copyable boxed />
@@ -43,5 +43,5 @@ import { useAppState } from '@/useAppState'
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-const { buildingData, output, input, settings, jsonData, chartRef } = useAppState()
+const { buildingData, output, input, settings, jsonData, chartRefs } = useAppState()
 </script>

@@ -190,7 +190,7 @@ export async function getDataLayerUrls(
     // Here we ask for *at least* LOW quality, but if there's a higher quality available,
     // the Solar API will return us the highest quality available.
     requiredQuality: 'MEDIUM',
-    exactQualityRequired: true,
+    exactQualityRequired: 'true',
   }
   console.log('GET dataLayers\n', args)
   const params = new URLSearchParams({ ...args, key: apiKey })

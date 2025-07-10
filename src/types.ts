@@ -73,6 +73,7 @@ export interface AppSettings {
   smartMaxTreshold: NumberSetting
   smartMaxFallbackTreshold: NumberSetting
   dcToAcDerate: NumberSetting
+  apiKey: TextSetting
 }
 
 export interface SolarCalculationResult {
@@ -91,7 +92,6 @@ export interface SolarCalculationResult {
   paybackYears: number
   totalCostsPerLifeSpanEuros: number
   calculationMonth?: number
-  dcToAcDerate: number
   yearlyEnergyAcKwh: number
   maintenanceCostsPerYear: number
   internalRateOfReturn: number

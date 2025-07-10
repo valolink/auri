@@ -47,18 +47,20 @@ const initialOutput = {
     areaMeters2: 0,
   },
   calculationBasis: {
-    label: null as string | null,
-    value: null as string | null,
+    label: '',
+    value: '',
   },
   monthlyDistribution: [] as number[],
-  calculationMonth: null as number | null,
+  calculationMonth: -1,
   addressFromApi: '' as string,
   buildingRadius: 0,
   buildingCenter: {
-    lat: null as number | null,
+    lat: 0,
     lng: null as number | null,
   },
   yearlyEnergyUsageKwh: 0,
+  placeNameFromApi: '',
+  scoreProduction: 0,
 }
 
 const output = reactive(initialOutput)

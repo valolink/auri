@@ -21,7 +21,8 @@ export function findSmartMax(): ExtendedSolarPanelConfig {
     const prev = configs[i - 1]
     const curr = configs[i]
 
-    const inRange = curr.gainPerPanel != null && curr.gainPerPanel >= rangeStart && curr.gainPerPanel <= rangeEnd
+    const inRange =
+      curr.gainPerPanel != null && curr.gainPerPanel >= rangeStart && curr.gainPerPanel <= rangeEnd
     if (!inRange || prev.gainPerPanel == null) continue
 
     const dropRatio = (prev.gainPerPanel - curr.gainPerPanel) / prev.gainPerPanel
@@ -157,8 +158,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     totalFinanceCostsPerLifeSpan +
     inverterReplacementCosts
 
-  // DC-AC conversion efficiency (default: 0.85 = 85%)
-  const dcToAcDerate = Number(settings.dcToAcDerate?.value) || 0.85
+  const dcToAcDerate = Number(settings.dcToAcDerate.value)
 
   // Available AC energy from solar production
   const yearlyEnergyAcKwh = yearlyEnergyDcKwh * dcToAcDerate
