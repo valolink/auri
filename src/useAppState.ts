@@ -58,6 +58,7 @@ const initialOutput = {
     lat: null as number | null,
     lng: null as number | null,
   },
+  yearlyEnergyUsageKwh: 0,
 }
 
 const output = reactive(initialOutput)
@@ -72,18 +73,19 @@ declare global {
     vueAppData?: {
       settings: AppSettings
       ajax_url: string
+      role: string
     }
   }
 }
 
 interface ChartRefs {
-  [key: string]: Ref<any>
+  [key: string]: Ref<Chart | null>
 }
 
 const registerChart = (chartId: string, chart: Chart) => {
   console.log('Registering chart:', chartId, chart) // Add this debug line
   if (!chartRefs[chartId]) {
-    chartRefs[chartId] = ref()
+    chartRefs[chartId] = ref<Chart | null>(null)
   }
   chartRefs[chartId].value = markRaw(chart)
   console.log('Chart stored:', chartRefs[chartId].value) // Add this debug line

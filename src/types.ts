@@ -72,6 +72,7 @@ export interface AppSettings {
   smartMaxRangeEnd: NumberSetting
   smartMaxTreshold: NumberSetting
   smartMaxFallbackTreshold: NumberSetting
+  dcToAcDerate: NumberSetting
 }
 
 export interface SolarCalculationResult {
@@ -112,5 +113,5 @@ export interface ExtendedSolarPanelConfig {
     yearlyEnergyDcKwh: number
     segmentIndex: number
   }[]
-  gainPerPanel: number | null
+  gainPerPanel: number
 }

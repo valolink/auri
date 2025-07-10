@@ -1,12 +1,12 @@
 // pdfService.ts
-import { useAppState } from '@/useAppState'
 import { useCharts } from '@/services/useCharts'
+import { useAppState } from '@/useAppState'
 import { calculateZoomFromRadius, captureMapWithProperSizing } from './mapService'
 const { getChartImage } = useCharts()
 const { ajaxUrl, settings, input, output, buildingData, mapInstance } = useAppState()
 
 export const requestPdf = async function () {
-  const roundToSignificantFigures = (num, figures = 3) => {
+  const roundToSignificantFigures = (num: number, figures = 3) => {
     if (num === 0) return 0
     const magnitude = Math.pow(10, figures - Math.floor(Math.log10(Math.abs(num))) - 1)
     return Math.round(num * magnitude) / magnitude
@@ -17,16 +17,17 @@ export const requestPdf = async function () {
   // TODO:
   formData.append('versionNumber', '1.0')
   formData.append('currentDate', new Date().toLocaleDateString('fi-FI'))
-  formData.append('address', output.addressFromApi || '')
+  // formData.append('address', output.addressFromApi || '')
+  formData.append('address', input.address || '')
 
-  formData.append('lat', output.buildingCenter.lat)
-  formData.append('lng', output.buildingCenter.lng)
-  formData.append('calculationBasis', output.calculationBasis.label)
+  formData.append('lat', output.buildingCenter.lat?.toString() || '0')
+  formData.append('lng', output.buildingCenter.lng?.toString() || '0')
+  formData.append('calculationBasis', output.calculationBasis.label || '')
   formData.append('buildingType', input.buildingTypeLabel)
   formData.append('yearlyEnergyUsageKwh', input.yearlyEnergyUsageKwh.value.toLocaleString())
 
-  formData.append('scoreProfitability', output.active.scoreProfitability)
-  formData.append('scoreProduction', output.active.scoreProduction)
+  formData.append('scoreProfitability', output.active.scoreProfitability.toString())
+  formData.append('scoreProduction', output.active.scoreProduction.toString())
 
   formData.append(
     'capacityKwp',
@@ -56,7 +57,7 @@ export const requestPdf = async function () {
     'averageYearlySavingsEuros',
     roundToSignificantFigures(output.active.averageYearlySavingsEuros).toLocaleString(),
   )
-  formData.append('lcoeSntkPerKwh', roundToSignificantFigures(output.active.lcoeSntPerKwh) || '0')
+  formData.append('lcoeSntkPerKwh', (roundToSignificantFigures(output.active.lcoeSntPerKwh) || 0).toString())
   formData.append(
     'netPresentValueEuros',
     roundToSignificantFigures(output.active.netPresentValueEuros, 3).toLocaleString(),
@@ -65,14 +66,14 @@ export const requestPdf = async function () {
     'internalRateOfReturn',
     roundToSignificantFigures(output.active.netPresentValueEuros).toLocaleString(),
   )
-  formData.append('energyPriceSnt', roundToSignificantFigures(settings?.energyPriceSnt?.value))
+  formData.append('energyPriceSnt', (roundToSignificantFigures(settings?.energyPriceSnt?.value) || 0).toString())
   formData.append(
     'transmissionPriceSnt',
-    roundToSignificantFigures(settings?.transmissionPriceSnt?.value),
+    (roundToSignificantFigures(settings?.transmissionPriceSnt?.value) || 0).toString(),
   )
   formData.append(
     'lcoeSntkPerKwhelectricityTaxSnt',
-    roundToSignificantFigures(settings?.electricityTax?.value),
+    (roundToSignificantFigures(settings?.electricityTax?.value) || 0).toString(),
   )
   formData.append('vat', settings?.vat?.value?.toString() || '24')
   formData.append(
@@ -108,7 +109,7 @@ export const requestPdf = async function () {
   formData.append('costIncreaseFactor', settings?.costIncreaseFactor?.value?.toString() || '0')
   formData.append('emissionsFactor', settings?.emissionsFactor?.value?.toString() || '0')
 
-  function compressImage(dataUrl, quality = 0.8) {
+  function compressImage(dataUrl: string, quality = 0.8): Promise<string> {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
@@ -117,16 +118,16 @@ export const requestPdf = async function () {
       img.onload = () => {
         canvas.width = img.width
         canvas.height = img.height
-        ctx.drawImage(img, 0, 0)
+        ctx?.drawImage(img, 0, 0)
         resolve(canvas.toDataURL('image/jpeg', quality)) // JPEG instead of PNG
       }
       img.src = dataUrl
     })
   }
 
-  function dataURLtoBlob(dataURL) {
+  function dataURLtoBlob(dataURL: string): Blob {
     const arr = dataURL.split(',')
-    const mime = arr[0].match(/:(.*?);/)[1]
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png'
     const bstr = atob(arr[1])
     let n = bstr.length
     const u8arr = new Uint8Array(n)
@@ -147,16 +148,24 @@ export const requestPdf = async function () {
       formData.append('solarChartImage', solarBlob, 'solarChart.png')
     }
 
-    mapInstance.value.setCenter(output.buildingCenter)
-    mapInstance.value.setZoom(calculateZoomFromRadius(output.buildingRadius))
+    if (mapInstance.value && output.buildingCenter.lat !== null && output.buildingCenter.lng !== null) {
+      mapInstance.value.setCenter({
+        lat: output.buildingCenter.lat,
+        lng: output.buildingCenter.lng
+      })
+      mapInstance.value.setZoom(calculateZoomFromRadius(output.buildingRadius))
+    }
 
     const mapDataUrl = await captureMapWithProperSizing({
-      center: output.buildingCenter,
+      center: {
+        lat: output.buildingCenter.lat || 0,
+        lng: output.buildingCenter.lng || 0
+      },
       radiusMeters: output.buildingRadius, // This is the key missing parameter!
       size: { width: 800, height: 800 },
     })
 
-    const response = await fetch(mapDataUrl)
+    // const response = await fetch(mapDataUrl)
     // const mapBlob = await response.blob()
     // console.log('Map blob:', mapBlob.size, mapBlob.type)
     const compressedDataUrl = await compressImage(mapDataUrl, 0.8)

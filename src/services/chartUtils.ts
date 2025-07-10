@@ -1,6 +1,7 @@
 // chartUtils.ts
 import { useAppState } from '@/useAppState'
 import { useCharts } from '@/services/useCharts'
+import type { SolarCalculationResult } from '@/types'
 
 const { output, input, settings } = useAppState()
 const { updateChart } = useCharts()
@@ -32,7 +33,7 @@ export function updateEnergyChart(
   updateChart('energy', labels, datasets)
 }
 
-function calculateLifecycleSavings(config: SolarPanelConfig): number[] {
+function calculateLifecycleSavings(config: SolarCalculationResult): number[] {
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000

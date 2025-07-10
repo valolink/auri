@@ -21,8 +21,8 @@ export function findSmartMax(): ExtendedSolarPanelConfig {
     const prev = configs[i - 1]
     const curr = configs[i]
 
-    const inRange = curr.gainPerPanel >= rangeStart && curr.gainPerPanel <= rangeEnd
-    if (!inRange || curr.gainPerPanel == null || prev.gainPerPanel == null) continue
+    const inRange = curr.gainPerPanel != null && curr.gainPerPanel >= rangeStart && curr.gainPerPanel <= rangeEnd
+    if (!inRange || prev.gainPerPanel == null) continue
 
     const dropRatio = (prev.gainPerPanel - curr.gainPerPanel) / prev.gainPerPanel
 
@@ -231,7 +231,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 }
 
 // pass smartMax panelsCount
-export function calculateScoreProduction(panelsCount: number): number | null {
+export function calculateScoreProduction(panelsCount: number): number {
   const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
   const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
   const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2

@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, markRaw } from 'vue'
+import { onMounted, onUnmounted, ref, markRaw, type ComponentPublicInstance } from 'vue'
 import {
   Chart,
   Title,
@@ -50,8 +50,10 @@ const emit = defineEmits<{
 const canvasRef = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 
-const setCanvasRef = (el: HTMLCanvasElement) => {
-  canvasRef.value = el
+const setCanvasRef = (el: Element | ComponentPublicInstance | null) => {
+  if (el && el instanceof HTMLCanvasElement) {
+    canvasRef.value = el
+  }
 }
 
 onMounted(() => {

@@ -64,7 +64,7 @@
                   >
                   <template #suffix>
                     <span style="opacity: 0.5"
-                      >{{ (input.normalizedDistribution[index] * 101).toFixed(1) }} %</span
+                      >{{ (normalizedDistribution[index] * 101).toFixed(1) }} %</span
                     ></template
                   >
                 </n-input-number>
@@ -73,7 +73,7 @@
           </div>
         </n-form-item>
         <n-tag style="margin-bottom: 20px" size="small">{{
-          input.customProfile.active ? input.normalizedDistribution : input.buildingType?.value
+          input.customProfile.active ? 'Custom Profile' : input.buildingType?.value
         }}</n-tag>
         <n-form-item :label="input.yearlyEnergyUsageKwh?.label">
           <n-space vertical>
@@ -108,7 +108,6 @@
               v-if="input.targetPower"
               v-model:value="input.targetPower.value"
               :min="0"
-              T
               :max="output.technicalMax?.capacityKwp"
               :step="0.1"
               @update:value="updateFromPower"
@@ -144,7 +143,6 @@
 
 <script setup lang="ts">
 import {
-  NCard,
   NForm,
   NAutoComplete,
   NFormItem,
@@ -178,12 +176,13 @@ import {
 const { mapRef, mapInstance, loading, settings, input, output, buildingData, role } = useAppState()
 const panelCapacity = 400 // watts per panel
 
-input.buildingTypeLabel = computed(() => {
-  const selectedOption = settings.buildingTypes.value.find(
-    (option) => option.value === input.buildingType.value,
-  )
-  return selectedOption ? selectedOption.label : ''
-})
+// Remove this assignment as it's causing type issues
+// input.buildingTypeLabel = computed(() => {
+//   const selectedOption = settings.buildingTypes.value.find(
+//     (option) => option.value === input.buildingType.value,
+//   )
+//   return selectedOption ? selectedOption.label : ''
+// })
 
 const monthNames = [
   'Tam',
@@ -202,14 +201,20 @@ const monthNames = [
 
 const monthlyValues = ref([9.1, 8.4, 8.7, 8.1, 7.8, 7.4, 7.7, 7.9, 8.1, 8.6, 8.8, 9.3])
 
-input.normalizedDistribution = computed(() => {
+const normalizedDistribution = computed(() => {
   const sum = monthlyValues.value.reduce((acc, val) => acc + (val || 0), 0)
   if (sum === 0) return new Array(12).fill(0)
   return monthlyValues.value.map((val) => Math.round(((val || 0) / sum) * 1000) / 1000)
 })
 let sessionToken: google.maps.places.AutocompleteSessionToken
 
-const suggestions = ref<{ label: string; value: string }[]>([])
+interface SuggestionItem {
+  label: string
+  value: string
+  placeId?: string
+}
+
+const suggestions = ref<SuggestionItem[]>([])
 async function getSuggestions() {
   console.log(input.address)
   sessionToken = new google.maps.places.AutocompleteSessionToken()
@@ -237,10 +242,11 @@ onMounted(async () => {
 })
 
 // Function to get place details using place ID with the new REST API
-async function getPlaceDetails(placeId) {
+async function getPlaceDetails(placeId: string) {
   try {
+    const apiKey = (settings as any).apiKey?.value || ''
     const response = await fetch(
-      `https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location,types&languageCode=fi&key=${settings.apiKey.value}`,
+      `https://places.googleapis.com/v1/places/${placeId}?fields=id,displayName,formattedAddress,location,types&languageCode=fi&key=${apiKey}`,
       {
         method: 'GET',
         headers: {
@@ -272,7 +278,7 @@ const runSearch = async (address: string = input.address) => {
   getSolarData(await getGeo(address))
 }
 
-async function handleSelect(selectedValue) {
+async function handleSelect(selectedValue: string) {
   runSearch(selectedValue)
   const selectedSuggestion = suggestions.value.find((s) => s.value === selectedValue)
 
@@ -283,8 +289,8 @@ async function handleSelect(selectedValue) {
       console.log('Full address:', placeDetails.address)
       console.log('Location:', placeDetails.location)
       console.log('Types:', placeDetails.types)
+      ;(output as any).placeNameFromApi = placeDetails.name
     }
-    output.placeNameFromApi = placeDetails.name
   }
 }
 
@@ -305,7 +311,7 @@ const enableManualBuildingSelect = async () => {
         console.log({ lat: lat, lng: lng })
 
         // Perform reverse geocoding to get address information
-        const coordinates = await reverseGeocode(lat, lng, settings.apiKey.value)
+        const coordinates = await reverseGeocode(lat, lng, (settings as any).apiKey?.value || '')
 
         await getSolarData(coordinates)
       },
@@ -319,7 +325,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   await getBuildingData(coordinates)
 
-  await initMap(output.buildingCenter.lat, output.buildingCenter.lng, output.buildingRadius)
+  await initMap(output.buildingCenter.lat!, output.buildingCenter.lng!, output.buildingRadius)
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
@@ -332,7 +338,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  output.scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
+  ;(output as any).scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
   loading.value = false
 }
 
@@ -379,8 +385,8 @@ const updateFromPanels = () => {
   )
 }
 
-input.energyProfile = computed(() =>
-  input.customProfile.active ? input.normalizedDistribution : JSON.parse(input.buildingType.value),
+const energyProfile = computed(() =>
+  input.customProfile.active ? normalizedDistribution.value : JSON.parse(input.buildingType?.value || '[]'),
 )
 
 const updateCalculationBasis = (
@@ -404,7 +410,7 @@ const updateCalculationBasis = (
     )
   } else if (option.value == 'optimized') {
     const optimized = calculateConfig(
-      findOptimized(input.yearlyEnergyUsageKwh.value, input.energyProfile),
+      findOptimized(input.yearlyEnergyUsageKwh.value, energyProfile.value),
     )
     output.active = optimized
     input.panelCount.value = optimized.panelsCount
@@ -421,7 +427,14 @@ const updateCalculationBasis = (
     }
   }
   renderPanels()
-  if (output.monthlyDistribution.length > 0) updateEnergyChart()
+  if (output.monthlyDistribution.length > 0) {
+    updateEnergyChart(
+      output.active.yearlyEnergyDcKwh,
+      output.monthlyDistribution,
+      input.yearlyEnergyUsageKwh.value,
+      energyProfile.value
+    )
+  }
   updateSavingsChart()
   // console.log('chartRef.value: ', chartRef.value.chart)
 }
