@@ -36,7 +36,10 @@
           </div>
         </n-form-item>
 
-        <n-switch v-model:value="input.customProfile.active" />
+        <n-switch
+          v-model:value="input.customProfile.active"
+          @update:value="updateCalculationBasis(input.calculationBasis)"
+        />
         <n-form-item v-if="!input.customProfile.active" :label="input.buildingType?.label">
           <n-select
             v-if="input.buildingType"
@@ -176,13 +179,17 @@ import {
 const { mapRef, mapInstance, loading, settings, input, output, buildingData, role } = useAppState()
 const panelCapacity = 400 // watts per panel
 
-// Remove this assignment as it's causing type issues
-// input.buildingTypeLabel = computed(() => {
-//   const selectedOption = settings.buildingTypes.value.find(
-//     (option) => option.value === input.buildingType.value,
-//   )
-//   return selectedOption ? selectedOption.label : ''
-// })
+function updateBuildingTypeLabel() {
+  const selectedOption = settings.buildingTypes.value.find(
+    (option) => option.value === input.buildingType.value,
+  )
+  console.log('input.customProfile.active', input.customProfile.active)
+  if (input.customProfile.active) {
+    input.buildingTypeLabel = 'Räätälöity kulutusprofiili'
+  } else {
+    input.buildingTypeLabel = selectedOption ? selectedOption.label : ''
+  }
+}
 
 const monthNames = [
   'Tam',
@@ -408,6 +415,7 @@ const updateCalculationBasis = (
   option: { value: string; label: string },
   updatePanelInput: boolean = true,
 ) => {
+  updateBuildingTypeLabel()
   const optionUnchanged = option == input.calculationBasis
   input.calculationBasis = option
   output.calculationBasis = option
@@ -451,6 +459,7 @@ const updateCalculationBasis = (
     )
   }
   updateSavingsChart()
+
   // console.log('chartRef.value: ', chartRef.value.chart)
 }
 </script>

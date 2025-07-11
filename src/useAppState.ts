@@ -58,9 +58,7 @@ const initialOutput = {
     lat: 0,
     lng: null as number | null,
   },
-  yearlyEnergyUsageKwh: 0,
   placeNameFromApi: '',
-  scoreProduction: 0,
 }
 
 const output = reactive({ ...initialOutput, reset })

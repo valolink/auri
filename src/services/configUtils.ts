@@ -102,7 +102,12 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
   const panelsCount = config.panelsCount
   const capacityKwp = (panelsCount * 400) / 1000
   const yearlyCarbonOffset = (Number(settings.emissionsFactor.value) * yearlyEnergyAcKwh) / 1000
-  const savingsYear1 = (yearlyEnergyAcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
+  const savingsYear1 =
+    (((100 - settings.excessRate.value) / 100) *
+      (yearlyEnergyAcKwh * output.static.totalEnergyPriceSntPerKwh)) /
+      100 +
+    ((settings.excessRate.value / 100) * (yearlyEnergyAcKwh * settings.excessSalePriceSnt.value)) /
+      100
   const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
   const maintenanceCostsPerLifeSpan =
     installationCostEuros *
@@ -117,7 +122,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     (Number(settings.efficiencyDepreciationFactor.value) / 100)
 
   const totalSavingsPerLifeSpan =
-    (((yearlyEnergyAcKwh * output.static.totalEnergyPriceSntPerKwh) / 100) *
+    (savingsYear1 *
       (1 -
         ((1 - Number(settings.efficiencyDepreciationFactor.value) / 100) *
           (1 + Number(settings.costIncreaseFactor.value) / 100)) **

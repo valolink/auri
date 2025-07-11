@@ -97,7 +97,6 @@ export const requestPdf = async function () {
     settings?.installationCostPerKwp?.value?.toString() || '0',
   )
 
-  // Building data - these don't seem to be in your current structure
   formData.append(
     'pitchDegrees',
     Math.round(
@@ -114,6 +113,10 @@ export const requestPdf = async function () {
   formData.append('discountRate', settings?.discountRate?.value?.toString() || '0')
   formData.append('costIncreaseFactor', settings?.costIncreaseFactor?.value?.toString() || '0')
   formData.append('emissionsFactor', settings?.emissionsFactor?.value?.toString() || '0')
+  formData.append(
+    'dailyMaxUtilizationFactor',
+    settings?.dailyMaxUtilizationFactor?.value?.toString() || '0',
+  )
 
   function compressImage(dataUrl: string, quality = 0.8): Promise<string> {
     return new Promise((resolve) => {
