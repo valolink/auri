@@ -121,6 +121,23 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('installationCostPerKwp', (settings?.installationCostPerKwp?.value).toString())
   formData.append('excessRate', (settings?.excessRate?.value).toString())
 
+  formData.append('excessSalePriceSnt', (settings?.excessSalePriceSnt?.value).toString())
+
+  formData.append(
+    'yearlyExcessEnergyAcKwh',
+    roundToSignificantFigures(output.active.yearlyExcessEnergyAcKwh).toLocaleString(),
+  )
+
+  formData.append(
+    'yearlySelfUseEnergyAcKwh',
+    roundToSignificantFigures(output.active.yearlySelfUseEnergyAcKwh).toLocaleString(),
+  )
+
+  formData.append(
+    'selfSufficiencyRate',
+    roundToSignificantFigures(output.active.selfSufficiencyRate).toLocaleString(),
+  )
+
   function compressImage(dataUrl: string, quality = 0.8): Promise<string> {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')

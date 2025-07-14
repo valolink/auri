@@ -1,7 +1,7 @@
 import { useAppState } from '@/useAppState'
 import type { SolarPanelConfig } from './solar'
 import type { ExtendedSolarPanelConfig } from '@/types'
-const { settings, output, buildingData } = useAppState()
+const { settings, output, buildingData, input } = useAppState()
 
 export function findTechnicalMax() {
   return buildingData.sortedConfigs[buildingData.sortedConfigs.length - 1]
@@ -141,6 +141,10 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 
   const yearlyExcessEnergyAcKwh = yearlyEnergyAcKwh * (Number(settings.excessRate.value) / 100)
 
+  const yearlySelfUseEnergyAcKwh = yearlyEnergyAcKwh * ( 1 - (Number(settings.excessRate.value) / 100) )
+
+  const selfSufficiencyRate = yearlySelfUseEnergyAcKwh / Number(input.yearlyEnergyUsageKwh.value) * 100
+
   const totalFinanceCostsPerLifeSpan =
     ((Number(settings.loan?.value) * (Number(settings.interestRate.value) / 100) +
       (Number(settings.loan?.value) / Number(settings.loanDurationYears?.value)) *
@@ -225,6 +229,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     savingsYear1,
     scoreProduction,
     scoreProfitability,
+    selfSufficiencyRate,
     totalCostsPerLifeSpanEuros,
     totalEnergyAcKwhPerLifeSpan,
     totalFinanceCostsPerLifeSpan,
@@ -234,6 +239,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     yearlyEnergyDcKwh,
     yearlyExcessEnergyAcKwh,
     yearlySavingsRate,
+    yearlySelfUseEnergyAcKwh,
   }
 }
 

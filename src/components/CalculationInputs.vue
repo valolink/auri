@@ -138,16 +138,18 @@
             />
           </n-space>
         </n-form-item>
-        <n-button type="primary" :disabled="loading" @click="ajaxRequest('pdf_report')"
-          >Tulosta raportti</n-button
-        >
-        <n-button
-          v-if="role == 'admin'"
-          type="primary"
-          :disabled="loading"
-          @click="ajaxRequest('save_to_database')"
-          >Tallenna tietokantaan</n-button
-        >
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <n-button type="primary" :disabled="loading" @click="ajaxRequest('pdf_report')"
+            >Tulosta raportti</n-button
+          >
+          <n-button
+            v-if="role == 'admin'"
+            type="primary"
+            :disabled="loading"
+            @click="ajaxRequest('save_to_database')"
+            >Tallenna tietokantaan</n-button
+          >
+        </div>
       </div>
     </n-form>
   </div>

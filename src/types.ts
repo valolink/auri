@@ -92,6 +92,7 @@ export interface SolarCalculationResult {
   savingsYear1: number
   scoreProduction: number
   scoreProfitability: number
+  selfSufficiencyRate: number
   totalCostsPerLifeSpanEuros: number
   totalEnergyAcKwhPerLifeSpan: number
   totalFinanceCostsPerLifeSpan: number
@@ -101,6 +102,7 @@ export interface SolarCalculationResult {
   yearlyEnergyDcKwh: number
   yearlyExcessEnergyAcKwh: number
   yearlySavingsRate: number
+  yearlySelfUseEnergyAcKwh: number
 }
 
 // Extended SolarPanelConfig with calculated properties
