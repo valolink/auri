@@ -190,7 +190,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
   const netCashFlowCumulative = cashFlowData.netCashFlowCumulative
 
   let scoreProfitability
-  if (internalRateOfReturn > 0.14) {
+  if (internalRateOfReturn > 14) {
     scoreProfitability = 100
   } else if (internalRateOfReturn < 0) {
     scoreProfitability = 0
