@@ -5,14 +5,14 @@ import { calculateZoomFromRadius, captureMapWithProperSizing } from './mapServic
 const { getChartImage } = useCharts()
 const { ajaxUrl, settings, input, output, buildingData, mapInstance } = useAppState()
 
-export const requestPdf = async function () {
+export const ajaxRequest = async function (action = 'pdf_report') {
   const roundToSignificantFigures = (num: number, figures = 3) => {
     if (num === 0) return 0
     const magnitude = Math.pow(10, figures - Math.floor(Math.log10(Math.abs(num))) - 1)
     return Math.round(num * magnitude) / magnitude
   }
   const formData = new FormData()
-  formData.append('action', 'pdf_report')
+  formData.append('action', action)
 
   // TODO:
   formData.append('versionNumber', '1.0')

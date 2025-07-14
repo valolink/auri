@@ -94,7 +94,7 @@ export function updateSavingsChart() {
 
   const datasets = [
     {
-      label: 'Elinkaarisäästöt',
+      label: 'Kumulatiivinen nettokassavirta',
       data: positiveData,
       type: 'line' as const,
       borderColor: '#10b981',

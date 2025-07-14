@@ -327,7 +327,7 @@
       <div class="bottom-section">
         <!-- Lifecycle Chart -->
         <div class="lifecycle-chart">
-          <div class="section-title">Elinkaarisäästöt</div>
+          <div class="section-title">Kumulatiivinen nettokassavirta</div>
           <div class="chart-placeholder image-placeholder">
             <?php if(isset($lifecycleChartImage)): ?>
             <img

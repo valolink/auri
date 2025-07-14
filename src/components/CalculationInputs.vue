@@ -138,7 +138,16 @@
             />
           </n-space>
         </n-form-item>
-        <n-button type="primary" :disabled="loading" @click="requestPdf">Tulosta raportti</n-button>
+        <n-button type="primary" :disabled="loading" @click="ajaxRequest('pdf_report')"
+          >Tulosta raportti</n-button
+        >
+        <n-button
+          v-if="role == 'admin'"
+          type="primary"
+          :disabled="loading"
+          @click="ajaxRequest('save_to_database')"
+          >Tallenna tietokantaan</n-button
+        >
       </div>
     </n-form>
   </div>
@@ -161,7 +170,7 @@ import {
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { resetCharts, updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
-import { requestPdf } from '@/services/pdfService'
+import { ajaxRequest } from '@/services/pdfService'
 import { getLayerData, getGeo, getBuildingData, renderPanels } from '@/services/useSolarApi'
 import type { GeocodeLatLng } from '@/services/geocodingApi'
 import { formatFinnishAddress, reverseGeocode } from '@/services/geocodingApi'
