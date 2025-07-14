@@ -139,6 +139,8 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
   const averageYearlySavingsEuros =
     totalSavingsPerLifeSpan / Number(settings.installationLifeSpan.value)
 
+  const yearlyExcessEnergyAcKwh = yearlyEnergyAcKwh * (Number(settings.excessRate.value) / 100)
+
   const totalFinanceCostsPerLifeSpan =
     ((Number(settings.loan?.value) * (Number(settings.interestRate.value) / 100) +
       (Number(settings.loan?.value) / Number(settings.loanDurationYears?.value)) *
@@ -230,6 +232,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     yearlyCarbonOffset,
     yearlyEnergyAcKwh,
     yearlyEnergyDcKwh,
+    yearlyExcessEnergyAcKwh,
     yearlySavingsRate,
   }
 }

@@ -99,6 +99,7 @@ export interface SolarCalculationResult {
   yearlyCarbonOffset: number
   yearlyEnergyAcKwh: number
   yearlyEnergyDcKwh: number
+  yearlyExcessEnergyAcKwh: number
   yearlySavingsRate: number
 }
 

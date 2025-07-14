@@ -26,8 +26,8 @@ export const requestPdf = async function () {
   formData.append('buildingType', input.buildingTypeLabel)
   formData.append('yearlyEnergyUsageKwh', input.yearlyEnergyUsageKwh.value.toLocaleString())
 
-  formData.append('scoreProfitability', output.active.scoreProfitability.toString())
-  formData.append('scoreProduction', output.active.scoreProduction.toString())
+  formData.append('scoreProfitability', Math.round(output.active.scoreProfitability).toString())
+  formData.append('scoreProduction', Math.round(output.active.scoreProduction).toString())
 
   formData.append(
     'capacityKwp',
@@ -116,8 +116,10 @@ export const requestPdf = async function () {
   formData.append('emissionsFactor', settings?.emissionsFactor?.value?.toString() || '0')
   formData.append(
     'dailyMaxUtilizationFactor',
-    settings?.dailyMaxUtilizationFactor?.value?.toString() || '0',
+    (settings?.dailyMaxUtilizationFactor?.value * 100).toString(),
   )
+  formData.append('installationCostPerKwp', (settings?.installationCostPerKwp?.value).toString())
+  formData.append('excessRate', (settings?.excessRate?.value).toString())
 
   function compressImage(dataUrl: string, quality = 0.8): Promise<string> {
     return new Promise((resolve) => {
