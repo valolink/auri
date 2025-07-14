@@ -1,6 +1,7 @@
 // chartUtils.ts
 import { useAppState } from '@/useAppState'
 import { useCharts } from '@/services/useCharts'
+import { calculateCashFlows, calculateBasicFinancials } from './cashFlowUtils' // Import shared utilities
 import type { SolarCalculationResult } from '@/types'
 
 const { output, input, settings } = useAppState()
@@ -10,6 +11,7 @@ export const resetCharts = () => {
   resetChart('energy')
   resetChart('savings')
 }
+
 // Energy Chart Functions
 export function updateEnergyChart(
   yearlyEnergy: number = output.active.yearlyEnergyDcKwh,
@@ -38,59 +40,36 @@ export function updateEnergyChart(
 }
 
 function calculateLifecycleSavings(config: SolarCalculationResult): number[] {
-  const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
-  const panelsCount = config.panelsCount
-  const capacityKwp = (panelsCount * 400) / 1000
+  // Use shared utility functions for consistent calculations
+  const basicFinancials = calculateBasicFinancials({
+    panelsCount: config.panelsCount,
+    yearlyEnergyDcKwh: config.yearlyEnergyDcKwh,
+  })
 
-  // Get values from settings
-  const installationCostEuros = Number(settings.installationCostPerKwp.value) * capacityKwp
-  const savingsYear1 = (yearlyEnergyDcKwh * output.static.totalEnergyPriceSntPerKwh) / 100
-  const maintenanceYearlyCost =
-    installationCostEuros * (Number(settings.maintenanceCostFactor.value) / 100)
+  // Get settings values
+  const installationLifeSpan = Number(settings.installationLifeSpan.value)
+  const efficiencyDepreciationFactor = Number(settings.efficiencyDepreciationFactor.value) / 100
+  const costIncreaseFactor = Number(settings.costIncreaseFactor.value) / 100
+  const inverterReplacementCostFactor = Number(settings.inverterReplacementCostFactor.value) / 100
 
-  // Factors for calculations
-  const efficiencyDepreciation = Number(settings.efficiencyDepreciationFactor.value) / 100
-  const costIncrease = Number(settings.costIncreaseFactor.value) / 100
-  const lifeSpan = Number(settings.installationLifeSpan.value)
+  // Use the shared cash flow calculation
+  const { netCashFlowCumulative } = calculateCashFlows(
+    basicFinancials.installationCostEuros,
+    basicFinancials.savingsYear1,
+    basicFinancials.maintenanceCostsPerYear,
+    installationLifeSpan,
+    efficiencyDepreciationFactor,
+    costIncreaseFactor,
+    inverterReplacementCostFactor,
+  )
 
-  const netCashFlowCumulative: number[] = []
-
-  // Year 0: Initial investment (negative)
-  let netCashFlowPerLifeSpan = -installationCostEuros
-  netCashFlowCumulative.push(Math.round(netCashFlowPerLifeSpan))
-
-  // Years 1 to lifeSpan
-  for (let i = 0; i < Math.min(29, lifeSpan - 1); i++) {
-    // -1 because we already did year 0
-    if (i === 0) {
-      // First year: basic savings minus maintenance
-      netCashFlowPerLifeSpan = netCashFlowPerLifeSpan + savingsYear1 - maintenanceYearlyCost
-    } else if (i === 14) {
-      // Year 15 (i=14 because we start from i=0 for year 1)
-      // Year 15: Include inverter replacement cost
-      const yearlyAdjustedSavings =
-        savingsYear1 * (1 + costIncrease - efficiencyDepreciation) ** (i + 1)
-      const inverterCost =
-        installationCostEuros * (Number(settings.inverterReplacementCostFactor.value) / 100)
-      netCashFlowPerLifeSpan =
-        netCashFlowPerLifeSpan + yearlyAdjustedSavings - maintenanceYearlyCost - inverterCost
-    } else {
-      // Other years: adjusted savings minus maintenance
-      const yearlyAdjustedSavings =
-        savingsYear1 * (1 + costIncrease - efficiencyDepreciation) ** (i + 1)
-      netCashFlowPerLifeSpan =
-        netCashFlowPerLifeSpan + yearlyAdjustedSavings - maintenanceYearlyCost
-    }
-
-    netCashFlowCumulative.push(Math.round(netCashFlowPerLifeSpan))
+  // Ensure we have 30 data points for the chart
+  const chartData = [...netCashFlowCumulative]
+  while (chartData.length < 30) {
+    chartData.push(chartData[chartData.length - 1] || 0)
   }
 
-  // Fill remaining years up to 30 if needed (keep the last value)
-  while (netCashFlowCumulative.length < 30) {
-    netCashFlowCumulative.push(netCashFlowCumulative[netCashFlowCumulative.length - 1] || 0)
-  }
-
-  return netCashFlowCumulative
+  return chartData.slice(0, 30)
 }
 
 export function updateSavingsChart() {

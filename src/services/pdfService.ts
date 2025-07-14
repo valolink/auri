@@ -97,6 +97,7 @@ export const requestPdf = async function () {
     settings?.installationCostPerKwp?.value?.toString() || '0',
   )
 
+  // Building data - these don't seem to be in your current structure
   formData.append(
     'pitchDegrees',
     Math.round(
