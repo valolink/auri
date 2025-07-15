@@ -213,7 +213,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
         100
       : 0
 
-  const scoreProduction = calculateScoreProduction(panelsCount)
+  const scoreProduction = calculateScoreProduction(panelsCount, yearlyEnergyAcKwh)
   const scoreUtilization = calculateScoreUtilization()
 
   return {
@@ -247,15 +247,29 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 }
 
 // pass smartMax panelsCount
-export function calculateScoreProduction(panelsCount: number): number {
-  const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
-  const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
-  const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
+export function calculateScoreProduction(panelsCount: number, yearlyEnergyAcKwh: number): number {
+  // const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
+  // const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
+  // const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
 
-  return Math.min(
-    ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100,
-    100,
-  )
+  // return Math.min(
+  //   ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100,
+  //   100,
+  // )
+
+  let scoreProduction = 0
+
+  if(yearlyEnergyAcKwh / panelsCount > 350){
+    scoreProduction = 100;
+  }
+  else if(yearlyEnergyAcKwh / panelsCount < 200) {
+    scoreProduction = 0;
+  }
+  else {
+    scoreProduction = (yearlyEnergyAcKwh / panelsCount - 200) / 150 * 100;
+  }
+
+  return scoreProduction
 }
 
 export function calculateScorePotential(): number {
