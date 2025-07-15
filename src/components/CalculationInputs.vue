@@ -353,7 +353,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
-  output.scorePotential = calculateScorePotential(output.smartMax.panelsCount)
+  output.scorePotential = calculateScorePotential()
   // updateCalculationBasis(
   //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   // )
