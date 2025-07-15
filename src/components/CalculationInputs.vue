@@ -184,7 +184,7 @@ import {
   findSmartMax,
   findConfigWithPanelCount,
   findTechnicalMax,
-  calculateScoreProduction,
+  calculateScorePotential,
 } from '@/services/configUtils'
 
 const { mapRef, mapInstance, loading, settings, input, output, buildingData, role } = useAppState()
@@ -353,6 +353,7 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
 
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
+  output.scorePotential = calculateScorePotential(output.smartMax.panelsCount)
   // updateCalculationBasis(
   //   settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   // )
@@ -369,7 +370,6 @@ const getSolarData = async (coordinates: GeocodeLatLng) => {
   updateCalculationBasis(
     settings.calculationBasis.options.find((option) => option.value === 'smartMax')!,
   )
-  output.scoreProduction = calculateScoreProduction(output.smartMax.panelsCount)
   loading.value = false
 }
 

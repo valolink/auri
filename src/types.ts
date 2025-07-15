@@ -92,6 +92,7 @@ export interface SolarCalculationResult {
   savingsYear1: number
   scoreProduction: number
   scoreProfitability: number
+  scoreUtilization: number
   selfSufficiencyRate: number
   totalCostsPerLifeSpanEuros: number
   totalEnergyAcKwhPerLifeSpan: number

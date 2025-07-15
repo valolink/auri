@@ -59,6 +59,7 @@ const initialOutput = {
     lng: null as number | null,
   },
   placeNameFromApi: '',
+  scorePotential: 0,
 }
 
 const output = reactive({ ...initialOutput, reset })

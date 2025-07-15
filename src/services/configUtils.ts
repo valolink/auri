@@ -141,9 +141,10 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 
   const yearlyExcessEnergyAcKwh = yearlyEnergyAcKwh * (Number(settings.excessRate.value) / 100)
 
-  const yearlySelfUseEnergyAcKwh = yearlyEnergyAcKwh * ( 1 - (Number(settings.excessRate.value) / 100) )
+  const yearlySelfUseEnergyAcKwh = yearlyEnergyAcKwh * (1 - Number(settings.excessRate.value) / 100)
 
-  const selfSufficiencyRate = yearlySelfUseEnergyAcKwh / Number(input.yearlyEnergyUsageKwh.value) * 100
+  const selfSufficiencyRate =
+    (yearlySelfUseEnergyAcKwh / Number(input.yearlyEnergyUsageKwh.value)) * 100
 
   const totalFinanceCostsPerLifeSpan =
     ((Number(settings.loan?.value) * (Number(settings.interestRate.value) / 100) +
@@ -213,6 +214,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
       : 0
 
   const scoreProduction = calculateScoreProduction(panelsCount)
+  const scoreUtilization = 0
 
   return {
     averageYearlySavingsEuros,
@@ -229,6 +231,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     savingsYear1,
     scoreProduction,
     scoreProfitability,
+    scoreUtilization,
     selfSufficiencyRate,
     totalCostsPerLifeSpanEuros,
     totalEnergyAcKwhPerLifeSpan,
@@ -245,6 +248,17 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
 
 // pass smartMax panelsCount
 export function calculateScoreProduction(panelsCount: number): number {
+  const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
+  const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
+  const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
+
+  return Math.min(
+    ((panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) * 100,
+    100,
+  )
+}
+
+export function calculateScorePotential(panelsCount: number): number {
   const panelHeightMeters = buildingData.building.solarPotential.panelHeightMeters
   const panelWidthMeters = buildingData.building.solarPotential.panelWidthMeters
   const areaMeters2 = buildingData.building.solarPotential.wholeRoofStats.areaMeters2
