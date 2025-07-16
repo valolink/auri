@@ -80,7 +80,7 @@ export const ajaxRequest = async function (action = 'pdf_report') {
     (roundToSignificantFigures(settings?.transmissionPriceSnt?.value) || 0).toString(),
   )
   formData.append(
-    'lcoeSntkPerKwhelectricityTaxSnt',
+    'electricityTaxSnt',
     (roundToSignificantFigures(settings?.electricityTax?.value) || 0).toString(),
   )
   formData.append('vat', settings?.vat?.value?.toString() || '24')
