@@ -84,6 +84,15 @@ onMounted(() => {
           },
           y: {
             type: 'linear',
+            grid: {
+              color: function(context) {
+                if (context.tick.value == 0 && props.chartId == 'savings') {
+                  return 'rgba(0,0,0,0.6)';
+                } else {
+                  return 'rgba(0,0,0,0.1)';
+                }
+              },
+            },
           },
         },
         layout: {
