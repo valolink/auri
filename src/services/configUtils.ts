@@ -214,7 +214,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
       : 0
 
   const scoreProduction = calculateScoreProduction(panelsCount, yearlyEnergyAcKwh)
-  const scoreUtilization = calculateScoreUtilization()
+  const scoreUtilization = calculateScoreUtilization(yearlyEnergyAcKwh)
 
   return {
     averageYearlySavingsEuros,
@@ -289,21 +289,14 @@ export function calculateScorePotential(): number {
   return scorePotential
 }
 
-export function calculateScoreUtilization(): number {
+export function calculateScoreUtilization(yearlyEnergyAcKwh: number): number {
   let scoreUtilization = 0
-  let activeYearlyEnergyAcKwh
 
-  if(output.active.yearlyEnergyAcKwh) {
-    activeYearlyEnergyAcKwh = output.active.yearlyEnergyAcKwh
-  }else {
-    activeYearlyEnergyAcKwh = output.smartMax.yearlyEnergyAcKwh
-  }
-
-  if(activeYearlyEnergyAcKwh > output.smartMax.yearlyEnergyAcKwh){
+  if(yearlyEnergyAcKwh > output.smartMax.yearlyEnergyAcKwh){
     scoreUtilization = 100;
   }
   else {
-    scoreUtilization = (activeYearlyEnergyAcKwh / output.smartMax.yearlyEnergyAcKwh) * 100;
+    scoreUtilization = (yearlyEnergyAcKwh / output.smartMax.yearlyEnergyAcKwh) * 100;
   }
 
   return scoreUtilization
