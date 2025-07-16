@@ -56,8 +56,8 @@ export const ajaxRequest = async function (action = 'pdf_report') {
 
   formData.append('paybackYears', output.active.paybackYears?.toFixed(1) || '0')
   formData.append(
-    'averageYearlySavingsEuros',
-    roundToSignificantFigures(output.active.averageYearlySavingsEuros).toLocaleString(),
+    'savingsYear1',
+    roundToSignificantFigures(output.active.savingsYear1).toLocaleString(),
   )
   formData.append(
     'lcoeSntkPerKwh',
