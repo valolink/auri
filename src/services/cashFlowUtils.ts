@@ -54,7 +54,8 @@ export function calculateCashFlows(
 }
 
 export function calculateBasicFinancials(config: { panelsCount: number; yearlyEnergyDcKwh: number }) {
-  const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh
+  const tiltBoostFactor = Number(settings.tiltBoostFactor.value)
+  const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh * ( 1 + ( tiltBoostFactor/100 ) )
   const dcToAcDerate = Number(settings.dcToAcDerate.value)
   const yearlyEnergyAcKwh = yearlyEnergyDcKwh * dcToAcDerate
   const panelsCount = config.panelsCount

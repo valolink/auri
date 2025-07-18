@@ -14,7 +14,7 @@ export const resetCharts = () => {
 
 // Energy Chart Functions
 export function updateEnergyChart(
-  yearlyEnergy: number = output.active.yearlyEnergyDcKwh,
+  yearlyEnergy: number = output.active.yearlyEnergyAcKwh,
   distribution: number[] = output.monthlyDistribution,
   yearlyUsage: number = input.yearlyEnergyUsageKwh.value,
   buildingProfile: number[] = input.customProfile.active

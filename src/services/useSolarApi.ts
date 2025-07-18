@@ -235,7 +235,7 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
   const sorted: SortedSolarPanelConfig[] = buildingData.building.solarPotential.solarPanelConfigs
     .sort((a: SolarPanelConfig, b: SolarPanelConfig) => a.panelsCount - b.panelsCount)
     .map((config: SolarPanelConfig, index: number, array: SolarPanelConfig[]) => {
-      const yearlyEnergyAcKwh = config.yearlyEnergyDcKwh * settings.dcToAcDerate.value
+      const yearlyEnergyAcKwh = config.yearlyEnergyDcKwh * settings.dcToAcDerate.value * ( 1 + (settings.tiltBoostFactor.value/100) )
       if (index === 0) {
         return {
           ...config,

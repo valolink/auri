@@ -69,6 +69,7 @@ export interface AppSettings {
   smartMaxRangeStart: NumberSetting
   smartMaxTreshold: NumberSetting
   targetPower: NumberSetting
+  tiltBoostFactor : NumberSetting
   totalCapacityKwp: TextSetting
   transmissionPriceSnt: NumberSetting
   vat: NumberSetting

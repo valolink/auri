@@ -140,6 +140,8 @@ export const ajaxRequest = async function (action = 'pdf_report') {
     roundToSignificantFigures(output.active.selfSufficiencyRate).toLocaleString(),
   )
 
+  formData.append('tiltBoostFactor', settings?.tiltBoostFactor?.value?.toString() || '0')
+
   function compressImage(dataUrl: string, quality = 0.8): Promise<string> {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas')
