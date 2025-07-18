@@ -138,6 +138,11 @@
             />
           </n-space>
         </n-form-item>
+
+        <n-form-item label="Kallistusvaikutus (%)">
+          <n-input-number v-model:value="settings.tiltBoostFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+        </n-form-item>
+
         <div style="display: flex; flex-wrap: wrap; gap: 8px">
           <n-button type="primary" :disabled="loading" @click="ajaxRequest('pdf_report')"
             >Tulosta raportti</n-button
