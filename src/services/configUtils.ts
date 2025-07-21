@@ -82,6 +82,8 @@ export function findOptimized(
   minPower = minPower * Number(settings.dailyMaxUtilizationFactor.value)
   console.log('minPower * dailyMaxUtilizationFactor', minPower)
 
+  updateSortedConfigs()
+
   const optimized = buildingData.sortedConfigs.reduce((closest, curr) => {
     if (curr.yearlyEnergyAcKwh > minPower) return closest
     if (closest.yearlyEnergyAcKwh > minPower) return curr
@@ -91,6 +93,32 @@ export function findOptimized(
   console.log(optimized.yearlyEnergyAcKwh > minPower)
   console.log(optimized.yearlyEnergyAcKwh < minPower)
   return optimized
+}
+
+ function updateSortedConfigs() {
+  const configs = buildingData.building?.solarPotential?.solarPanelConfigs || []
+  buildingData.sortedConfigs = configs
+    .sort((a, b) => a.panelsCount - b.panelsCount)
+    .map((config, index, array) => {
+      const yearlyEnergyAcKwh =
+        config.yearlyEnergyDcKwh *
+        settings.dcToAcDerate.value *
+        (1 + settings.tiltBoostFactor.value / 100)
+
+      let gainPerPanel = null
+      if (index > 0) {
+        const prev = array[index - 1]
+        const panelDiff = config.panelsCount - prev.panelsCount
+        const energyGain = config.yearlyEnergyDcKwh - prev.yearlyEnergyDcKwh
+        gainPerPanel = panelDiff > 0 ? energyGain / panelDiff : null
+      }
+
+      return {
+        ...config,
+        gainPerPanel,
+        yearlyEnergyAcKwh,
+      }
+    })
 }
 
 import type { SolarCalculationResult } from '@/types'
