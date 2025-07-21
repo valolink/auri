@@ -468,7 +468,7 @@ const updateCalculationBasis = (
   renderPanels()
   if (output.monthlyDistribution.length > 0) {
     updateEnergyChart(
-      output.active.yearlyEnergyDcKwh,
+      output.active.yearlyEnergyAcKwh,
       output.monthlyDistribution,
       input.yearlyEnergyUsageKwh.value,
       energyProfile.value,
