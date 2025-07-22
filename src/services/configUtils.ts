@@ -237,7 +237,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
   const yearlyEnergyUsageKwh = output.active.yearlyEnergyUsageKwh || yearlyEnergyAcKwh // Fallback to production if usage not available
   const yearlySavingsRate =
     yearlyEnergyUsageKwh > 0
-      ? (savingsYear1 / ((yearlyEnergyUsageKwh * output.static.totalEnergyPriceSntPerKwh) / 100)) *
+      ? (savingsYear1 / (yearlyEnergyUsageKwh * (output.static.totalEnergyPriceSntPerKwh / 100))) *
         100
       : 0
 
