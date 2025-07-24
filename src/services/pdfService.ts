@@ -231,7 +231,24 @@ export const ajaxRequest = async function (action = 'pdf_report') {
 
     const result = await response.json()
 
-    if (result.success) {
+    if(action == 'save_to_database'){
+      const targetElement = document.querySelector('#ajax-buttons');
+      const newElement = document.createElement('div');
+      if (result.success) {
+        newElement.textContent = 'Tallennus tietokantaan onnistui';
+      }
+      else {
+        console.error('Save to database failed:', result.data?.message)
+        newElement.textContent = 'Tallennus tietokantaan ei onnistunut';
+      }
+      if (targetElement) {
+        targetElement.after(newElement);
+        setTimeout(() => {
+          newElement.remove()
+        }, 5000);
+      }
+    }
+    else if (result.success) {
       window.open(result.data.file_url, '_blank')
     } else {
       console.error('PDF generation failed:', result.data?.message)
