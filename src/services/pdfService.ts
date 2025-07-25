@@ -19,6 +19,8 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('currentDate', new Date().toLocaleDateString('fi-FI'))
   // formData.append('address', output.addressFromApi || '')
   formData.append('address', input.address || '')
+  formData.append('postalCode', output.postalCode || '')
+  formData.append('locality', output.locality || '')
 
   formData.append('lat', output.buildingCenter.lat?.toString() || '0')
   formData.append('lng', output.buildingCenter.lng?.toString() || '0')

@@ -53,6 +53,8 @@ const initialOutput = {
   monthlyDistribution: [] as number[],
   calculationMonth: -1,
   addressFromApi: '' as string,
+  postalCode: '' as string,
+  locality: '' as string,
   buildingRadius: 0,
   buildingCenter: {
     lat: 0,

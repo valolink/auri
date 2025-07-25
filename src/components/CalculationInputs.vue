@@ -349,6 +349,8 @@ const enableManualBuildingSelect = async () => {
 const getSolarData = async (coordinates: GeocodeLatLng) => {
   //TODO clear data
   output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
+  output.locality = coordinates.addressComponents[2].long_name
+  output.postalCode = coordinates.addressComponents[7].long_name
 
   await getBuildingData(coordinates)
 
