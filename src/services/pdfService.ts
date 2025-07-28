@@ -22,6 +22,9 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('postalCode', output.postalCode || '')
   formData.append('locality', output.locality || '')
 
+  formData.append('areaMeters2', output.static.areaMeters2.toLocaleString())
+  formData.append('monthlyDistribution', JSON.stringify( output.monthlyDistribution) )
+
   formData.append('lat', output.buildingCenter.lat?.toString() || '0')
   formData.append('lng', output.buildingCenter.lng?.toString() || '0')
   formData.append('calculationBasis', output.calculationBasis.label || '')
