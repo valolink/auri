@@ -54,6 +54,11 @@ export function calculateCashFlows(
 }
 
 export function calculateBasicFinancials(config: { panelsCount: number; yearlyEnergyDcKwh: number }) {
+  output.static.totalEnergyPriceSntPerKwh =
+    Number(settings.energyPriceSnt.value) +
+    (Number(settings.transmissionPriceSnt.value) + Number(settings.electricityTax.value)) *
+      (1 + Number(settings.vat.value) / 100)
+
   const tiltBoostFactor = Number(settings.tiltBoostFactor.value)
   const yearlyEnergyDcKwh = config.yearlyEnergyDcKwh * ( 1 + ( tiltBoostFactor/100 ) )
   const dcToAcDerate = Number(settings.dcToAcDerate.value)
