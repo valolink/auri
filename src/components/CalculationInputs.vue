@@ -140,62 +140,137 @@
         </n-form-item>
         <div class="setting-fields">
           <n-form-item label="Kallistusvaikutus (%)">
-            <n-input-number v-model:value="settings.tiltBoostFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.tiltBoostFactor.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Sähkön hinta (snt)">
-            <n-input-number v-model:value="settings.energyPriceSnt.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.energyPriceSnt.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Sähkön siirtohinta (snt)">
-            <n-input-number v-model:value="settings.transmissionPriceSnt.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.transmissionPriceSnt.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Sähkövero (snt/kWh)">
-            <n-input-number v-model:value="settings.electricityTax.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.electricityTax.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Arvonlisävero">
-            <n-input-number v-model:value="settings.vat.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.vat.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Sähkön hinnan vuosimuutos (%)">
-            <n-input-number v-model:value="settings.costIncreaseFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.costIncreaseFactor.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Päivittäinen käyttöaste">
-            <n-input-number v-model:value="settings.dailyMaxUtilizationFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.dailyMaxUtilizationFactor.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Sähkön muuntokerroin">
-            <n-input-number v-model:value="settings.dcToAcDerate.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.dcToAcDerate.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Diskonttauskorko (%)">
-            <n-input-number v-model:value="settings.discountRate.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.discountRate.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Päästökerroin (gCO2/kWh)">
-            <n-input-number v-model:value="settings.emissionsFactor.value" :step="1" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.emissionsFactor.value"
+              :step="1"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Investointihinta per kWp (€/kWp)">
-            <n-input-number v-model:value="settings.installationCostPerKwp.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.installationCostPerKwp.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Paneelitehon vähenemä vuosittain (-%)">
-            <n-input-number v-model:value="settings.efficiencyDepreciationFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.efficiencyDepreciationFactor.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Ylijäämän osuus (%)">
-            <n-input-number v-model:value="settings.excessRate.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.excessRate.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Ylijäämän myyntihinta (snt)">
-            <n-input-number v-model:value="settings.excessSalePriceSnt.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.excessSalePriceSnt.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Laina (€)">
-            <n-input-number v-model:value="settings.loan.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.loan.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Laina-aika vuosissa">
-            <n-input-number v-model:value="settings.loanDurationYears.value" :step="1" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.loanDurationYears.value"
+              :step="1"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Vuosikorko (%)">
-            <n-input-number v-model:value="settings.interestRate.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.interestRate.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
           <n-form-item label="Invertterin vaihtokustannus (%)">
-            <n-input-number v-model:value="settings.inverterReplacementCostFactor.value" :step="0.01" @update:value="updateCalculationBasis(input.calculationBasis)" />
+            <n-input-number
+              v-model:value="settings.inverterReplacementCostFactor.value"
+              :step="0.01"
+              @update:value="updateCalculationBasis(input.calculationBasis)"
+            />
           </n-form-item>
-      </div>
+        </div>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;" id="ajax-buttons">
+        <div
+          style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px"
+          id="ajax-buttons"
+        >
           <n-button type="primary" :disabled="loading" @click="ajaxRequest('pdf_report')"
             >Tulosta raportti</n-button
           >
@@ -400,9 +475,10 @@ const enableManualBuildingSelect = async () => {
 
 const getSolarData = async (coordinates: GeocodeLatLng) => {
   //TODO clear data
-  output.addressFromApi = formatFinnishAddress(coordinates.addressComponents)
-  output.locality = coordinates.addressComponents[2].long_name
-  output.postalCode = coordinates.addressComponents[7].long_name
+  const addressResponse = formatFinnishAddress(coordinates.addressComponents)
+  output.addressFromApi = addressResponse.formattedAddress
+  output.locality = addressResponse.locality
+  output.postalCode = addressResponse.postalCode
 
   await getBuildingData(coordinates)
 
@@ -540,18 +616,18 @@ const updateCalculationBasis = (
   max-width: 600px;
   margin: auto;
 }
-.setting-fields{
+.setting-fields {
   display: flex;
   flex-wrap: wrap;
   column-gap: 20px;
   row-gap: 10px;
 }
 @media (min-width: 600px) {
-.setting-fields div{
-  flex: 1 1 45%;
-}
-.setting-fields > div:last-child {
-  max-width: 48%;
-}
+  .setting-fields div {
+    flex: 1 1 45%;
+  }
+  .setting-fields > div:last-child {
+    max-width: 48%;
+  }
 }
 </style>
