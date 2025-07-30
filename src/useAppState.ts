@@ -17,7 +17,7 @@ const jsonData = reactive({
 })
 
 const inputRef = {
-  address: 'Rajatorpantie 8',
+  address: 'Rajatorpantie 8 A',
   calculationBasis: toRaw(
     settings.calculationBasis.options.find((option) => option.value === 'targetPower') as {
       label: string

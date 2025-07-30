@@ -4,11 +4,17 @@ export interface AddressComponent {
   types: string[]
 }
 
-export interface GeocodeLatLng {
+export interface geocodelatlng {
   lat: number
   lng: number
-  formattedAddress: string
-  addressComponents: AddressComponent[]
+  formattedaddress: string
+  addresscomponents: addresscomponent[]
+}
+
+export interface formatResponse {
+  formattedaddress: string
+  postalCode: string
+  locality: string
 }
 
 /**
@@ -16,7 +22,7 @@ export interface GeocodeLatLng {
  * @param addressComponents - Array of address components from Google Geocoding API
  * @returns Formatted address string like "Kadunnimi 2, 00500 Helsinki"
  */
-export function formatFinnishAddress(addressComponents: AddressComponent[]): string {
+export function formatFinnishAddress(addressComponents: AddressComponent[]): formatResponse {
   let streetNumber = ''
   let route = ''
   let postalCode = ''
@@ -30,21 +36,24 @@ export function formatFinnishAddress(addressComponents: AddressComponent[]): str
       route = component.long_name
     } else if (component.types.includes('postal_code')) {
       postalCode = component.long_name
-    } else if (component.types.includes('locality') || component.types.includes('administrative_area_level_3')) {
+    } else if (
+      component.types.includes('locality') ||
+      component.types.includes('administrative_area_level_3')
+    ) {
       locality = component.long_name
     }
   }
 
   // Build Finnish format address: "Street name number, postal code city"
   let formattedAddress = ''
-  
+
   if (route) {
     formattedAddress += route
     if (streetNumber) {
       formattedAddress += ` ${streetNumber}`
     }
   }
-  
+
   if (postalCode || locality) {
     if (formattedAddress) {
       formattedAddress += ', '
@@ -59,7 +68,11 @@ export function formatFinnishAddress(addressComponents: AddressComponent[]): str
     }
   }
 
-  return formattedAddress || 'Osoite ei saatavilla'
+  return {
+    formattedAddress: formattedAddress || 'Osoite ei saatavilla',
+    postalCode,
+    locality,
+  }
 }
 
 /**
@@ -69,28 +82,34 @@ export function formatFinnishAddress(addressComponents: AddressComponent[]): str
  * @param apiKey - Google Maps API key
  * @returns Promise<GeocodeLatLng> - Geocoded location with address components
  */
-export async function reverseGeocode(lat: number, lng: number, apiKey: string): Promise<GeocodeLatLng> {
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+  apiKey: string,
+): Promise<GeocodeLatLng> {
   const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
-  
+
   try {
     const response = await fetch(url)
     const data = await response.json()
-    
+
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       const result = data.results[0]
-      
+
       // Convert Google's address_components to our AddressComponent interface
-      const addressComponents: AddressComponent[] = result.address_components.map((component: any) => ({
-        long_name: component.long_name,
-        short_name: component.short_name,
-        types: component.types
-      }))
-      
+      const addressComponents: AddressComponent[] = result.address_components.map(
+        (component: any) => ({
+          long_name: component.long_name,
+          short_name: component.short_name,
+          types: component.types,
+        }),
+      )
+
       return {
         lat,
         lng,
         formattedAddress: result.formatted_address,
-        addressComponents
+        addressComponents,
       }
     } else {
       // Fallback if reverse geocoding fails
@@ -98,7 +117,7 @@ export async function reverseGeocode(lat: number, lng: number, apiKey: string): 
         lat,
         lng,
         formattedAddress: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-        addressComponents: []
+        addressComponents: [],
       }
     }
   } catch (error) {
@@ -108,7 +127,7 @@ export async function reverseGeocode(lat: number, lng: number, apiKey: string): 
       lat,
       lng,
       formattedAddress: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-      addressComponents: []
+      addressComponents: [],
     }
   }
 }
@@ -127,11 +146,11 @@ export async function geocodeAddress(address: string, apiKey: string): Promise<G
 
   const result = data.results[0]
   const location = result.geometry.location
-  
-  return { 
-    lat: location.lat, 
+
+  return {
+    lat: location.lat,
     lng: location.lng,
     formattedAddress: result.formatted_address,
-    addressComponents: result.address_components
+    addressComponents: result.address_components,
   }
 }
