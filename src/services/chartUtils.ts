@@ -21,7 +21,7 @@ export function updateEnergyChart(
     ? input.normalizedDistribution
     : JSON.parse(input.buildingType?.value),
 ) {
-  const labels = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+  const labels = ['Tam', 'Hel', 'Maa', 'Huh', 'Tou', 'Kes', 'Hei', 'Elo', 'Syy', 'Lok', 'Mar', 'Jou']
 
   const datasets = [
     {
@@ -74,8 +74,8 @@ function calculateLifecycleSavings(config: SolarCalculationResult): number[] {
 
 export function updateSavingsChart() {
   const cumulativeSavings = calculateLifecycleSavings(output.active)
-  const currentYear = new Date().getFullYear()
-  const labels = Array.from({ length: 30 }, (_, i) => (currentYear + i + 1).toString())
+  // const currentYear = new Date().getFullYear()
+  const labels = Array.from({ length: 30 }, (_, i) => (0 + i + 1).toString())
 
   // Create datasets that overlap at crossover points
   const negativeData = cumulativeSavings.map((value, index) => {
@@ -94,7 +94,7 @@ export function updateSavingsChart() {
 
   const datasets = [
     {
-      label: 'Kumulatiivinen nettokassavirta',
+      label: 'Kumulatiivinen nettokassavirta (€)',
       data: positiveData,
       type: 'line' as const,
       borderColor: '#10b981',

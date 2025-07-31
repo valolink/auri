@@ -31,6 +31,7 @@ const inputRef = {
   dailyMaxUtilizationFactor: toRaw(settings.dailyMaxUtilizationFactor),
   extraRadius: 0,
   customProfile: { active: false, value: '' },
+  additionalSettings: { active: false, value: '' },
   buildingTypeLabel: '',
   normalizedDistribution: '',
   energyProfile: [],
