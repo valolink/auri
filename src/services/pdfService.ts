@@ -23,59 +23,77 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('locality', output.locality || '')
 
   formData.append('areaMeters2', output.static.areaMeters2.toLocaleString())
-  formData.append('monthlyDistribution', JSON.stringify( output.monthlyDistribution) )
+  formData.append('monthlyDistribution', JSON.stringify(output.monthlyDistribution))
 
   formData.append('lat', output.buildingCenter.lat?.toString() || '0')
   formData.append('lng', output.buildingCenter.lng?.toString() || '0')
   formData.append('calculationBasis', output.calculationBasis.label || '')
-  formData.append('buildingType', input.buildingTypeLabel)
-  formData.append('yearlyEnergyUsageKwh', input.yearlyEnergyUsageKwh.value.toLocaleString())
+  formData.append('scorePotential', Math.round(output.scorePotential).toString())
 
   formData.append('scoreProfitability', Math.round(output.active.scoreProfitability).toString())
   formData.append('scoreProduction', Math.round(output.active.scoreProduction).toString())
   formData.append('scoreUtilization', Math.round(output.active.scoreUtilization).toString())
-  formData.append('scorePotential', Math.round(output.scorePotential).toString())
 
-  formData.append(
-    'capacityKwp',
-    roundToSignificantFigures(output.active.capacityKwp).toLocaleString(),
-  )
-  formData.append('panelsCount', output.active.panelsCount.toLocaleString())
-  formData.append(
-    'installationCostEuros',
-    roundToSignificantFigures(output.active.installationCostEuros).toLocaleString(),
-  )
-  formData.append(
-    'yearlyEnergyAcKwh',
-    roundToSignificantFigures(output.active.yearlyEnergyAcKwh).toLocaleString(),
-  )
-  formData.append(
-    'yearlyCarbonOffset',
-    roundToSignificantFigures(output.active.yearlyCarbonOffset).toLocaleString(),
-  )
+  const outputs = ['active', 'smartMax', 'technicalMax']
+  const prefixes = ['', 'smart_', 'technical_']
+  for (let i = 0; i < outputs.length; i++) {
+    formData.append(
+      prefixes[i] + 'capacityKwp',
+      roundToSignificantFigures(output[outputs[i]].capacityKwp).toLocaleString(),
+    )
 
-  formData.append(
-    'maintenanceCostsPerYear',
-    roundToSignificantFigures(output.active.maintenanceCostsPerYear).toLocaleString(),
-  )
-
-  formData.append('paybackYears', output.active.paybackYears?.toFixed(1) || '0')
-  formData.append(
-    'savingsYear1',
-    roundToSignificantFigures(output.active.savingsYear1).toLocaleString(),
-  )
-  formData.append(
-    'lcoeSntkPerKwh',
-    (roundToSignificantFigures(output.active.lcoeSntPerKwh) || 0).toString(),
-  )
-  formData.append(
-    'netPresentValueEuros',
-    roundToSignificantFigures(output.active.netPresentValueEuros, 3).toLocaleString(),
-  )
-  formData.append(
-    'internalRateOfReturn',
-    roundToSignificantFigures(output.active.internalRateOfReturn).toLocaleString(),
-  )
+    formData.append(prefixes[i] + 'panelsCount', output.active.panelsCount.toLocaleString())
+    formData.append(
+      prefixes[i] + 'installationCostEuros',
+      roundToSignificantFigures(output[outputs[i]].installationCostEuros).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'yearlyEnergyAcKwh',
+      roundToSignificantFigures(output[outputs[i]].yearlyEnergyAcKwh).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'yearlyCarbonOffset',
+      roundToSignificantFigures(output[outputs[i]].yearlyCarbonOffset).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'maintenanceCostsPerYear',
+      roundToSignificantFigures(output[outputs[i]].maintenanceCostsPerYear).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'paybackYears',
+      output[outputs[i]].paybackYears?.toFixed(1) || '0',
+    )
+    formData.append(
+      prefixes[i] + 'savingsYear1',
+      roundToSignificantFigures(output[outputs[i]].savingsYear1).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'lcoeSntkPerKwh',
+      (roundToSignificantFigures(output[outputs[i]].lcoeSntPerKwh) || 0).toString(),
+    )
+    formData.append(
+      prefixes[i] + 'netPresentValueEuros',
+      roundToSignificantFigures(output[outputs[i]].netPresentValueEuros, 3).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'internalRateOfReturn',
+      roundToSignificantFigures(output[outputs[i]].internalRateOfReturn).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'yearlyExcessEnergyAcKwh',
+      roundToSignificantFigures(output[outputs[i]].yearlyExcessEnergyAcKwh).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'yearlySelfUseEnergyAcKwh',
+      roundToSignificantFigures(output[outputs[i]].yearlySelfUseEnergyAcKwh).toLocaleString(),
+    )
+    formData.append(
+      prefixes[i] + 'selfSufficiencyRate',
+      roundToSignificantFigures(output[outputs[i]].selfSufficiencyRate).toLocaleString(),
+    )
+  }
+  formData.append('buildingType', input.buildingTypeLabel)
+  formData.append('yearlyEnergyUsageKwh', input.yearlyEnergyUsageKwh.value.toLocaleString())
   formData.append(
     'energyPriceSnt',
     (roundToSignificantFigures(settings?.energyPriceSnt?.value) || 0).toString(),
@@ -129,21 +147,6 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('excessRate', (settings?.excessRate?.value).toString())
 
   formData.append('excessSalePriceSnt', (settings?.excessSalePriceSnt?.value).toString())
-
-  formData.append(
-    'yearlyExcessEnergyAcKwh',
-    roundToSignificantFigures(output.active.yearlyExcessEnergyAcKwh).toLocaleString(),
-  )
-
-  formData.append(
-    'yearlySelfUseEnergyAcKwh',
-    roundToSignificantFigures(output.active.yearlySelfUseEnergyAcKwh).toLocaleString(),
-  )
-
-  formData.append(
-    'selfSufficiencyRate',
-    roundToSignificantFigures(output.active.selfSufficiencyRate).toLocaleString(),
-  )
 
   formData.append('tiltBoostFactor', settings?.tiltBoostFactor?.value?.toString() || '0')
 
@@ -236,24 +239,22 @@ export const ajaxRequest = async function (action = 'pdf_report') {
 
     const result = await response.json()
 
-    if(action == 'save_to_database'){
-      const targetElement = document.querySelector('#ajax-buttons');
-      const newElement = document.createElement('div');
+    if (action == 'save_to_database') {
+      const targetElement = document.querySelector('#ajax-buttons')
+      const newElement = document.createElement('div')
       if (result.success) {
-        newElement.textContent = 'Tallennus tietokantaan onnistui';
-      }
-      else {
+        newElement.textContent = 'Tallennus tietokantaan onnistui'
+      } else {
         console.error('Save to database failed:', result.data?.message)
-        newElement.textContent = 'Tallennus tietokantaan ei onnistunut';
+        newElement.textContent = 'Tallennus tietokantaan ei onnistunut'
       }
       if (targetElement) {
-        targetElement.after(newElement);
+        targetElement.after(newElement)
         setTimeout(() => {
           newElement.remove()
-        }, 5000);
+        }, 5000)
       }
-    }
-    else if (result.success) {
+    } else if (result.success) {
       window.open(result.data.file_url, '_blank')
     } else {
       console.error('PDF generation failed:', result.data?.message)
