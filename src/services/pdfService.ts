@@ -22,6 +22,8 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('postalCode', output.postalCode || '')
   formData.append('locality', output.locality || '')
 
+  formData.append('buildingId', output.buildingId || '')
+
   formData.append('areaMeters2', output.static.areaMeters2.toLocaleString())
   formData.append('monthlyDistribution', JSON.stringify(output.monthlyDistribution))
 
@@ -42,7 +44,7 @@ export const ajaxRequest = async function (action = 'pdf_report') {
       roundToSignificantFigures(output[outputs[i]].capacityKwp).toLocaleString(),
     )
 
-    formData.append(prefixes[i] + 'panelsCount', output.active.panelsCount.toLocaleString())
+    formData.append(prefixes[i] + 'panelsCount', output[outputs[i]].panelsCount.toLocaleString())
     formData.append(
       prefixes[i] + 'installationCostEuros',
       roundToSignificantFigures(output[outputs[i]].installationCostEuros).toLocaleString(),

@@ -75,7 +75,8 @@ function calculateLifecycleSavings(config: SolarCalculationResult): number[] {
 export function updateSavingsChart() {
   const cumulativeSavings = calculateLifecycleSavings(output.active)
   // const currentYear = new Date().getFullYear()
-  const labels = Array.from({ length: 30 }, (_, i) => (0 + i + 1).toString())
+  // const labels = Array.from({ length: 30 }, (_, i) => (currentYear + i + 1).toString())
+  const labels = Array.from({ length: 30 }, (_, i) => ( i ).toString())
 
   // Create datasets that overlap at crossover points
   const negativeData = cumulativeSavings.map((value, index) => {

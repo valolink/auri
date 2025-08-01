@@ -225,6 +225,9 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
     new google.maps.LatLng(geo.lat, geo.lng),
     settings.apiKey.value,
   )
+
+  output.buildingId = buildingData.building.name
+
   jsonData.buildingResult = JSON.stringify(buildingData.building, null, 2)
   output.static.areaMeters2 = buildingData.building.solarPotential.buildingStats.areaMeters2
   output.static.totalEnergyPriceSntPerKwh =

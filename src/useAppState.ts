@@ -56,6 +56,7 @@ const initialOutput = {
   addressFromApi: '' as string,
   postalCode: '' as string,
   locality: '' as string,
+  buildingId: '' as string,
   buildingRadius: 0,
   buildingCenter: {
     lat: 0,
