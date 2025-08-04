@@ -31,14 +31,20 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('lng', output.buildingCenter.lng?.toString() || '0')
   formData.append('calculationBasis', output.calculationBasis.label || '')
   formData.append('scorePotential', Math.round(output.scorePotential).toString())
-
-  formData.append('scoreProfitability', Math.round(output.active.scoreProfitability).toString())
-  formData.append('scoreProduction', Math.round(output.active.scoreProduction).toString())
   formData.append('scoreUtilization', Math.round(output.active.scoreUtilization).toString())
 
   const outputs = ['active', 'smartMax', 'technicalMax']
   const prefixes = ['', 'smart_', 'technical_']
   for (let i = 0; i < outputs.length; i++) {
+    formData.append(
+      prefixes[i] + 'scoreProfitability',
+      Math.round(output[outputs[i]].scoreProfitability).toString(),
+    )
+    formData.append(
+      prefixes[i] + 'scoreProduction',
+      Math.round(output[outputs[i]].scoreProduction).toString(),
+    )
+
     formData.append(
       prefixes[i] + 'capacityKwp',
       roundToSignificantFigures(output[outputs[i]].capacityKwp).toLocaleString(),
