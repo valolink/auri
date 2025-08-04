@@ -7,6 +7,8 @@ import MapView from './components/MapView.vue'
 import CalculationInputs from './components/CalculationInputs.vue'
 import AuriChart from '@/components/AuriChart.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
+import ResultItem from './components/ResultItem.vue'
+import ResultList from './components/ResultList.vue'
 
 const app = createApp({
   setup() {
@@ -20,6 +22,8 @@ const app = createApp({
     'map-view': MapView,
     'auri-chart': AuriChart,
     'loading-indicator': LoadingIndicator,
+    'result-item': ResultItem,
+    'result-list': ResultList,
   },
 })
 
