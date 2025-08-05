@@ -9,6 +9,7 @@ import AuriChart from '@/components/AuriChart.vue'
 import LoadingIndicator from './components/LoadingIndicator.vue'
 import ResultItem from './components/ResultItem.vue'
 import ResultList from './components/ResultList.vue'
+import AuriHeading from './components/AuriHeading.vue'
 
 const app = createApp({
   setup() {
@@ -24,6 +25,7 @@ const app = createApp({
     'loading-indicator': LoadingIndicator,
     'result-item': ResultItem,
     'result-list': ResultList,
+    'auri-heading': AuriHeading,
   },
 })
 

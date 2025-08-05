@@ -114,7 +114,7 @@
     </ResultItem>
   </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import { useAppState } from '@/useAppState'
 const { output } = useAppState()
 import ResultItem from '@/components/ResultItem.vue'
