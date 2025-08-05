@@ -6,8 +6,7 @@
         {{ formattedValue }}
       </b>
     </span>
-    <span> </span>
-    <span v-if="unit"> {{ unit }}</span>
+    <span v-if="unit">&nbsp;{{ unit }}</span>
   </div>
 </template>
 
