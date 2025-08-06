@@ -95,7 +95,7 @@ export function findOptimized(
   return optimized
 }
 
- function updateSortedConfigs() {
+function updateSortedConfigs() {
   const configs = buildingData.building?.solarPotential?.solarPanelConfigs || []
   buildingData.sortedConfigs = configs
     .sort((a, b) => a.panelsCount - b.panelsCount)
@@ -234,7 +234,7 @@ export function calculateConfig(config: SolarPanelConfig): SolarCalculationResul
     Math.pow(1 + discountRate, Number(settings.installationLifeSpan.value))
 
   // Yearly savings rate (%) - requires yearlyEnergyUsageKwh
-  const yearlyEnergyUsageKwh = output.active.yearlyEnergyUsageKwh || yearlyEnergyAcKwh // Fallback to production if usage not available
+  const yearlyEnergyUsageKwh = input.yearlyEnergyUsageKwh.value
   const yearlySavingsRate =
     yearlyEnergyUsageKwh > 0
       ? (savingsYear1 / (yearlyEnergyUsageKwh * (output.static.totalEnergyPriceSntPerKwh / 100))) *
@@ -287,14 +287,12 @@ export function calculateScoreProduction(panelsCount: number, yearlyEnergyAcKwh:
 
   let scoreProduction = 0
 
-  if(yearlyEnergyAcKwh / panelsCount > 350){
-    scoreProduction = 100;
-  }
-  else if(yearlyEnergyAcKwh / panelsCount < 200) {
-    scoreProduction = 0;
-  }
-  else {
-    scoreProduction = (yearlyEnergyAcKwh / panelsCount - 200) / 150 * 100;
+  if (yearlyEnergyAcKwh / panelsCount > 350) {
+    scoreProduction = 100
+  } else if (yearlyEnergyAcKwh / panelsCount < 200) {
+    scoreProduction = 0
+  } else {
+    scoreProduction = ((yearlyEnergyAcKwh / panelsCount - 200) / 150) * 100
   }
 
   return scoreProduction
@@ -307,11 +305,12 @@ export function calculateScorePotential(): number {
 
   let scorePotential = 0
 
-  if(output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters >= (areaMeters2 / 2)){
-    scorePotential = 100;
-  }
-  else {
-    scorePotential = (output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2) * 100;
+  if (output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters >= areaMeters2 / 2) {
+    scorePotential = 100
+  } else {
+    scorePotential =
+      ((output.smartMax.panelsCount * panelHeightMeters * panelWidthMeters) / (areaMeters2 / 2)) *
+      100
   }
 
   return scorePotential
@@ -320,13 +319,11 @@ export function calculateScorePotential(): number {
 export function calculateScoreUtilization(yearlyEnergyAcKwh: number): number {
   let scoreUtilization = 0
 
-  if(yearlyEnergyAcKwh > output.smartMax.yearlyEnergyAcKwh){
-    scoreUtilization = 100;
-  }
-  else {
-    scoreUtilization = (yearlyEnergyAcKwh / output.smartMax.yearlyEnergyAcKwh) * 100;
+  if (yearlyEnergyAcKwh > output.smartMax.yearlyEnergyAcKwh) {
+    scoreUtilization = 100
+  } else {
+    scoreUtilization = (yearlyEnergyAcKwh / output.smartMax.yearlyEnergyAcKwh) * 100
   }
 
   return scoreUtilization
 }
-
