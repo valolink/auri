@@ -58,7 +58,7 @@ watchEffect(() => {
     :trap-focus="false"
     :block-scroll="false"
   >
-    <n-drawer-content title="Asetukset">
+    <n-drawer-content title="Asetukset" closable>
       <!-- This only exists after the first time Drawer renders -->
       <div id="drawer-host"></div>
     </n-drawer-content>
