@@ -155,9 +155,7 @@
           </n-form-item>
         </div>
         <n-form-item label="Lisäasetukset">
-          <n-switch
-            v-model:value="input.additionalSettings.active"
-          />
+          <n-switch v-model:value="input.additionalSettings.active" />
         </n-form-item>
         <div class="setting-fields" v-if="input.additionalSettings.active">
           <n-form-item label="Kallistusvaikutus (%)">
@@ -616,7 +614,7 @@ const updateCalculationBasis = (
   // console.log('chartRef.value: ', chartRef.value.chart)
 }
 
-const settingsChange = () =>{
+const settingsChange = () => {
   updateCalculationBasis(input.calculationBasis)
   output.technicalMax = calculateConfig(findTechnicalMax())
   output.smartMax = calculateConfig(findSmartMax())
@@ -627,7 +625,6 @@ const settingsChange = () =>{
 .input-container {
   padding: 1rem;
   max-width: 600px;
-  margin: auto;
 }
 .setting-fields {
   display: flex;
