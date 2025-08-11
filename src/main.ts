@@ -10,6 +10,7 @@ import LoadingIndicator from './components/LoadingIndicator.vue'
 import ResultItem from './components/ResultItem.vue'
 import ResultList from './components/ResultList.vue'
 import AuriHeading from './components/AuriHeading.vue'
+import InputsDrawer from './components/InputsDrawer.vue'
 
 const app = createApp({
   setup() {
@@ -26,6 +27,7 @@ const app = createApp({
     'result-item': ResultItem,
     'result-list': ResultList,
     'auri-heading': AuriHeading,
+    'inputs-drawer': InputsDrawer,
   },
 })
 

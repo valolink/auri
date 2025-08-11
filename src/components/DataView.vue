@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="role == 'admin'">
     <p>output:</p>
     <json-viewer v-if="output" :value="output" :expand-depth="1" copyable boxed sort />
 
@@ -43,5 +43,5 @@ import { useAppState } from '@/useAppState'
 import JsonViewer from 'vue-json-viewer'
 import 'vue-json-viewer/style.css'
 
-const { buildingData, output, input, settings, jsonData, chartRefs } = useAppState()
+const { role, buildingData, output, input, settings, jsonData, chartRefs } = useAppState()
 </script>

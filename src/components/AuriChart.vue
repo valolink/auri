@@ -85,11 +85,11 @@ onMounted(() => {
           y: {
             type: 'linear',
             grid: {
-              color: function(context) {
+              color: function (context) {
                 if (context.tick.value == 0 && props.chartId == 'savings') {
-                  return 'rgba(0,0,0,0.6)';
+                  return 'rgba(0,0,0,0.6)'
                 } else {
-                  return 'rgba(0,0,0,0.1)';
+                  return 'rgba(0,0,0,0.1)'
                 }
               },
             },
@@ -112,7 +112,8 @@ onUnmounted(() => {
 
 <style scoped>
 .chart-container {
-  max-width: 600px;
   margin: 0 auto;
+  width: 100%;
+  max-height: 350px;
 }
 </style>
