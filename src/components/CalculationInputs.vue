@@ -623,7 +623,6 @@ const settingsChange = () => {
 
 <style scoped>
 .input-container {
-  padding: 1rem;
   max-width: 600px;
 }
 .setting-fields {

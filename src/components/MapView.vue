@@ -1,9 +1,6 @@
 <template>
-  <div style="padding: 1rem; max-width: 600px; margin: auto">
-    <div
-      ref="mapRef"
-      style="width: 100%; height: 400px; margin-top: 1rem; border: 1px solid #ccc"
-    ></div>
+  <div style="width: 100%; margin: auto">
+    <div ref="mapRef" style="width: 100%; height: 400px; margin-top: 1rem"></div>
   </div>
 </template>
 
