@@ -1,1 +1,10 @@
 /* @import './base.css'; */
+@import './inline-inter.css';
+
+#content {
+  font-family: 'Inter';
+  font-weight: 400;
+}
+b {
+  font-weight: 600; /* Medium instead of bold */
+}

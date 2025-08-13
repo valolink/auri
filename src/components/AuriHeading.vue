@@ -1,11 +1,6 @@
 <template>
   <component :is="tag" class="auri-heading" v-if="output.addressFromApi">
-    <NIcon
-      v-if="icon"
-      :size="headingSizeMap[props.level]"
-      class="auri-heading__icon"
-      aria-hidden="true"
-    >
+    <NIcon v-if="icon" class="auri-heading__icon" aria-hidden="true">
       <component :is="icon" />
     </NIcon>
     <slot />
@@ -14,7 +9,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { NIcon } from 'naive-ui'
+import { NH1, NH2, NH3, NH4, NH5, NH6, NIcon } from 'naive-ui'
+
 import { useAppState } from '@/useAppState'
 const { output } = useAppState()
 
@@ -163,17 +159,20 @@ const props = defineProps<{
   icon?: IconName
 }>()
 
-// Map heading levels to font/icon sizes
-const headingSizeMap: Record<number, number> = {
-  1: 36, // matches ~2.25rem
-  2: 32, // ~2rem
-  3: 28, // ~1.75rem
-  4: 24, // ~1.5rem
-  5: 20, // ~1.25rem
-  6: 16, // ~1rem
+const headingComponents = {
+  1: NH1,
+  2: NH2,
+  3: NH3,
+  4: NH4,
+  5: NH5,
+  6: NH6,
 }
 
-const tag = computed(() => `h${Math.min(6, Math.max(1, props.level ?? 1))}`)
+const tag = computed(() => {
+  const lvl = Math.min(6, Math.max(1, props.level ?? 1))
+  return headingComponents[lvl]
+})
+
 const icon = computed(() => {
   if (!props.icon) return null
   const searchName = props.icon.toLowerCase()
@@ -187,25 +186,6 @@ const icon = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-h1.auri-heading {
-  font-size: 2.25rem;
-}
-h2.auri-heading {
-  font-size: 2rem;
-}
-h3.auri-heading {
-  font-size: 1.75rem;
-}
-h4.auri-heading {
-  font-size: 1.5rem;
-}
-h5.auri-heading {
-  font-size: 1.25rem;
-}
-h6.auri-heading {
-  font-size: 1rem;
 }
 
 .auri-heading__icon {

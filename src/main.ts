@@ -1,5 +1,6 @@
 // main.ts
 import './assets/main.css'
+import 'vfonts/Inter.css'
 import { createApp } from 'vue'
 import { useAppState } from './useAppState'
 import DataView from './components/DataView.vue'
@@ -11,6 +12,7 @@ import ResultItem from './components/ResultItem.vue'
 import ResultList from './components/ResultList.vue'
 import AuriHeading from './components/AuriHeading.vue'
 import InputsDrawer from './components/InputsDrawer.vue'
+import { NConfigProvider, NThemeEditor, darkTheme } from 'naive-ui'
 
 const app = createApp({
   setup() {
@@ -28,6 +30,8 @@ const app = createApp({
     'result-list': ResultList,
     'auri-heading': AuriHeading,
     'inputs-drawer': InputsDrawer,
+    'n-config-provider': NConfigProvider,
+    'n-theme-editor': NThemeEditor,
   },
 })
 
