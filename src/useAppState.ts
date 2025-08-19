@@ -35,6 +35,7 @@ const inputRef = {
   buildingTypeLabel: '',
   normalizedDistribution: '',
   energyProfile: [],
+  customDistribution: [],
 }
 
 const input = reactive(structuredClone(inputRef))

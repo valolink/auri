@@ -359,7 +359,11 @@ const monthlyValues = ref([9.1, 8.4, 8.7, 8.1, 7.8, 7.4, 7.7, 7.9, 8.1, 8.6, 8.8
 const normalizedDistribution = computed(() => {
   const sum = monthlyValues.value.reduce((acc, val) => acc + (val || 0), 0)
   if (sum === 0) return new Array(12).fill(0)
-  return monthlyValues.value.map((val) => Math.round(((val || 0) / sum) * 1000) / 1000)
+
+  input.customDistribution = monthlyValues.value.map(
+    (val) => Math.round(((val || 0) / sum) * 1000) / 1000,
+  )
+  return input.customDistribution
 })
 let sessionToken: google.maps.places.AutocompleteSessionToken
 
