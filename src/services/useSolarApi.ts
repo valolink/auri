@@ -176,8 +176,10 @@ function getMonthlyFluxForPanelArea(
 }
 
 export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
+  const data = await getDataLayerUrls(geo, radius)
+  jsonData.layerResult = JSON.stringify(data, null, 2)
   // Run both operations in parallel
-  await Promise.all([getAnnualFluxLayer(geo, radius), getMonthlyDistribution()])
+  await Promise.all([getAnnualFluxLayer(data), getMonthlyDistribution(data)])
 }
 
 // export const getLayerData = async (geo: GeocodeLatLng, radius: number) => {
@@ -238,7 +240,10 @@ export const getBuildingData = async (geo: GeocodeLatLng) => {
   const sorted: SortedSolarPanelConfig[] = buildingData.building.solarPotential.solarPanelConfigs
     .sort((a: SolarPanelConfig, b: SolarPanelConfig) => a.panelsCount - b.panelsCount)
     .map((config: SolarPanelConfig, index: number, array: SolarPanelConfig[]) => {
-      const yearlyEnergyAcKwh = config.yearlyEnergyDcKwh * settings.dcToAcDerate.value * ( 1 + (settings.tiltBoostFactor.value/100) )
+      const yearlyEnergyAcKwh =
+        config.yearlyEnergyDcKwh *
+        settings.dcToAcDerate.value *
+        (1 + settings.tiltBoostFactor.value / 100)
       if (index === 0) {
         return {
           ...config,
@@ -297,31 +302,30 @@ export async function getDataLayerUrls(
   )
 }
 
-// Handle annual flux visualization for the map
-export const getAnnualFluxLayer = async (geo: GeocodeLatLng, radius: number) => {
-  const data = await getDataLayerUrls(geo, radius)
-  jsonData.layerResult = JSON.stringify(data, null, 2)
-
+export const getAnnualFluxLayer = async (data) => {
+  // const data = await getDataLayerUrls(geo, radius)
+  // jsonData.layerResult = JSON.stringify(data, null, 2)
+  //
   const layer = await getLayer('annualFlux', data, settings.apiKey.value)
   const canvas = layer.render(true, 0, 14)[0]
   updateOverlay(canvas, layer.bounds)
 }
 
 // Handle monthly flux calculations for the best panel
-export const getMonthlyDistribution = async () => {
+export const getMonthlyDistribution = async (data) => {
   // Get best panel location from building data
   const bestPanel = buildingData.building.solarPotential.solarPanels.reduce((a, b) =>
     a.yearlyEnergyDcKwh > b.yearlyEnergyDcKwh ? a : b,
   )
 
-  const panelLocation = {
-    lat: bestPanel.center.latitude,
-    lng: bestPanel.center.longitude,
-  }
+  // const panelLocation = {
+  //   lat: bestPanel.center.latitude,
+  //   lng: bestPanel.center.longitude,
+  // }
 
   // Get panel-specific data with small radius
-  const panelData = await getDataLayerUrls(panelLocation, 25)
-  const monthlyFlux = await downloadGeoTIFF(panelData.monthlyFluxUrl, settings.apiKey.value)
+  // const panelData = await getDataLayerUrls(panelLocation, 25)
+  const monthlyFlux = await downloadGeoTIFF(data.monthlyFluxUrl, settings.apiKey.value)
 
   const azimuth =
     buildingData.building.solarPotential.roofSegmentStats[bestPanel.segmentIndex].azimuthDegrees
