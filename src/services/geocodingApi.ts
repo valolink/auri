@@ -27,7 +27,7 @@ export function formatFinnishAddress(addressComponents: AddressComponent[]): for
   let route = ''
   let postalCode = ''
   let locality = ''
-
+  console.log('addressComponents: ', addressComponents)
   // Extract relevant components
   for (const component of addressComponents) {
     if (component.types.includes('street_number')) {
