@@ -53,7 +53,7 @@ watchEffect(() => {
   <n-drawer
     v-model:show="show"
     placement="left"
-    :width="420"
+    :width="'min(420px, calc(100% - 20px))'"
     display-directive="show"
     :trap-focus="false"
     :block-scroll="false"

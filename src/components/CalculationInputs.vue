@@ -18,28 +18,16 @@
         <n-form-item v-if="role == 'admin'" label="Extra radius">
           <n-input-number v-model:value="input.extraRadius" :min="0" :step="10" size="small" />
         </n-form-item>
-        <n-form-item label="Vaihda rakennus kartalta:">
-          <n-button @click="enableManualBuildingSelect">Lisää click-event karttaan</n-button>
-        </n-form-item>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-form-item>
+              <n-button @click="enableManualBuildingSelect">Vaihda rakennus kartalta</n-button>
+            </n-form-item>
+          </template>
+          <span>Lorem ipsum</span>
+        </n-tooltip>
         <div style="height: 20px"></div>
-        <n-form-item :label="settings.calculationBasis.label">
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <n-button
-              v-for="option in settings.calculationBasis.options"
-              :key="option.value"
-              :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
-              @click="updateCalculationBasis(option)"
-              :disabled="loading && option.value === 'optimized'"
-            >
-              {{ option.label }}
-            </n-button>
-          </div>
-        </n-form-item>
 
-        <n-switch
-          v-model:value="input.customProfile.active"
-          @update:value="updateCalculationBasis(input.calculationBasis)"
-        />
         <n-form-item v-if="!input.customProfile.active" :label="input.buildingType?.label">
           <n-select
             v-if="input.buildingType"
@@ -48,6 +36,11 @@
             @update:value="updateCalculationBasis(input.calculationBasis)"
           />
         </n-form-item>
+        <n-form-item label="Luo oma kulutusprofiili">
+          <n-switch
+          v-model:value="input.customProfile.active"
+          @update:value="updateCalculationBasis(input.calculationBasis)"
+        /></n-form-item>
         <!-- Monthly Distribution Input -->
         <n-form-item v-if="input.customProfile.active" label="Kuukausittainen jakauma">
           <div>
@@ -75,201 +68,327 @@
             </n-flex>
           </div>
         </n-form-item>
-        <n-tag style="margin-bottom: 20px" size="small">{{
-          input.customProfile.active ? 'Custom Profile' : input.buildingType?.value
-        }}</n-tag>
-        <n-form-item :label="input.yearlyEnergyUsageKwh?.label">
-          <n-space vertical>
-            <n-slider
-              v-if="input.yearlyEnergyUsageKwh"
-              v-model:value="input.yearlyEnergyUsageKwh.value"
-              :min="0"
-              :max="100000"
-              :step="10"
-              @update:value="updateCalculationBasis(input.calculationBasis)"
-            />
-            <n-input-number
-              v-if="input.yearlyEnergyUsageKwh"
-              v-model:value="input.yearlyEnergyUsageKwh.value"
-              :min="0"
-              @update:value="updateCalculationBasis(input.calculationBasis)"
-            />
-          </n-space>
-        </n-form-item>
+        <div style="overflow: auto; margin-bottom: 20px;">
+          <n-tag size="small">{{
+            input.customProfile.active ? 'Custom Profile' : input.buildingType?.value
+          }}</n-tag>
+        </div>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-form-item :label="input.yearlyEnergyUsageKwh?.label">
+              <n-space vertical>
+                <n-slider
+                  v-if="input.yearlyEnergyUsageKwh"
+                  v-model:value="input.yearlyEnergyUsageKwh.value"
+                  :min="0"
+                  :max="100000"
+                  :step="10"
+                  @update:value="updateCalculationBasis(input.calculationBasis)"
+                />
+                <n-input-number
+                  v-if="input.yearlyEnergyUsageKwh"
+                  v-model:value="input.yearlyEnergyUsageKwh.value"
+                  :min="0"
+                  @update:value="updateCalculationBasis(input.calculationBasis)"
+                />
+              </n-space>
+            </n-form-item>
+          </template>
+          <span>{{settings.yearlyEnergyUsageKwh.secondary?.value}}</span>
+        </n-tooltip>
 
-        <n-form-item :label="input.targetPower?.label">
-          <n-space vertical>
-            <n-slider
-              v-if="input.targetPower"
-              v-model:value="input.targetPower.value"
-              :min="0"
-              :max="output.technicalMax?.capacityKwp"
-              :step="1"
-              @update:value="updateFromPower"
-            />
-            <n-input-number
-              v-if="input.targetPower"
-              v-model:value="input.targetPower.value"
-              :min="0"
-              :max="output.technicalMax?.capacityKwp"
-              :step="0.1"
-              @update:value="updateFromPower"
-            />
-          </n-space>
-        </n-form-item>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-form-item :label="settings.calculationBasis.label">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px">
+                <n-button
+                  v-for="option in settings.calculationBasis.options"
+                  :key="option.value"
+                  :type="input.calculationBasis.value === option.value ? 'primary' : 'default'"
+                  @click="updateCalculationBasis(option)"
+                  :disabled="loading && option.value === 'optimized'"
+                >
+                  {{ option.label }}
+                </n-button>
+              </div>
+            </n-form-item>
+          </template>
+          <span>{{settings.calculationBasis.secondary?.value}}</span>
+        </n-tooltip>
 
-        <n-form-item :label="input.panelCount?.label">
-          <n-space vertical>
-            <n-slider
-              v-if="input.panelCount"
-              v-model:value="input.panelCount.value"
-              :min="0"
-              :max="output.technicalMax?.panelsCount"
-              :step="1"
-              @update:value="updateFromPanels"
-            />
-            <n-input-number
-              v-if="input.panelCount"
-              v-model:value="input.panelCount.value"
-              :min="0"
-              :max="output.technicalMax?.panelsCount"
-              :step="5"
-              @update:value="updateFromPanels"
-            />
-          </n-space>
-        </n-form-item>
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-form-item :label="input.targetPower?.label">
+              <n-space vertical>
+                <n-slider
+                  v-if="input.targetPower"
+                  v-model:value="input.targetPower.value"
+                  :min="0"
+                  :max="output.technicalMax?.capacityKwp"
+                  :step="1"
+                  @update:value="updateFromPower"
+                />
+                <n-input-number
+                  v-if="input.targetPower"
+                  v-model:value="input.targetPower.value"
+                  :min="0"
+                  :max="output.technicalMax?.capacityKwp"
+                  :step="0.1"
+                  @update:value="updateFromPower"
+                />
+              </n-space>
+            </n-form-item>
+          </template>
+          <span>{{settings.targetPower.secondary?.value}}</span>
+        </n-tooltip>
+
+        <n-tooltip trigger="hover">
+          <template #trigger>
+            <n-form-item :label="input.panelCount?.label">
+              <n-space vertical>
+                <n-slider
+                  v-if="input.panelCount"
+                  v-model:value="input.panelCount.value"
+                  :min="0"
+                  :max="output.technicalMax?.panelsCount"
+                  :step="1"
+                  @update:value="updateFromPanels"
+                />
+                <n-input-number
+                  v-if="input.panelCount"
+                  v-model:value="input.panelCount.value"
+                  :min="0"
+                  :max="output.technicalMax?.panelsCount"
+                  :step="5"
+                  @update:value="updateFromPanels"
+                />
+              </n-space>
+            </n-form-item>
+          </template>
+          <span>{{settings.panelCount.secondary?.value}}</span>
+        </n-tooltip>
         <div class="setting-fields">
-          <n-form-item label="Sähkön hinta (snt)">
-            <n-input-number
-              v-model:value="settings.energyPriceSnt.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Sähkön siirtohinta (snt)">
-            <n-input-number
-              v-model:value="settings.transmissionPriceSnt.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Sähkön hinta (snt)">
+                <n-input-number
+                  v-model:value="settings.energyPriceSnt.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.energyPriceSnt.secondary?.value}}</span>
+          </n-tooltip>
+        <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Sähkön siirtohinta (snt)">
+                <n-input-number
+                  v-model:value="settings.transmissionPriceSnt.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.transmissionPriceSnt.secondary?.value}}</span>
+          </n-tooltip>
         </div>
         <n-form-item label="Lisäasetukset">
           <n-switch v-model:value="input.additionalSettings.active" />
         </n-form-item>
         <div class="setting-fields" v-if="input.additionalSettings.active">
-          <n-form-item label="Kallistusvaikutus (%)">
-            <n-input-number
-              v-model:value="settings.tiltBoostFactor.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Sähkövero (snt/kWh)">
-            <n-input-number
-              v-model:value="settings.electricityTax.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Arvonlisävero">
-            <n-input-number
-              v-model:value="settings.vat.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Sähkön hinnan vuosimuutos (%)">
-            <n-input-number
-              v-model:value="settings.costIncreaseFactor.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Päivittäinen käyttöaste">
-            <n-input-number
-              v-model:value="settings.dailyMaxUtilizationFactor.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Sähkön muuntokerroin">
-            <n-input-number
-              v-model:value="settings.dcToAcDerate.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Diskonttauskorko (%)">
-            <n-input-number
-              v-model:value="settings.discountRate.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Päästökerroin (gCO2/kWh)">
-            <n-input-number
-              v-model:value="settings.emissionsFactor.value"
-              :step="1"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Investointihinta per kWp (€/kWp)">
-            <n-input-number
-              v-model:value="settings.installationCostPerKwp.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Paneelitehon vähenemä vuosittain (-%)">
-            <n-input-number
-              v-model:value="settings.efficiencyDepreciationFactor.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Ylijäämän osuus (%)">
-            <n-input-number
-              v-model:value="settings.excessRate.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Ylijäämän myyntihinta (snt)">
-            <n-input-number
-              v-model:value="settings.excessSalePriceSnt.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Laina (€)">
-            <n-input-number
-              v-model:value="settings.loan.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Laina-aika vuosissa">
-            <n-input-number
-              v-model:value="settings.loanDurationYears.value"
-              :step="1"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Vuosikorko (%)">
-            <n-input-number
-              v-model:value="settings.interestRate.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
-          <n-form-item label="Invertterin vaihtokustannus (%)">
-            <n-input-number
-              v-model:value="settings.inverterReplacementCostFactor.value"
-              :step="0.01"
-              @update:value="settingsChange()"
-            />
-          </n-form-item>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Kallistusvaikutus (%)">
+                <n-input-number
+                  v-model:value="settings.tiltBoostFactor.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.tiltBoostFactor.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Sähkövero (snt/kWh)">
+                <n-input-number
+                  v-model:value="settings.electricityTax.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.electricityTax.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Arvonlisävero">
+                <n-input-number
+                  v-model:value="settings.vat.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.vat.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Sähkön hinnan vuosimuutos (%)">
+                <n-input-number
+                  v-model:value="settings.costIncreaseFactor.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.costIncreaseFactor.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Päivittäinen käyttöaste">
+                <n-input-number
+                  v-model:value="settings.dailyMaxUtilizationFactor.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.dailyMaxUtilizationFactor.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Sähkön muuntokerroin">
+                <n-input-number
+                  v-model:value="settings.dcToAcDerate.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.dcToAcDerate.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Diskonttauskorko (%)">
+                <n-input-number
+                  v-model:value="settings.discountRate.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.discountRate.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Päästökerroin (gCO2/kWh)">
+                <n-input-number
+                  v-model:value="settings.emissionsFactor.value"
+                  :step="1"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.emissionsFactor.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Investointihinta per kWp (€/kWp)">
+                <n-input-number
+                  v-model:value="settings.installationCostPerKwp.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.installationCostPerKwp.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Paneelitehon vähenemä vuosittain (-%)">
+                <n-input-number
+                  v-model:value="settings.efficiencyDepreciationFactor.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.efficiencyDepreciationFactor.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Ylijäämän osuus (%)">
+                <n-input-number
+                  v-model:value="settings.excessRate.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.excessRate.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Ylijäämän myyntihinta (snt)">
+                <n-input-number
+                  v-model:value="settings.excessSalePriceSnt.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.excessSalePriceSnt.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Laina (€)">
+                <n-input-number
+                  v-model:value="settings.loan.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.loan.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Laina-aika vuosissa">
+                <n-input-number
+                  v-model:value="settings.loanDurationYears.value"
+                  :step="1"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.loanDurationYears.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Vuosikorko (%)">
+                <n-input-number
+                  v-model:value="settings.interestRate.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.interestRate.secondary?.value}}</span>
+          </n-tooltip>
+          <n-tooltip trigger="hover">
+            <template #trigger>
+              <n-form-item label="Invertterin vaihtokustannus (%)">
+                <n-input-number
+                  v-model:value="settings.inverterReplacementCostFactor.value"
+                  :step="0.01"
+                  @update:value="settingsChange()"
+                />
+              </n-form-item>
+            </template>
+            <span>{{settings.inverterReplacementCostFactor.secondary?.value}}</span>
+          </n-tooltip>
         </div>
 
         <div
@@ -306,6 +425,7 @@ import {
   NTag,
   NSwitch,
   NFlex,
+  NTooltip,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { resetCharts, updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
