@@ -27,7 +27,7 @@ export const ajaxRequest = async function (action = 'pdf_report') {
   formData.append('areaMeters2', output.static.areaMeters2.toLocaleString())
   formData.append('monthlyDistribution', JSON.stringify(output.monthlyDistribution))
   const energyProfile = input.customProfile.active
-    ? JSON.stringify(input.customDistribution)
+    ? JSON.stringify(input.customDistribution).replace(/,/g, ", ")
     : input.buildingType.value
   formData.append('energyProfile', energyProfile)
 
