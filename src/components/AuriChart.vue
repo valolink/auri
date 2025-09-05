@@ -114,6 +114,9 @@ onUnmounted(() => {
 .chart-container {
   margin: 0 auto;
   width: 100%;
-  max-height: 350px;
+}
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 </style>
