@@ -4,14 +4,22 @@
     "label": "Sähkön vuosikulutus (kWh/a)",
     "type": "number",
     "sanitize": "intval",
-    "description": "Sähkön vuosikulutus (kWh/a)"
+    "description": "Sähkön vuosikulutus (kWh/a)",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
   {
-    "id": "totalCapacityKwp",
-    "label": "Voimalan kokonaispaneeliteho (kWp)",
-    "type": "text",
-    "sanitize": "sanitize_text_field",
-    "description": "Voimalan kokonaispaneeliteho (kWp), oletus smartPanelsCount * panelCapacityWatts / 1000"
+    "id": "dcToAcDerate",
+    "label": "Sähkön muuntokerroin",
+	  "type": "number",
+	  "sanitize": "floatval",
+	  "description": "-",
+	  "value": 0.85,
+	  "step": "0.01",
+	  "secondary": {
+		  "label": "Tooltip"
+	  }
   },
   {
 	  "id": "targetPower",
@@ -20,7 +28,10 @@
 	  "sanitize": "floatval",
 	  "description": "-",
 	  "value": 6.0,
-	  "step": "0.01"
+	  "step": "0.01",
+		  "secondary": {
+		  "label": "Tooltip"
+		}
   },
   {
 	  "id": "panelCount",
@@ -29,11 +40,14 @@
 	  "sanitize": "intval",
 	  "description": "-",
 	  "value": 15,
-	  "step": "1"
+	  "step": "1",
+	  "secondary": {
+		  "label": "Tooltip"
+		}
 	},
   {
     "id": "calculationBasis",
-    "label": "Laskentatapa",
+    "label": "Laskentamenetelmä",
     "type": "select",
     "sanitize": "sanitize_text_field",
     "description": "Choose the default:",
@@ -42,27 +56,21 @@
       "technicalMax": "Tekninen maksimi",
 	  "optimized": "Kulutusoptimoitu",
 	  "targetPower": "Tavoiteteho"
+    },
+	 "secondary": {
+      "label": "Tooltip"
     }
   },  
-  {
-    "id": "powerConsumptionProfile",
-    "label": "Rakennuksen sähkönkulutusprofiili",
-    "type": "select",
-    "sanitize": "sanitize_text_field",
-    "description": "Choose the default:",
-    "options": {
-      "profile1": "Profiili 1",
-      "profile2": "Profiili 2",
-      "profile2": "Räätälöity"
-    }
-  },
   {
     "id": "energyPriceSnt",
     "label": "Sähkön hinta (snt)",
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
   {
     "id": "transmissionPriceSnt",
@@ -70,15 +78,21 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "electricityTax",
-    "label": "Sähkövero (%)",
+    "label": "Sähkövero (snt/kWh)",
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "vat",
@@ -86,7 +100,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "costIncreaseFactor",
@@ -94,7 +111,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "efficiencyDepreciationFactor",
@@ -102,7 +122,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "excessRate",
@@ -110,7 +133,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "excessSalePriceSnt",
@@ -118,7 +144,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "installationCostPerKwp",
@@ -126,7 +155,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "incentives",
@@ -142,14 +174,20 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "loanDurationYears",
     "label": "Laina-aika vuosissa",
     "type": "number",
     "sanitize": "intval",
-    "description": "-"
+    "description": "-",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "interestRate",
@@ -157,7 +195,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "inverterReplacementCostFactor",
@@ -165,7 +206,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "maintenanceCostFactor",
@@ -195,7 +239,10 @@
     "label": "Päästökerroin (gCO2/kWh)",
     "type": "number",
     "sanitize": "intval",
-    "description": "-"
+    "description": "-",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "minYearlyEnergyPerPanelAdded",
@@ -217,7 +264,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "dailyMaxUtilizationFactor",
@@ -225,7 +275,10 @@
     "type": "number",
     "sanitize": "floatval",
     "description": "-",
-	"step": "0.01"
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "smartMaxRangeStart",
@@ -258,6 +311,17 @@
     "sanitize": "floatval",
     "description": "-",
 	"step": "1"
+  },
+	{
+    "id": "tiltBoostFactor",
+    "label": "Kallistusvaikutus (%)",
+    "type": "number",
+    "sanitize": "floatval",
+    "description": "-",
+	"step": "0.01",
+	"secondary": {
+      "label": "Tooltip"
+    }
   },
 	{
     "id": "buildingTypes",

@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'AURIAPP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-settings.php';
+require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-reports-admin.php';
 
 class VueAppShortcode {
 
@@ -72,11 +73,75 @@ class VueAppShortcode {
 			$this->enqueue_assets();
 		}
 	}
+	
+	private function build_keyed_settings(): array {
+		// Load settings config
+		$settings_json_path = plugin_dir_path(__FILE__) . 'includes/auriapp-settings.json';
+		$settings_fields = [];
+		if ( file_exists( $settings_json_path ) ) {
+			$settings_json   = file_get_contents( $settings_json_path );
+			$settings_fields = json_decode( $settings_json, true ) ?? [];
+		}
+
+		// Load stored values
+		$stored_values = get_option( 'auriapp_settings_option_name', [] );
+
+		$keyed_settings = [];
+		foreach ( $settings_fields as $field ) {
+			$field_id           = $field['id'];
+			$supports_secondary = ! empty( $field['secondary'] );
+			$secondary_key      = $field_id . '_secondary_val';
+
+			$keyed = [
+				'label'       => $field['label'] ?? '',
+				'type'        => $field['type'] ?? 'text',
+				'sanitize'    => $field['sanitize'] ?? 'sanitize_text_field',
+				'description' => $field['description'] ?? '',
+				'value'       => $stored_values[ $field_id ] ?? ( ( $field['type'] ?? '' ) === 'checkbox' ? false : '' ),
+			];
+
+			// step passthrough (for number inputs)
+			if ( isset( $field['step'] ) ) {
+				$keyed['step'] = $field['step'];
+			}
+
+			// options passthrough (normalize to [{label, value}])
+			if ( isset( $field['options'] ) && is_array( $field['options'] ) ) {
+				$keyed['options'] = array_map(
+					fn( $value, $label ) => [ 'label' => $label, 'value' => $value ],
+					array_keys( $field['options'] ),
+					array_values( $field['options'] )
+				);
+			}
+
+			// secondary textarea payload
+			if ( $supports_secondary ) {
+				$keyed['secondary'] = [
+					'label' => $field['secondary']['label'] ?? 'Secondary',
+					'value' => $stored_values[ $secondary_key ] ?? '',
+				];
+			}
+
+			$keyed_settings[ $field_id ] = $keyed;
+		}
+
+		return $keyed_settings;
+	}
 
 	/**
 	 * Enqueue the Vue app's JS and CSS from the dist folder.
 	 */
 	private function enqueue_assets() {
+		$css = $this->plugin_path . 'auriapp.css';
+		if ( file_exists( $css ) ) {
+			wp_enqueue_style(
+				'auriapp-style',
+				$this->plugin_url . 'auriapp.css',
+				array(),
+				filemtime( $css )
+			);
+		}
+		
 		// Check if ?script=local is present in the URL
 		if ( isset( $_GET['script'] ) && $_GET['script'] === 'local' ) {
 			// Enqueue the Vite dev server script
@@ -87,56 +152,19 @@ class VueAppShortcode {
 				null,
 				true
 			);
-			
-			// Load the settings configuration JSON
-			$settings_json_path = plugin_dir_path(__FILE__) . 'includes/auriapp-settings.json';
-			$settings_fields = [];
-			if (file_exists($settings_json_path)) {
-				$settings_json = file_get_contents($settings_json_path);
-				$settings_fields = json_decode($settings_json, true) ?? [];
-			}
 
-			// Load the stored values from the WP options
-			$stored_values = get_option('auriapp_settings_option_name', []);
-
-			// Build the keyed settings object
-			$keyed_settings = [];
-			foreach ($settings_fields as $field) {
-				$field_id = $field['id'];
-				$keyed_settings[$field_id] = [
-					'label' => $field['label'] ?? '',
-					'type' => $field['type'] ?? 'text',
-					'sanitize' => $field['sanitize'] ?? 'sanitize_text_field',
-					'description' => $field['description'] ?? '',
-					'value' => $stored_values[$field_id] ?? ($field['type'] === 'checkbox' ? false : ''),
-				];
-
-				if (isset($field['step'])) {
-					$keyed_settings[$field_id]['step'] = $field['step'];
-				}
-				if (isset($field['options'])) {
-					$keyed_settings[$field_id]['options'] = array_map(
-						fn($value, $label) => ['label' => $label, 'value' => $value],
-						array_keys($field['options']),
-						array_values($field['options'])
-					);
-				}
-			}
-
-			// Localize the settings
+			// Localize the settings (includes secondary textarea values)
 			wp_localize_script(
 				'vue-app-local-script',
 				'vueAppData',
 				array(
-					'ajax_url' => admin_url('admin-ajax.php'),
-					'role' => current_user_can('manage_options') ? 'admin' : 'guest',
-					'settings' => $keyed_settings,
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'role'     => current_user_can( 'manage_options' ) ? 'admin' : 'guest',
+					'settings' => $this->build_keyed_settings(),
 				)
 			);
 
-				
-			
-			// Add filter to modify the script tag
+			// Add type="module" to script tag
 			add_filter( 'script_loader_tag', array( $this, 'add_module_to_script' ), 10, 3 );
 
 			return; // Skip normal asset loading
@@ -156,11 +184,11 @@ class VueAppShortcode {
 			}
 		}
 
-// 		$js_files = glob( $this->dist_path . '*.js' );
-		$js_files = glob($this->dist_path . 'index-*.js');
+		$js_files = glob( $this->dist_path . 'index-*.js' );
 		if ( ! empty( $js_files ) ) {
 			foreach ( $js_files as $js_file ) {
 				$js_filename = basename( $js_file );
+
 				wp_enqueue_script(
 					'vue-app-script-' . sanitize_title( $js_filename ),
 					$this->dist_url . $js_filename,
@@ -169,55 +197,19 @@ class VueAppShortcode {
 					true
 				);
 
-				// Load the settings configuration JSON
-				$settings_json_path = plugin_dir_path(__FILE__) . 'includes/auriapp-settings.json';
-				$settings_fields = [];
-				if (file_exists($settings_json_path)) {
-					$settings_json = file_get_contents($settings_json_path);
-					$settings_fields = json_decode($settings_json, true) ?? [];
-				}
-
-				// Load the stored values from the WP options
-				$stored_values = get_option('auriapp_settings_option_name', []);
-
-				// Build the keyed settings object
-				$keyed_settings = [];
-				foreach ($settings_fields as $field) {
-					$field_id = $field['id'];
-					$keyed_settings[$field_id] = [
-						'label' => $field['label'] ?? '',
-						'type' => $field['type'] ?? 'text',
-						'sanitize' => $field['sanitize'] ?? 'sanitize_text_field',
-						'description' => $field['description'] ?? '',
-						'value' => $stored_values[$field_id] ?? ($field['type'] === 'checkbox' ? false : ''),
-					];
-
-					if (isset($field['step'])) {
-						$keyed_settings[$field_id]['step'] = $field['step'];
-					}
-					if (isset($field['options'])) {
-						$keyed_settings[$field_id]['options'] = array_map(
-							fn($label, $value) => ['label' => $label, 'value' => $value],
-							array_values($field['options']),
-							array_keys($field['options'])
-						);
-					}
-				}
-
-				// Localize the settings
+				// Localize the settings (includes secondary textarea values)
 				wp_localize_script(
-					'vue-app-script-' . sanitize_title($js_filename),
+					'vue-app-script-' . sanitize_title( $js_filename ),
 					'vueAppData',
 					array(
-						'ajax_url' => admin_url('admin-ajax.php'),
-						'role' => current_user_can('manage_options') ? 'admin' : 'guest',
-						'settings' => $keyed_settings,
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						'role'     => current_user_can( 'manage_options' ) ? 'admin' : 'guest',
+						'settings' => $this->build_keyed_settings(),
 					)
 				);
-				
-				// Add filter to modify the script tag
-				add_filter( 'script_loader_tag', array( $this, 'add_module_to_script' ), 10, 3 );
 
+				// Add type="module" to script tag
+				add_filter( 'script_loader_tag', array( $this, 'add_module_to_script' ), 10, 3 );
 			}
 		}
 	}
@@ -257,9 +249,58 @@ require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-pdf.php';
 // AJAX hooks for PDF generation
 add_action('wp_ajax_pdf_report', 'auriapp_handle_pdf_report');
 add_action('wp_ajax_nopriv_pdf_report', 'auriapp_handle_pdf_report'); // optional if public access needed
-
 function auriapp_handle_pdf_report() {
 	AuriappPDFGenerator::handle_ajax_request();
 }
+
+require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-database-storage.php';
+
+add_action('wp_ajax_save_to_database', 'auriapp_handle_save_to_database');
+add_action('wp_ajax_nopriv_save_to_database', 'auriapp_handle_save_to_database');
+function auriapp_handle_save_to_database() {
+	AuriappDatabaseStorage::handle_ajax_request();
+}
+
+
+add_action('admin_post_auriapp_export_reports_csv', 'auriapp_handle_csv_export');
+function auriapp_handle_csv_export() {
+    if (!current_user_can('manage_options')) {
+        wp_die('Unauthorized');
+    }
+
+    check_admin_referer('export_reports_csv');
+
+    require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-database-storage.php';
+    $storage = new AuriappDatabaseStorage();
+    $reports = $storage->get_reports(10000, 0);
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="solar-reports.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'w');
+	
+	// UTF-8 BOM, for Excel
+    fwrite($output, "\xEF\xBB\xBF");
+
+    if (!empty($reports)) {
+        fputcsv($output, array_keys($reports[0]));
+        foreach ($reports as $report) {
+			if (isset($report['postal_code'])) {
+				$report['postal_code'] =  $report['postal_code'];
+			}
+            fputcsv($output, $report);
+        }
+    } else {
+        fputcsv($output, ['No reports found.']);
+    }
+
+    fclose($output);
+    exit;
+}
+
+// Hook to create table on plugin activation
+register_activation_hook(__FILE__, ['AuriappDatabaseStorage', 'create_table']);
 
 new VueAppShortcode();

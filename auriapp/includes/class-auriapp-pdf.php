@@ -92,6 +92,7 @@ class AuriappPDFGenerator {
             'calculationBasis' => sanitize_text_field($_POST['calculationBasis'] ?? ''),
             'yearlyEnergyUsageKwh' => sanitize_text_field($_POST['yearlyEnergyUsageKwh'] ?? ''),
             'BuildingType' => sanitize_text_field($_POST['buildingType'] ?? ''),
+            'energyProfile' => sanitize_text_field($_POST['energyProfile'] ?? ''),
             
             // Location
             'lat' => sanitize_text_field($_POST['lat'] ?? 0),
@@ -100,18 +101,20 @@ class AuriappPDFGenerator {
             // Scores
             'scoreProfitability' => sanitize_text_field($_POST['scoreProfitability'] ?? 0),
             'scoreProduction' => sanitize_text_field($_POST['scoreProduction'] ?? 0),
+			'scoreUtilization' => sanitize_text_field($_POST['scoreUtilization'] ?? 0),
+			'scorePotential' => sanitize_text_field($_POST['scorePotential'] ?? 0),
             
             // System specifications
             'capacityKwp' => sanitize_text_field($_POST['capacityKwp'] ?? 0),
             'panelsCount' => sanitize_text_field($_POST['panelsCount'] ?? 0),
-            'yearlyEnergyDcKwh' => sanitize_text_field($_POST['yearlyEnergyDcKwh'] ?? 0),
+            'yearlyEnergyAcKwh' => sanitize_text_field($_POST['yearlyEnergyAcKwh'] ?? 0),
             'installationCostEuros' => sanitize_text_field($_POST['installationCostEuros'] ?? 0),
             'yearlyCarbonOffset' => sanitize_text_field($_POST['yearlyCarbonOffset'] ?? 0),
             'maintenanceCostsPerYear' => sanitize_text_field($_POST['maintenanceCostsPerYear'] ?? 0),
             
             // Profitability
             'paybackYears' => sanitize_text_field($_POST['paybackYears'] ?? 0),
-            'averageYearlySavingsEuros' => sanitize_text_field($_POST['averageYearlySavingsEuros'] ?? 0),
+            'savingsYear1' => sanitize_text_field($_POST['savingsYear1'] ?? 0),
             'lcoeSntkPerKwh' => sanitize_text_field($_POST['lcoeSntkPerKwh'] ?? 0),
             'netPresentValueEuros' => sanitize_text_field($_POST['netPresentValueEuros'] ?? 0),
             'internalRateOfReturn' => sanitize_text_field($_POST['internalRateOfReturn'] ?? 0),
@@ -131,6 +134,14 @@ class AuriappPDFGenerator {
             'discountRate' => sanitize_text_field($_POST['discountRate'] ?? 0),
             'costIncreaseFactor' => sanitize_text_field($_POST['costIncreaseFactor'] ?? 0),
             'emissionsFactor' => sanitize_text_field($_POST['emissionsFactor'] ?? 0),
+            'dailyMaxUtilizationFactor' => sanitize_text_field($_POST['dailyMaxUtilizationFactor'] ?? 0),
+            'installationCostPerKwp' => sanitize_text_field($_POST['installationCostPerKwp'] ?? 0),
+            'excessRate' => sanitize_text_field($_POST['excessRate'] ?? 0),
+			'yearlyExcessEnergyAcKwh' => sanitize_text_field($_POST['yearlyExcessEnergyAcKwh'] ?? 0),
+			'yearlySelfUseEnergyAcKwh' => sanitize_text_field($_POST['yearlySelfUseEnergyAcKwh'] ?? 0),
+			'selfSufficiencyRate' => sanitize_text_field($_POST['selfSufficiencyRate'] ?? 0),
+			'excessSalePriceSnt' => sanitize_text_field($_POST['excessSalePriceSnt'] ?? 0),
+			'tiltBoostFactor' => sanitize_text_field($_POST['tiltBoostFactor'] ?? 0),
         ];
     }
     

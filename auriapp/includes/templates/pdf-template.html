@@ -28,7 +28,7 @@
       .legend-gradient {
         height: 20px;
         margin-bottom: 5px;
-        border: 1px solid #ddd;
+        border: 0;
       }
 
       .gradient-description span:nth-child(2) {
@@ -58,7 +58,7 @@
 
       .header-right {
         width: 50%;
-        text-align: right;
+        text-align: left;
       }
 
       .app-info h1 {
@@ -87,7 +87,7 @@
       /* Replace flexbox main content with table */
       .main-content {
         width: 100%;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
       }
 
       .main-table {
@@ -156,8 +156,8 @@
         width: 100%;
         min-height: 150px;
         max-height: 250px;
-        border: 1px solid #ddd;
-        margin-bottom: 10px;
+        border: 0;
+/*         margin-bottom: 10px; */
         background: #f5f5f5;
         text-align: center;
         color: #666;
@@ -173,7 +173,7 @@
 
       .chart-container {
         width: 100%;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
       }
 
       .chart-title {
@@ -204,7 +204,7 @@
       /* Replace flexbox bottom section with table */
       .bottom-section {
         width: 100%;
-        margin-top: 30px;
+        margin-top: 20px;
       }
 
       .bottom-table {
@@ -306,6 +306,12 @@
       .calc-table {
         page-break-inside: avoid;
       }
+		.score-table{
+			width: 100%;
+		}
+		.score-table td{
+			text-align:left;
+		}
     </style>
   </head>
   <body>
@@ -326,8 +332,18 @@
             <td class="header-right">
               <div class="scores">
                 <div><strong>Arviointipisteet</strong></div>
-                <div>Kannattavuus <span class="variable">{{scoreProfitability}}</span>/100</div>
-                <div>Tuotanto <span class="variable">{{scoreProduction}}</span>/100</div>
+				  <table class="score-table">
+					  <tr>
+						  <td>
+							  <div>Potentiaali <span class="variable">{{scorePotential}}</span>/100</div>
+							  <div>Katon hyödyntäminen <span class="variable">{{scoreUtilization}}</span>/100</div>
+						  </td>
+						  <td>
+							  <div>Kannattavuus <span class="variable">{{scoreProfitability}}</span>/100</div>
+							  <div>Tuotantoteho <span class="variable">{{scoreProduction}}</span>/100</div>
+						  </td>
+					  </tr>
+				  </table>
               </div>
             </td>
           </tr>
@@ -376,7 +392,7 @@
 
                 <div class="spec-item">
                   <span class="spec-label">Aurinkosähkön vuosituotto:</span>
-                  <span class="spec-value">{{yearlyEnergyDcKwh}}</span>
+                  <span class="spec-value">{{yearlyEnergyAcKwh}}</span>
                   <span class="spec-unit">kWh</span>
                 </div>
 
@@ -397,6 +413,18 @@
                   <span class="spec-value">{{maintenanceCostsPerYear}}</span>
                   <span class="spec-unit">€/vuosi</span>
                 </div>
+				  
+				<div class="spec-item">
+                  <span class="spec-label">Ylijäämä vuosittain:</span>
+                  <span class="spec-value">{{yearlyExcessEnergyAcKwh}}</span>
+                  <span class="spec-unit">kWh</span>
+                </div>
+				  
+				<div class="spec-item">
+                  <span class="spec-label">Omakäyttö vuosittain:</span>
+                  <span class="spec-value">{{yearlySelfUseEnergyAcKwh}}</span>
+                  <span class="spec-unit">kWh</span>
+                </div>
               </div>
             </td>
             <td class="right-panel">
@@ -410,7 +438,8 @@
               </div>
 				
               <!--div class="legend-gradient"></div-->
-<img class="legend-gradient" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAAUCAYAAACj6Wu2AAACtUlEQVR4Xu2d6W6DMBCEvfRn3/91k2LWx9r4oiVtKn2KUIAYH0RiNLszi4j7fIoTt+0f+906d24zPxNbnEc4/9Jv853ZxfWsrKRce3201lM5zsqo7fvunMhTN/fI+/JwzoXz+76Y/eL8cZ1vp9fqb6Efu397f34sM1+zX5wfzd2ubzD3Yk2391fed+fnIfqf+O+4ybGfz8lWHus1VRt/vJlrUn9xjNy/b6fXx60+1r513H6bNO/Q7t+vw98U+di3fUH+e39u5WO/SPPbcXNmx/b6ur/X9S/N+cfxzJym84/ra92P3nru63//OwAQD1wrj/8xKKz0MAfp41kAgAzBDwAxgAGAACAHGAEgDR5UM4/MWlbYij7SV7gAAPJzRgMDsYwEBhJA7m4mBQPJYFEwLAAEADnADgYyC7/BQGAghLBC6CqFuAAQAAQACeG7cf4GAAFAABAAJISXcjBqJSylwaYrYakrbcfpcnIgo6Q8ISxCWL8gBiCERQirTiXPlVqosHxYBxVWg5mgwkKFlVRZK6qrWpWFCiuxuaFqrR0iQ4UV2MyKhgoGAgNBxhvkyX8lR4aBwEBgIP1AHEn0uYeFHAg5EHIg5EDIgTQNnKiwUGGp4RAjoTVuRgMmRsJ2yAkVFiosVFiosKKrHACpnP8AiJYd6DnrARAABAABQAAQLdFSlHGxpWRgIDCQquoWKiwrZSaERQiLEBYAUuc4ZscwEBgIDAQGAgOBgcS6VkvFICmmmCoBYySklIkWksSJThLdVhkmhJUqDpMD6ZeAB0AAEADkRUUIKeeu/onTAxgjIUbCTmkTqvHyPpDrgMT7QN66JAtGQoyEGAkxEsYHe688y+hlWBgJMRJiJMRIiJEQI2G3vhcAgpGwfAMkPhB8IM1QE9V4y1cJI+MliY6MFxnvTLb7HgzkC2T214R1hcoFAAAAAElFTkSuQmCC" style="width: 100%; height: 20px;" />
+<!-- <img class="legend-gradient" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAAUCAYAAACj6Wu2AAACtUlEQVR4Xu2d6W6DMBCEvfRn3/91k2LWx9r4oiVtKn2KUIAYH0RiNLszi4j7fIoTt+0f+906d24zPxNbnEc4/9Jv853ZxfWsrKRce3201lM5zsqo7fvunMhTN/fI+/JwzoXz+76Y/eL8cZ1vp9fqb6Efu397f34sM1+zX5wfzd2ubzD3Yk2391fed+fnIfqf+O+4ybGfz8lWHus1VRt/vJlrUn9xjNy/b6fXx60+1r513H6bNO/Q7t+vw98U+di3fUH+e39u5WO/SPPbcXNmx/b6ur/X9S/N+cfxzJym84/ra92P3nru63//OwAQD1wrj/8xKKz0MAfp41kAgAzBDwAxgAGAACAHGAEgDR5UM4/MWlbYij7SV7gAAPJzRgMDsYwEBhJA7m4mBQPJYFEwLAAEADnADgYyC7/BQGAghLBC6CqFuAAQAAQACeG7cf4GAAFAABAAJISXcjBqJSylwaYrYakrbcfpcnIgo6Q8ISxCWL8gBiCERQirTiXPlVqosHxYBxVWg5mgwkKFlVRZK6qrWpWFCiuxuaFqrR0iQ4UV2MyKhgoGAgNBxhvkyX8lR4aBwEBgIP1AHEn0uYeFHAg5EHIg5EDIgTQNnKiwUGGp4RAjoTVuRgMmRsJ2yAkVFiosVFiosKKrHACpnP8AiJYd6DnrARAABAABQAAQLdFSlHGxpWRgIDCQquoWKiwrZSaERQiLEBYAUuc4ZscwEBgIDAQGAgOBgcS6VkvFICmmmCoBYySklIkWksSJThLdVhkmhJUqDpMD6ZeAB0AAEADkRUUIKeeu/onTAxgjIUbCTmkTqvHyPpDrgMT7QN66JAtGQoyEGAkxEsYHe688y+hlWBgJMRJiJMRIiJEQI2G3vhcAgpGwfAMkPhB8IM1QE9V4y1cJI+MliY6MFxnvTLb7HgzkC2T214R1hcoFAAAAAElFTkSuQmCC" style="width: 100%; height: 20px;" /> -->
+<img class="legend-gradient" src="data:image/png;base64,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" style="width: 100%; height: 20px;">
               <div class="gradient-description"><span><b>Varjoisa</b></span><span><b>Valoisa</b></span></div>
             </td>
           </tr>
@@ -446,7 +475,7 @@
 
                 <div class="profit-item">
                   <span class="profit-label">Vuosisäästö:</span>
-                  <span class="profit-value">{{averageYearlySavingsEuros}}</span>
+                  <span class="profit-value">{{savingsYear1}}</span>
                   <span class="profit-label">€/vuosi</span>
                 </div>
 
@@ -465,6 +494,12 @@
                 <div class="profit-item">
                   <span class="profit-label">Sisäinen korkokanta:</span>
                   <span class="profit-value">{{internalRateOfReturn}}</span>
+                  <span class="profit-label">%</span>
+                </div>
+				  
+				<div class="profit-item">
+                  <span class="profit-label">Omavaraisuusaste:</span>
+                  <span class="profit-value">{{selfSufficiencyRate}}</span>
                   <span class="profit-label">%</span>
                 </div>
               </div>
@@ -498,6 +533,12 @@
                 <span class="calc-value">{{energyPriceSnt}}</span>
                 <span class="calc-label">snt/kWh</span>
               </div>
+				
+              <div class="calc-item">
+                <span class="calc-label">Investointihinta:</span>
+                <span class="calc-value">{{installationCostPerKwp}}</span>
+                <span class="calc-label">€/kWp</span>
+              </div>
 
               <div class="calc-item">
                 <span class="calc-label">Sähkön siirtohinta:</span>
@@ -519,7 +560,13 @@
 
               <div class="calc-item">
                 <span class="calc-label">Päivittäinen max. omavaraisuusaste:</span>
-                <span class="calc-value">{{TODO}}</span>
+                <span class="calc-value">{{dailyMaxUtilizationFactor}}</span>
+                <span class="calc-label">%</span>
+              </div>
+				
+			  <div class="calc-item">
+                <span class="calc-label">Lisäkallistusvaikutus:</span>
+                <span class="calc-value">{{tiltBoostFactor}}</span>
                 <span class="calc-label">%</span>
               </div>
             </td>
@@ -529,6 +576,12 @@
                 <span class="calc-label">Ylläpitokulut vuodessa:</span>
                 <span class="calc-value">{{maintenanceCostFactor}}</span>
                 <span class="calc-label">% investointikuluista</span>
+              </div>
+				
+              <div class="calc-item">
+                <span class="calc-label">Ylijäämäaste :</span>
+                <span class="calc-value">{{excessRate}}</span>
+                <span class="calc-label">%</span>
               </div>
 
               <div class="calc-item">
@@ -557,7 +610,7 @@
 
             <td>
               <div class="calc-item">
-                <span class="calc-label">Kallistuskulma:</span>
+                <span class="calc-label">Katon kallistuskulma:</span>
                 <span class="calc-value">{{pitchDegrees}}</span>
                 <span class="calc-label">°</span>
               </div>
@@ -569,7 +622,7 @@
               </div>
 
               <div class="calc-item">
-                <span class="calc-label">Diskonttakorkо:</span>
+                <span class="calc-label">Diskonttakorko:</span>
                 <span class="calc-value">{{discountRate}}</span>
                 <span class="calc-label">%</span>
               </div>
@@ -584,6 +637,12 @@
                 <span class="calc-label">Ostosähkön päästökerroin:</span>
                 <span class="calc-value">{{emissionsFactor}}</span>
                 <span class="calc-label">gCO2/kWh</span>
+              </div>
+				
+			  <div class="calc-item">
+                <span class="calc-label">Ylijäämäsähkön myyntihinta:</span>
+                <span class="calc-value">{{excessSalePriceSnt}}</span>
+                <span class="calc-label">snt/kWh</span>
               </div>
             </td>
           </tr>

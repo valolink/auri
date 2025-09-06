@@ -22,6 +22,14 @@ class AuriappSettings {
 			'dashicons-admin-generic',
 			80
 		);
+		add_submenu_page(
+			'auriapp-settings',                      // parent slug
+			'Auriapp Settings',                      // page title
+			'Auriapp Settings',                      // submenu title shown under "Auriapp"
+			'manage_options',
+			'auriapp-settings',                      
+			[$this, 'auriapp_settings_create_admin_page']
+		);
 	}
 
 	public function auriapp_settings_create_admin_page() {
@@ -68,29 +76,45 @@ class AuriappSettings {
 	}
 
 	public function auriapp_settings_sanitize($input) {
-		$sanitary_values = array();
+		$sanitary_values = [];
 		$fields = $this->get_fields_config();
 
 		foreach ($fields as $field) {
-			if (isset($input[$field['id']])) {
-				$callback = $field['sanitize'] ?? 'sanitize_text_field';
-				$sanitary_values[$field['id']] = call_user_func($callback, $input[$field['id']]);
-			} else {
-				// Handle unchecked checkboxes
-				if ($field['type'] === 'checkbox') {
-					$sanitary_values[$field['id']] = 0;
-				}
+			$id   = $field['id'];
+			$type = $field['type'] ?? 'text';
+			$primary_cb = $field['sanitize'] ?? 'sanitize_text_field';
+			$supports_secondary = !empty($field['secondary']);
+			$secondary_key = $id . '_secondary_val';
+
+			if ($type === 'checkbox') {
+				$sanitary_values[$id] = isset($input[$id]) ? 1 : 0;
+				continue;
 			}
-			if ($field['type'] === 'repeater') {
-				$sanitary_values[$field['id']] = array();
-				foreach ($input[$field['id']] as $item) {
-					$sanitary_values[$field['id']][] = array(
-						'label' => sanitize_text_field($item['label'] ?? ''),
-						'value' => sanitize_text_field($item['value'] ?? '')
-					);
+
+			if ($type === 'repeater') {
+				$sanitary_values[$id] = [];
+				if (!empty($input[$id]) && is_array($input[$id])) {
+					foreach ($input[$id] as $item) {
+						$sanitary_values[$id][] = [
+							'label' => sanitize_text_field($item['label'] ?? ''),
+							'value' => sanitize_text_field($item['value'] ?? ''),
+						];
+					}
 				}
+				continue;
+			}
+
+			// Primary scalar-like fields (text/email/url/number/textarea/select)
+			$primary_raw = $input[$id] ?? '';
+			$sanitary_values[$id] = call_user_func($primary_cb, $primary_raw);
+
+			// Secondary textarea (flat storage under id_secondary_val)
+			if ($supports_secondary) {
+				$secondary_raw = $input[$secondary_key] ?? '';
+				$sanitary_values[$secondary_key] = sanitize_textarea_field($secondary_raw);
 			}
 		}
+
 		return $sanitary_values;
 	}
 
@@ -99,63 +123,88 @@ class AuriappSettings {
 	}
 
 	public function render_field($field) {
-		$value = $this->auriapp_settings_options[$field['id']] ?? '';
+		$options = $this->auriapp_settings_options ?? [];
 		$id = esc_attr($field['id']);
-		$name = "auriapp_settings_option_name[$id]";
+		$name_base = "auriapp_settings_option_name";
 		$description = isset($field['description']) ? '<p class="description">' . esc_html($field['description']) . '</p>' : '';
+		$supports_secondary = !empty($field['secondary']);
+		$secondary_label = $supports_secondary && !empty($field['secondary']['label'])
+			? $field['secondary']['label']
+			: 'Secondary';
+
+		$primary_val   = $options[$field['id']] ?? '';
+		$secondary_key = $field['id'] . '_secondary_val';
+		$secondary_val = $options[$secondary_key] ?? '';
 
 		switch ($field['type']) {
 			case 'textarea':
 				printf(
-					'<textarea class="large-text" id="%s" name="%s">%s</textarea>%s',
+					'<textarea class="large-text" id="%s" name="%s[%s]">%s</textarea>',
 					$id,
-					$name,
-					esc_textarea($value),
-					$description
+					$name_base,
+					esc_attr($field['id']),
+					esc_textarea($primary_val)
 				);
+				echo $description;
+				if ($supports_secondary) {
+					printf(
+						'<p style="margin-top:8px; width:350px;"><label><strong>%s</strong></label><br><textarea class="large-text" rows="3" name="%s[%s]">%s</textarea></p>',
+						esc_html($secondary_label),
+						$name_base,
+						esc_attr($secondary_key),
+						esc_textarea($secondary_val)
+					);
+				}
 				break;
 
 			case 'checkbox':
 				printf(
-					'<input type="checkbox" id="%s" name="%s" value="1" %s> %s',
+					'<input type="checkbox" id="%s" name="%s[%s]" value="1" %s> %s',
 					$id,
-					$name,
-					checked($value, 1, false),
+					$name_base,
+					esc_attr($field['id']),
+					checked((int)$primary_val, 1, false),
 					$description
 				);
 				break;
 
 			case 'select':
-				echo '<select id="' . $id . '" name="' . $name . '">';
+				echo '<select id="' . $id . '" name="' . $name_base . '[' . esc_attr($field['id']) . ']">';
 				foreach ($field['options'] as $option_value => $option_label) {
 					printf(
 						'<option value="%s" %s>%s</option>',
 						esc_attr($option_value),
-						selected($value, $option_value, false),
+						selected($primary_val, $option_value, false),
 						esc_html($option_label)
 					);
 				}
-				echo '</select>' . $description;
+				echo '</select>';
+				echo $description;
+				if ($supports_secondary) {
+					printf(
+						'<p style="margin-top:8px; width:350px;"><label><strong>%s</strong></label><br><textarea class="large-text" rows="3" name="%s[%s]">%s</textarea></p>',
+						esc_html($secondary_label),
+						$name_base,
+						esc_attr($secondary_key),
+						esc_textarea($secondary_val)
+					);
+				}
 				break;
-				
+
 			case 'repeater':
-				$rows = is_array($value) ? $value : array(array('name' => '', 'value' => ''));
+				$rows = is_array($primary_val) ? $primary_val : array(array('label' => '', 'value' => ''));
 				echo '<div id="' . $id . '_repeater">';
 				foreach ($rows as $index => $row) {
 					$label_val = esc_attr($row['label'] ?? '');
 					$value_val = esc_attr($row['value'] ?? '');
 					echo '<div class="repeater-row" style="margin-bottom: 10px;">';
 					printf(
-						'<input type="text" placeholder="Label" name="%s[%d][label]" value="%s" class="regular-text" style="margin-right:10px;">',
-						esc_attr($name),
-						$index,
-						$label_val
+						'<input type="text" placeholder="Label" name="%s[%s][%d][label]" value="%s" class="regular-text" style="margin-right:10px;">',
+						$name_base, esc_attr($field['id']), $index, $label_val
 					);
 					printf(
-						'<input type="text" placeholder="Value" name="%s[%d][value]" value="%s" class="regular-text">',
-						esc_attr($name),
-						$index,
-						$value_val
+						'<input type="text" placeholder="Value" name="%s[%s][%d][value]" value="%s" class="regular-text">',
+						$name_base, esc_attr($field['id']), $index, $value_val
 					);
 					echo ' <button type="button" class="button remove-row">Remove</button>';
 					echo '</div>';
@@ -168,13 +217,16 @@ class AuriappSettings {
 			case 'number':
 				$step = isset($field['step']) ? 'step="' . esc_attr($field['step']) . '"' : '';
 				printf(
-					'<input class="regular-text" type="number" id="%s" name="%s" value="%s" %s>%s',
-					$id,
-					$name,
-					esc_attr($value),
-					$step,
-					$description
+					'<input class="regular-text" type="number" id="%s" name="%s[%s]" value="%s" %s>',
+					$id, $name_base, esc_attr($field['id']), esc_attr($primary_val), $step
 				);
+				echo $description;
+				if ($supports_secondary) {
+					printf(
+						'<p style="margin-top:8px; width:350px;"><label><strong>%s</strong></label><br><textarea class="large-text" rows="3" name="%s[%s]">%s</textarea></p>',
+						esc_html($secondary_label), $name_base, esc_attr($secondary_key), esc_textarea($secondary_val)
+					);
+				}
 				break;
 
 			case 'text':
@@ -182,13 +234,16 @@ class AuriappSettings {
 			case 'url':
 			default:
 				printf(
-					'<input class="regular-text" type="%s" id="%s" name="%s" value="%s">%s',
-					esc_attr($field['type']),
-					$id,
-					$name,
-					esc_attr($value),
-					$description
+					'<input class="regular-text" type="%s" id="%s" name="%s[%s]" value="%s">',
+					esc_attr($field['type']), $id, $name_base, esc_attr($field['id']), esc_attr($primary_val)
 				);
+				echo $description;
+				if ($supports_secondary) {
+					printf(
+						'<p style="margin-top:8px; width:350px;"><label><strong>%s</strong></label><br><textarea class="large-text" rows="3" name="%s[%s]">%s</textarea></p>',
+						esc_html($secondary_label), $name_base, esc_attr($secondary_key), esc_textarea($secondary_val)
+					);
+				}
 		}
 	}
 
