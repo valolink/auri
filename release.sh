@@ -7,7 +7,7 @@ set -euo pipefail
 PLUGIN_DIR="auriapp"
 PLUGIN_MAIN="$PLUGIN_DIR/valolink-auriapp.php"
 PKG_JSON="package.json"
-ZIP_NAME_PREFIX="auriapp"      # zip => auriapp-vX.Y.Z.zip
+ZIP_NAME="valolink-auriapp"
 BUILD_CMD="npm run build-only" # your build command
 DIST_DIR="dist"                # created by build
 TAG_PREFIX="v"                 # tags like v1.2.3
@@ -17,7 +17,7 @@ COMMIT_PREFIX="chore(release):"
 MANIFEST_JSON="manifest.json"
 MANIFEST_VERSION_JQ='.version'
 MANIFEST_URL_JQ='.download_url'
-ASSET_NAME_PREFIX="$ZIP_NAME_PREFIX"
+ASSET_NAME_PREFIX="$ZIP_NAME"
 ASSET_NAME_TEMPLATE='${ASSET_NAME_PREFIX}-v${NEW_VERSION}.zip'
 # leave DOWNLOAD_URL_TEMPLATE empty to auto-derive from repo/tag/asset name:
 DOWNLOAD_URL_TEMPLATE=""
@@ -125,7 +125,7 @@ copy_dist_into_plugin() {
 
 zip_plugin_dir() {
 	local v="$1"
-	local zip="${ZIP_NAME_PREFIX}-v${v}.zip"
+	local zip="${ZIP_NAME}.zip"
 	rm -f "$zip"
 	# Zip contents of PLUGIN_DIR into top-level folder of the same name
 	(cd "$PLUGIN_DIR" && zip -r "../$zip" . >/dev/null)
@@ -351,7 +351,7 @@ fi
 log "Packaging plugin directory…"
 ZIPFILE=""
 if ((DRY_RUN)); then
-	ZIPFILE="${ZIP_NAME_PREFIX}-v${NEW_VERSION}.zip"
+	ZIPFILE="${ZIP_NAME}.zip"
 	warn "[dry-run] Would create $ZIPFILE"
 else
 	ZIPFILE="$(zip_plugin_dir "$NEW_VERSION")"
