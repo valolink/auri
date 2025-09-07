@@ -173,7 +173,7 @@ compose_download_url() {
 		error "Could not determine GitHub repo slug for download URL; set DOWNLOAD_URL_TEMPLATE."
 		exit 1
 	fi
-	printf 'https://github.com/%s/releases/download/%s/%s' "$slug" "$TAG_NAME" "$asset"
+	printf 'https://github.com/%s/releases/download/%s/%s.zip' "$slug" "$TAG_NAME" "$ZIP_NAME"
 }
 
 update_manifest_json() {
