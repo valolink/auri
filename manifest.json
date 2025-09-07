@@ -1,0 +1,18 @@
+{
+  "name": "Auriapp",
+  "slug": "valolink-auriapp",
+  "author": "Valolink",
+  "version": "0.1.0",
+  "download_url": "https://github.com/valolink/auri/releases/download/v0.1.1/auriapp-v0.1.1.zip",
+  "requires": "6",
+  "tested": "6",
+  "requires_php": "8",
+  "added": "2025-09-7 12:10:00",
+  "last_updated": "2025-09-7 12:10:00",
+  "homepage": "https://auri2027.fi",
+  "sections": {
+    "description": "Auriapp",
+    "installation": "Set the google API in the auri app settings",
+    "changelog": "changelog"
+  }
+}

@@ -2,19 +2,25 @@
 set -euo pipefail
 
 # ---------------------------
-# Config you might adjust
+# Config
 # ---------------------------
 PLUGIN_DIR="auriapp"
-PLUGIN_MAIN="$PLUGIN_DIR/auriapp.php" # WordPress plugin main file
+PLUGIN_MAIN="$PLUGIN_DIR/valolink-auriapp.php"
 PKG_JSON="package.json"
-ZIP_NAME_PREFIX="auriapp" # zip => auriapp-vX.Y.Z.zip
-BUILD_CMD="npm run dev"   # your build command
-DIST_DIR="dist"           # created by build
-TAG_PREFIX="v"            # tags like v1.2.3
-DEFAULT_BUMP="patch"      # if user doesn't provide a version
+ZIP_NAME_PREFIX="auriapp"      # zip => auriapp-vX.Y.Z.zip
+BUILD_CMD="npm run build-only" # your build command
+DIST_DIR="dist"                # created by build
+TAG_PREFIX="v"                 # tags like v1.2.3
+DEFAULT_BUMP="patch"           # if user doesn't provide a version
 REMOTE_NAME="origin"
 COMMIT_PREFIX="chore(release):"
-
+MANIFEST_JSON="manifest.json"
+MANIFEST_VERSION_JQ='.version'
+MANIFEST_URL_JQ='.download_url'
+ASSET_NAME_PREFIX="$ZIP_NAME_PREFIX"
+ASSET_NAME_TEMPLATE='${ASSET_NAME_PREFIX}-v${NEW_VERSION}.zip'
+# leave DOWNLOAD_URL_TEMPLATE empty to auto-derive from repo/tag/asset name:
+DOWNLOAD_URL_TEMPLATE=""
 # ---------------------------
 # Helpers
 # ---------------------------
@@ -126,6 +132,66 @@ zip_plugin_dir() {
 	echo "$zip"
 }
 
+# Build the asset file name string from template vars
+render_asset_name() {
+	# shellcheck disable=SC2034
+	local ASSET_NAME_PREFIX="$ASSET_NAME_PREFIX" NEW_VERSION="$NEW_VERSION"
+	eval "printf '%s' \"$ASSET_NAME_TEMPLATE\""
+}
+
+# Repo "owner/name" from gh (fallback: parse git remote)
+repo_slug() {
+	if gh repo view --json nameWithOwner -q '.nameWithOwner' 2>/dev/null; then
+		return 0
+	fi
+	# Fallback if gh json fails (handles https and ssh remotes)
+	local url
+	url="$(git remote get-url "$REMOTE_NAME")" || return 1
+	url="${url%.git}"
+	case "$url" in
+	https://github.com/*) echo "${url#https://github.com/}" ;;
+	git@github.com:*) echo "${url#git@github.com:}" ;;
+	*)
+		echo ""
+		return 1
+		;;
+	esac
+}
+
+# Compose the download URL used by the updater
+compose_download_url() {
+	local asset
+	asset="$(render_asset_name)"
+	if [[ -n "$DOWNLOAD_URL_TEMPLATE" ]]; then
+		# shellcheck disable=SC2034
+		local ASSET_NAME_TEMPLATE="$asset"
+		eval "printf '%s' \"$DOWNLOAD_URL_TEMPLATE\""
+		return
+	fi
+	local slug
+	slug="$(repo_slug)" || slug=""
+	if [[ -z "$slug" ]]; then
+		error "Could not determine GitHub repo slug for download URL; set DOWNLOAD_URL_TEMPLATE."
+		exit 1
+	fi
+	printf 'https://github.com/%s/releases/download/%s/%s' "$slug" "$TAG_NAME" "$asset"
+}
+
+update_manifest_json() {
+	local v="$1" url="$2" file="$MANIFEST_JSON"
+	if [[ ! -f "$file" ]]; then
+		error "Manifest file not found: $file"
+		exit 1
+	fi
+	local tmp
+	tmp="$(mktemp)"
+	# Build a single jq program that assigns both fields
+	local jq_prog="$MANIFEST_VERSION_JQ = \$v | $MANIFEST_URL_JQ = \$u"
+	jq --arg v "$v" --arg u "$url" "$jq_prog" "$file" >"$tmp"
+	mv "$tmp" "$file"
+	log "Updated $file ($MANIFEST_VERSION_JQ=$v, $MANIFEST_URL_JQ=$url)"
+}
+
 # ---------------------------
 # CLI args
 # ---------------------------
@@ -198,9 +264,10 @@ git remote get-url "$REMOTE_NAME" >/dev/null 2>&1 || {
 	exit 1
 }
 
-confirm_clean_git
-git fetch --tags --quiet
-
+if ((!DRY_RUN)); then
+	confirm_clean_git
+	git fetch --tags --quiet
+fi
 # ---------------------------
 # Determine version
 # ---------------------------
@@ -237,6 +304,14 @@ if ((DRY_RUN)); then
 else
 	set_pkg_version "$NEW_VERSION"
 	update_wp_plugin_header_version "$NEW_VERSION"
+fi
+
+# --- Manifest update (version + download URL) ---
+DOWNLOAD_URL="$(compose_download_url)"
+if ((DRY_RUN)); then
+	warn "[dry-run] Would update $MANIFEST_JSON: $MANIFEST_VERSION_JQ=$NEW_VERSION, $MANIFEST_URL_JQ=$DOWNLOAD_URL"
+else
+	update_manifest_json "$NEW_VERSION" "$DOWNLOAD_URL"
 fi
 
 # ---------------------------

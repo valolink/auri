@@ -1,6 +1,6 @@
 // main.ts
 import './assets/main.css'
-import 'vfonts/Inter.css'
+// import 'vfonts/Inter.css'
 import { createApp } from 'vue'
 import { useAppState } from './useAppState'
 import DataView from './components/DataView.vue'

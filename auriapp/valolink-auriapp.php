@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Valolink Auriapp
-Plugin URI: 
+Plugin Name: Auriapp
+Plugin URI: valolink-auriapp
 Description: 
-Version: 
-Author: 
-Author URI: 
+Version: 0.1.0
+Author: Valolink
+Author URI: valolink.fi
 License: 
 License URI: 
 */
