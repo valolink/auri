@@ -2,6 +2,7 @@
 /*
 Plugin Name: Auriapp
 Plugin URI: valolink-auriapp
+Update URI: https://github.com/owner/repo
 Description: 
 Version: 0.1.1
 Author: Valolink
@@ -20,60 +21,145 @@ require_once AURIAPP_PLUGIN_DIR . 'includes/class-auriapp-reports-admin.php';
 
 class VueAppShortcode {
 
-	/**
-	 * Plugin directory path.
-	 *
-	 * @var string
-	 */
-	private $plugin_path;
+  private $plugin_path;
+  private $plugin_url;
+  private $dist_path;
+  private $dist_url;
 
-	/**
-	 * Plugin directory URL.
-	 *
-	 * @var string
-	 */
-	private $plugin_url;
+  // NEW: a few fields for update wiring
+  private $basename;        // e.g. "your-plugin/your-plugin.php"
+  private $slug;            // same as basename; used as key in update transient
+  private $main_file;
+  private $action_id;       // safe action slug for admin-post
+  private $force_flag_key = 'vue_app_force_update_check'; // one-shot transient
 
-	/**
-	 * Dist folder path.
-	 *
-	 * @var string
-	 */
-	private $dist_path;
+  /**
+   * Constructor.
+   */
+  public function __construct( $main_file = __FILE__ ) {
+    $this->plugin_path = plugin_dir_path( __FILE__ );
+    $this->plugin_url  = plugin_dir_url( __FILE__ );
+    $this->dist_path   = $this->plugin_path . 'dist/assets/';
+    $this->dist_url    = $this->plugin_url . 'dist/assets/';
 
-	/**
-	 * Dist folder URL.
-	 *
-	 * @var string
-	 */
-	private $dist_url;
+    // Identify the plugin file in WP's eyes
+    $this->main_file = $main_file;
+    $this->basename  = plugin_basename( $this->main_file ); // "dir/file.php"
+    $this->slug      = $this->basename;                     // WP uses this as the array key
+    $this->action_id = str_replace( ['\\','/','.'], '-', $this->basename ) . '-force-update-check';
 
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		$this->plugin_path = plugin_dir_path( __FILE__ );
-		$this->plugin_url  = plugin_dir_url( __FILE__ );
-		$this->dist_path   = $this->plugin_path . 'dist/assets/';
-		$this->dist_url    = $this->plugin_url . 'dist/assets/';
+    // Register the shortcode.
+    add_shortcode( 'vue_app', [ $this, 'render_vue_app_shortcode' ] );
 
-		// Register the shortcode.
-		add_shortcode( 'vue_app', array( $this, 'render_vue_app_shortcode' ) );
+    // Enqueue assets if the shortcode is used on the page.
+    add_action( 'wp_enqueue_scripts', [ $this, 'conditionally_enqueue_assets' ] );
 
-		// Enqueue assets if the shortcode is used on the page.
-		add_action( 'wp_enqueue_scripts', array( $this, 'conditionally_enqueue_assets' ) );
-	}
+    // Update hooks
+    add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'check_updates' ] );
+    add_filter( 'plugins_api', [ $this, 'plugin_info' ], 10, 3 );
 
-	/**
-	 * Check if the current post has the shortcode and enqueue assets if so.
-	 */
-	public function conditionally_enqueue_assets() {
-		// Only check on singular posts or pages.
-		if ( is_singular() && has_shortcode( get_post()->post_content, 'vue_app' ) ) {
-			$this->enqueue_assets();
-		}
-	}
-	
+    // NEW: plugin row action link + handler
+    add_filter( "plugin_action_links_{$this->basename}", [ $this, 'add_check_link' ] );
+    add_action( "admin_post_{$this->action_id}", [ $this, 'handle_force_check' ] );
+  }
+
+  /**
+   * Check if the current post has the shortcode and enqueue assets if so.
+   */
+  public function conditionally_enqueue_assets() {
+    if ( is_singular() && has_shortcode( get_post()->post_content, 'vue_app' ) ) {
+      $this->enqueue_assets();
+    }
+  }
+
+  // NEW: adds “Check for updates” link to your plugin row
+  public function add_check_link( array $links ): array {
+    $return_to = rawurlencode( add_query_arg( [], $_SERVER['REQUEST_URI'] ?? admin_url( 'plugins.php' ) ) );
+    $url = wp_nonce_url(
+      admin_url( "admin-post.php?action={$this->action_id}&redirect={$return_to}" ),
+      $this->action_id
+    );
+    $links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Check for updates', 'your-plugin' ) . '</a>';
+    return $links;
+  }
+
+  // NEW: handler that sets a one-shot force flag, refreshes updates, and redirects back
+  public function handle_force_check(): void {
+    if ( ! current_user_can( is_multisite() ? 'manage_network_plugins' : 'update_plugins' ) ) {
+      wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'your-plugin' ) );
+    }
+    check_admin_referer( $this->action_id );
+
+    // Tell check_updates() to bypass any once-per-day gate for this run
+    set_transient( $this->force_flag_key, 1, MINUTE_IN_SECONDS );
+
+    // Clear cached results and run checks now (fires your check_updates())
+    require_once ABSPATH . 'wp-admin/includes/update.php';
+    delete_site_transient( 'update_plugins' );
+    wp_update_plugins();
+
+    // Bounce back to where the user clicked
+    $redirect = isset( $_GET['redirect'] )
+      ? wp_validate_redirect( wp_unslash( $_GET['redirect'] ), admin_url( 'plugins.php' ) )
+      : admin_url( 'plugins.php' );
+    wp_safe_redirect( $redirect );
+    exit;
+  }
+
+  // Helper to consume the one-shot flag
+  private function is_force_check(): bool {
+    if ( get_transient( $this->force_flag_key ) ) {
+      delete_transient( $this->force_flag_key );
+      return true;
+    }
+    return false;
+  }
+
+  public function check_updates( $transient ) {
+    if ( empty( $transient->checked ) ) return $transient;
+
+    $installed_version = $transient->checked[ $this->slug ] ?? null;
+
+    // --- OPTIONAL daily gate (example) ---
+    // If you already have a once-per-day cache, wrap it with:
+    // $force = $this->is_force_check();
+    // if (!$force && time() - $last_checked < DAY_IN_SECONDS) { use cached $data; } else { fetch fresh; cache; }
+    // -------------------------------------
+
+    // NOTE: include the branch in your raw URL (e.g. "/main/")
+    $resp = wp_remote_get( 'https://raw.githubusercontent.com/valolink/auri/main/manifest.json', [
+      'headers' => [ 'Accept' => 'application/json' ],
+      'timeout' => 10,
+    ] );
+    if ( is_wp_error( $resp ) ) return $transient;
+
+    $data = json_decode( wp_remote_retrieve_body( $resp ) );
+    if ( ! $data || empty( $data->version ) ) return $transient;
+
+    if ( $installed_version && version_compare( $data->version, $installed_version, '>' ) ) {
+      $transient->response[ $this->slug ] = (object) [
+        'slug'        => dirname( $this->slug ),
+        'plugin'      => $this->slug,
+        'new_version' => $data->version,
+        'package'     => $data->download_url ?? $data->package ?? '',
+        'url'         => $data->homepage  ?? '',
+        'requires'    => $data->requires  ?? '',
+        'tested'      => $data->tested    ?? '',
+      ];
+    }
+
+    return $transient;
+  }
+
+  private function get_version_from_header(): string {
+    if ( ! function_exists( 'get_plugin_data' ) ) {
+      require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+    $data = get_plugin_data( $this->file, false, false );
+    return $data['Version'] ?? '';
+  }
+
+
 	private function build_keyed_settings(): array {
 		// Load settings config
 		$settings_json_path = plugin_dir_path(__FILE__) . 'includes/auriapp-settings.json';
