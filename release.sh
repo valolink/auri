@@ -17,8 +17,7 @@ COMMIT_PREFIX="chore(release):"
 MANIFEST_JSON="manifest.json"
 MANIFEST_VERSION_JQ='.version'
 MANIFEST_URL_JQ='.download_url'
-ASSET_NAME_PREFIX="$ZIP_NAME"
-ASSET_NAME_TEMPLATE='${ASSET_NAME_PREFIX}-v${NEW_VERSION}.zip'
+ASSET_NAME_TEMPLATE='${ZIP_NAME}.zip'
 # leave DOWNLOAD_URL_TEMPLATE empty to auto-derive from repo/tag/asset name:
 DOWNLOAD_URL_TEMPLATE=""
 # ---------------------------
