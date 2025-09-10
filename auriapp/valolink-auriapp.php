@@ -307,6 +307,7 @@ class VueAppShortcode
                         'ajax_url' => admin_url('admin-ajax.php'),
                         'role'     => current_user_can('manage_options') ? 'admin' : 'guest',
                         'settings' => $this->build_keyed_settings(),
+                        'plugin_base' => esc_url(plugins_url('dist/', __FILE__))
                     )
                 );
 
