@@ -1,6 +1,5 @@
-body,
-#page {
-  background: var(--wp--preset--color--base-2, #f7f7f8);
+body, #page {
+		  background: var(--wp--preset--color--base-2, #f7f7f8);
 }
 
 /* scope everything to this page section */
@@ -8,26 +7,22 @@ body,
   --gap: 20px;
   --section-gap: 5px;
   --section-pad: 20px;
+
 }
 
-.auri-main-inner-column,
-.auri-main-column {
+.auri-main-inner-column, .auri-main-column {
   margin: 0;
-  column-gap: 0;
-  gap: var(--gap);
+	column-gap: 0;
+	gap: var(--gap);
 }
+
 
 /* the two main columns */
 .auri-outer-column .auri-input-column,
 .auri-outer-column .auri-main-column {
   display: flex;
   flex-direction: column;
-  padding: var(--section-gap);
-}
-
-.auri-map-column.auri-section-column {
-  padding: 0;
-  overflow: hidden;
+	padding: var(--section-gap)
 }
 
 /* a single content section */
@@ -37,7 +32,8 @@ body,
   gap: calc(var(--section-gap));
   padding: var(--section-pad);
   border-radius: 8px;
-  background: var(--wp--preset--color--base-3, #f7f7f8);
+	background: var(--wp--preset--color--base-3, #f7f7f8);
+
 }
 
 /* make Naive UI cards/forms breathe when inside Gutenberg columns */
@@ -48,8 +44,7 @@ body,
 }
 
 /* responsive: stack main columns on small screens */
-@media (max-width: 782px) {
-  /* WP’s column breakpoint */
+@media (max-width: 782px) { /* WP’s column breakpoint */
   .auri-outer-column.wp-block-columns {
     flex-wrap: wrap;
   }
@@ -58,17 +53,18 @@ body,
   }
 }
 
-@media all and (max-width: 1400px) {
-  .auri-input-column {
-    display: none !important;
-  }
+
+@media all and (max-width: 1400px) { 
+	.auri-input-column {
+		display: none !important;
+	}
 }
-@media all and (min-width: 1400px) {
-  #input-toggle-btn {
-    display: none !important;
-  }
+@media all and (min-width: 1400px) { 
+	#input-toggle-btn {
+		display: none !important;
+	}
 }
 
 .admin-bar .n-drawer-header {
-  margin-top: 38px;
+	margin-top: 38px;
 }

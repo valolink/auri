@@ -1,19 +1,29 @@
 <template>
+  <n-modal :show="showModal">
+    <div :style="backgroundStyle" class="start-modal-container">
+      <n-card
+        style="width: 600px"
+        title="Aloita syöttämällä rakennuksen osoite"
+        :bordered="false"
+        size="huge"
+        role="dialog"
+        aria-modal="true"
+      >
+        <AddressSearch
+          v-model="input.address"
+          @search="runSearch"
+          @select="({ value }) => handleSelect(value)"
+        />
+      </n-card>
+    </div>
+  </n-modal>
   <div class="input-container">
     <n-form>
-      <n-form-item label="Osoite">
-        <n-input-group>
-          <n-auto-complete
-            v-model:value="input.address"
-            :options="suggestions"
-            placeholder="Syötä osoite"
-            :input-props="{ autocomplete: 'off' }"
-            @input="getSuggestions"
-            :on-select="handleSelect"
-          />
-          <n-button type="primary" @click="runSearch(input.address)">Hae</n-button>
-        </n-input-group>
-      </n-form-item>
+      <AddressSearch
+        v-model="input.address"
+        @search="runSearch"
+        @select="({ value }) => handleSelect(value)"
+      />
       <div v-if="output.technicalMax.panelsCount">
         <n-form-item v-if="role == 'admin'" label="Extra radius">
           <n-input-number v-model:value="input.extraRadius" :min="0" :step="10" size="small" />
@@ -38,8 +48,8 @@
         </n-form-item>
         <n-form-item label="Luo oma kulutusprofiili">
           <n-switch
-          v-model:value="input.customProfile.active"
-          @update:value="updateCalculationBasis(input.calculationBasis)"
+            v-model:value="input.customProfile.active"
+            @update:value="updateCalculationBasis(input.calculationBasis)"
         /></n-form-item>
         <!-- Monthly Distribution Input -->
         <n-form-item v-if="input.customProfile.active" label="Kuukausittainen jakauma">
@@ -68,7 +78,7 @@
             </n-flex>
           </div>
         </n-form-item>
-        <div style="overflow: auto; margin-bottom: 20px;">
+        <div style="overflow: auto; margin-bottom: 20px">
           <n-tag size="small">{{
             input.customProfile.active ? 'Custom Profile' : input.buildingType?.value
           }}</n-tag>
@@ -94,7 +104,7 @@
               </n-space>
             </n-form-item>
           </template>
-          <span>{{settings.yearlyEnergyUsageKwh.secondary?.value}}</span>
+          <span>{{ settings.yearlyEnergyUsageKwh.secondary?.value }}</span>
         </n-tooltip>
 
         <n-tooltip trigger="hover">
@@ -113,7 +123,7 @@
               </div>
             </n-form-item>
           </template>
-          <span>{{settings.calculationBasis.secondary?.value}}</span>
+          <span>{{ settings.calculationBasis.secondary?.value }}</span>
         </n-tooltip>
 
         <n-tooltip trigger="hover">
@@ -139,7 +149,7 @@
               </n-space>
             </n-form-item>
           </template>
-          <span>{{settings.targetPower.secondary?.value}}</span>
+          <span>{{ settings.targetPower.secondary?.value }}</span>
         </n-tooltip>
 
         <n-tooltip trigger="hover">
@@ -165,7 +175,7 @@
               </n-space>
             </n-form-item>
           </template>
-          <span>{{settings.panelCount.secondary?.value}}</span>
+          <span>{{ settings.panelCount.secondary?.value }}</span>
         </n-tooltip>
         <div class="setting-fields">
           <n-tooltip trigger="hover">
@@ -178,9 +188,9 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.energyPriceSnt.secondary?.value}}</span>
+            <span>{{ settings.energyPriceSnt.secondary?.value }}</span>
           </n-tooltip>
-        <n-tooltip trigger="hover">
+          <n-tooltip trigger="hover">
             <template #trigger>
               <n-form-item label="Sähkön siirtohinta (snt)">
                 <n-input-number
@@ -190,7 +200,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.transmissionPriceSnt.secondary?.value}}</span>
+            <span>{{ settings.transmissionPriceSnt.secondary?.value }}</span>
           </n-tooltip>
         </div>
         <n-form-item label="Lisäasetukset">
@@ -207,7 +217,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.tiltBoostFactor.secondary?.value}}</span>
+            <span>{{ settings.tiltBoostFactor.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -219,7 +229,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.electricityTax.secondary?.value}}</span>
+            <span>{{ settings.electricityTax.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -231,7 +241,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.vat.secondary?.value}}</span>
+            <span>{{ settings.vat.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -243,7 +253,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.costIncreaseFactor.secondary?.value}}</span>
+            <span>{{ settings.costIncreaseFactor.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -255,7 +265,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.dailyMaxUtilizationFactor.secondary?.value}}</span>
+            <span>{{ settings.dailyMaxUtilizationFactor.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -267,7 +277,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.dcToAcDerate.secondary?.value}}</span>
+            <span>{{ settings.dcToAcDerate.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -279,7 +289,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.discountRate.secondary?.value}}</span>
+            <span>{{ settings.discountRate.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -291,7 +301,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.emissionsFactor.secondary?.value}}</span>
+            <span>{{ settings.emissionsFactor.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -303,7 +313,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.installationCostPerKwp.secondary?.value}}</span>
+            <span>{{ settings.installationCostPerKwp.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -315,7 +325,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.efficiencyDepreciationFactor.secondary?.value}}</span>
+            <span>{{ settings.efficiencyDepreciationFactor.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -327,7 +337,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.excessRate.secondary?.value}}</span>
+            <span>{{ settings.excessRate.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -339,7 +349,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.excessSalePriceSnt.secondary?.value}}</span>
+            <span>{{ settings.excessSalePriceSnt.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -351,7 +361,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.loan.secondary?.value}}</span>
+            <span>{{ settings.loan.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -363,7 +373,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.loanDurationYears.secondary?.value}}</span>
+            <span>{{ settings.loanDurationYears.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -375,7 +385,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.interestRate.secondary?.value}}</span>
+            <span>{{ settings.interestRate.secondary?.value }}</span>
           </n-tooltip>
           <n-tooltip trigger="hover">
             <template #trigger>
@@ -387,7 +397,7 @@
                 />
               </n-form-item>
             </template>
-            <span>{{settings.inverterReplacementCostFactor.secondary?.value}}</span>
+            <span>{{ settings.inverterReplacementCostFactor.secondary?.value }}</span>
           </n-tooltip>
         </div>
 
@@ -412,20 +422,21 @@
 </template>
 
 <script setup lang="ts">
+import AddressSearch from '@/components/AddressSearch.vue'
 import {
   NForm,
-  NAutoComplete,
   NFormItem,
   NSelect,
   NInputNumber,
   NButton,
-  NInputGroup,
   NSlider,
   NSpace,
   NTag,
   NSwitch,
   NFlex,
   NTooltip,
+  NModal,
+  NCard,
 } from 'naive-ui'
 import { useAppState } from '@/useAppState'
 import { resetCharts, updateEnergyChart, updateSavingsChart } from '@/services/chartUtils'
@@ -444,8 +455,21 @@ import {
   calculateScorePotential,
 } from '@/services/configUtils'
 
-const { mapRef, mapInstance, loading, settings, input, output, buildingData, role } = useAppState()
+const { pluginBase, mapRef, mapInstance, loading, settings, input, output, buildingData, role } =
+  useAppState()
 const panelCapacity = 400 // watts per panel
+
+const showModal = ref(true)
+const backgroundStyle = {
+  backgroundImage: 'url(' + pluginBase + 'startbackground.jpg)',
+  width: '100%',
+  height: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center center',
+}
 
 function updateBuildingTypeLabel() {
   const selectedOption = settings.buildingTypes.value.find(
@@ -553,6 +577,7 @@ async function getPlaceDetails(placeId: string) {
 }
 
 const runSearch = async (address: string = input.address) => {
+  showModal.value = false
   output.reset()
   resetCharts()
   loading.value = true

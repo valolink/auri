@@ -2,7 +2,6 @@
 import { ref, onMounted, onBeforeUnmount, computed, nextTick, watchEffect } from 'vue'
 import { NDrawer, NDrawerContent, NButton } from 'naive-ui'
 import CalculationInputs from '@/components/CalculationInputs.vue'
-
 const show = ref(true)
 const isWide = ref(true)
 let mql: MediaQueryList
@@ -65,7 +64,6 @@ watchEffect(() => {
   </n-drawer>
 
   <!-- Mount only when the destination exists -->
-  <!-- If you're on Vue 3.5+, keep 'defer' to smooth target resolution -->
   <teleport v-if="hostReady" :to="toSelector" defer>
     <CalculationInputs />
   </teleport>

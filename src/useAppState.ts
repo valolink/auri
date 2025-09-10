@@ -84,6 +84,7 @@ declare global {
       settings: AppSettings
       ajax_url: string
       role: string
+      plugin_base: string
     }
   }
 }
@@ -106,6 +107,7 @@ const mapRef = ref<HTMLElement | null>(null)
 const mapInstance = ref<google.maps.Map | null>(null) // Google Map object
 const loading = ref(false)
 const ajaxUrl = window.vueAppData!.ajax_url
+const pluginBase = window.vueAppData!.plugin_base
 
 export function useAppState() {
   return {
@@ -121,6 +123,7 @@ export function useAppState() {
     mapInstance,
     loading,
     ajaxUrl,
+    pluginBase,
     role,
   }
 }
