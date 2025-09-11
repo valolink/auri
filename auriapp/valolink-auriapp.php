@@ -4,7 +4,7 @@ Plugin Name: Auriapp
 Plugin URI: valolink-auriapp
 Update URI: https://github.com/owner/repo
 Description:
-Version: 0.1.8
+Version: 0.1.9
 Author: Valolink
 Author URI: valolink.fi
 License:
