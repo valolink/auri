@@ -74,7 +74,12 @@ body,
 }
 
 #content {
-  max-width: revert;
+  max-width: 1800px;
+  padding: 40px 20px;
+}
+
+.result-item {
+  margin: 0;
 }
 
 .n-button.n-button {
