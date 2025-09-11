@@ -72,3 +72,41 @@ body,
 .admin-bar .n-drawer-header {
   margin-top: 38px;
 }
+
+#content {
+  max-width: revert;
+}
+
+.n-button.n-button {
+  margin: 0;
+  font-weight: var(--n-font-weight);
+  line-height: 1;
+  font-family: inherit;
+  padding: var(--n-padding);
+  height: var(--n-height);
+  font-size: var(--n-font-size);
+  border-radius: var(--n-border-radius);
+  color: var(--n-text-color);
+  background-color: var(--n-color);
+  width: var(--n-width);
+  white-space: nowrap;
+  outline: none;
+  position: relative;
+  z-index: auto;
+  border: none;
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    color 0.3s var(--n-bezier),
+    background-color 0.3s var(--n-bezier),
+    opacity 0.3s var(--n-bezier),
+    border-color 0.3s var(--n-bezier);
+}
